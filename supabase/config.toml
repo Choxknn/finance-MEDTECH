@@ -1,0 +1,5 @@
+project_id = "sdegiugcttarbsnqvusm"
+[functions.finance-api]
+verify_jwt = false
+[functions.line-webhook]
+verify_jwt = false

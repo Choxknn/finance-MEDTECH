@@ -1,10 +1,10 @@
 // Public values only. Never put service-role keys or provider secrets here.
 window.FINANCE_CONFIG = {
-  mode: 'demo', // Change to 'live' after deploying Supabase and provisioning accounts.
+  mode: 'live',
   supabaseUrl: 'https://sdegiugcttarbsnqvusm.supabase.co',
-  supabaseAnonKey: '',
+  supabaseAnonKey: 'sb_publishable_-M0J8pWSiEJay-LiT5DGRg_iZDqKkmh',
   studentEmailDomain: 'students.finance-medtech.invalid',
   bankName: '', accountName: '', accountNumber: '',
-  paymentQrUrl: '', // Your verified bank/PromptPay QR image; not a generated placeholder.
+  paymentQrUrl: '',
   lineOaUrl: '',
 };

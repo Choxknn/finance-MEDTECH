@@ -67,6 +67,26 @@ Deno.serve(async req=>{
     if(verified)await notify(db,profile.id,`finance MEDTECH\nยืนยันชำระ ${charge.rounds.title}\nจำนวน ${value.toFixed(2)} บาท`);
     return json({message:verified?'ยืนยันการชำระแล้ว':'บันทึกสลิปแล้ว รอแอดมินตรวจสอบ',payment_id:pid});
    }
+   case 'retry-payment':{
+    requireAdmin();
+    const p=await query(db.from('payments').select('*,charges(rounds(title,created_at))').eq('id',input.payment_id).single());
+    if(!['pending','review'].includes(p.status)||!p.drive_file_id)throw new Error('ตรวจซ้ำได้เฉพาะรายการที่รอตรวจและมีหลักฐาน');
+    const access=await driveToken();const r=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(p.drive_file_id)}?alt=media&supportsAllDrives=true`,{headers:{Authorization:`Bearer ${access}`},signal:AbortSignal.timeout(20000)});
+    if(!r.ok)throw new Error('เปิดหลักฐานไม่สำเร็จ');
+    const blob=await r.blob();const image=await validateImage(new File([blob],'slip',{type:blob.type}));
+    const result=await checkSlip(image,Number(p.amount)),detail=result.body.data;
+    await query(db.from('payments').update({verification:result.body}).eq('id',p.id));
+    const transferred=detail?.transTimestamp?Date.parse(detail.transTimestamp):NaN;
+    const validDate=Number.isFinite(transferred)&&transferred>=Date.parse(p.charges.rounds.created_at)&&transferred<=Date.now()+300000;
+    if(result.ok&&validDate){
+     await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK (ตรวจซ้ำ)',p_ref:String(detail.transRef),p_actor:null}));
+     await notify(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`);
+     return json({message:'SlipOK ยืนยันการชำระแล้ว'});
+    }
+    const note='ผลตรวจต้องตรวจเพิ่มเติม: '+String(result.body.message||detail?.message||'ยอด บัญชี หรือวันที่ไม่ตรง');
+    await query(db.from('payments').update({note:note.slice(0,500)}).eq('id',p.id).in('status',['pending','review']));
+    return json({message:note});
+   }
    case 'review':{
     requireAdmin();const decision=text(input.decision,20);if(!['approved','rejected'].includes(decision))throw new Error('สถานะไม่ถูกต้อง');const p=await query(db.from('payments').select('*').eq('id',input.payment_id).single());
     await query(db.rpc('decide_payment',{p_id:p.id,p_decision:decision,p_note:text(input.note,500),p_ref:String(input.trans_ref||'').slice(0,100),p_actor:profile.id}));

@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import jsQR from 'npm:jsqr@1.4.0';
 import jpeg from 'npm:jpeg-js@0.4.4';
 import { PNG } from 'npm:pngjs@7.0.0';
@@ -7,7 +8,7 @@ export async function slipQrData(file:File){
  else if(file.type==='image/png'){
   const v=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   if(bytes.length<24||v.getUint32(16)*v.getUint32(20)>20000000)throw new Error('ภาพมีความละเอียดสูงเกินไป');
-  decoded=PNG.sync.read(bytes);
+  decoded=PNG.sync.read(Buffer.from(bytes));
  }else return null;
  const result=jsQR(new Uint8ClampedArray(decoded.data),decoded.width,decoded.height,{inversionAttempts:'attemptBoth'});
  return result?.data||null;

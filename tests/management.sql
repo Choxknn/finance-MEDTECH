@@ -1,0 +1,42 @@
+-- Transactional integration test. All inserted records are rolled back.
+begin;
+do $$
+declare actor_id uuid; member_id uuid; rid uuid; cid uuid; pid uuid; eid uuid; patch jsonb; blocked boolean;
+begin
+ select id into actor_id from public.profiles where role='admin' and active limit 1;
+ select id into member_id from public.profiles where role='member' limit 1;
+ if actor_id is null or member_id is null then raise exception 'Missing test actors';end if;
+ rid:=public.create_round('ROLLBACK management test','temporary',100,current_date,'test');
+ select id into cid from public.charges where round_id=rid and profile_id=member_id;
+ if cid is null then insert into public.charges(profile_id,round_id,amount) values(member_id,rid,100) returning id into cid;end if;
+ patch:=jsonb_build_object('title','edited test','description','test','amount',120,'due_date',current_date,'archived',false);
+ perform public.manage_record('round',rid,patch,actor_id);
+ if (select amount from public.charges where id=cid)<>120 then raise exception 'Round propagation failed';end if;
+ pid:=public.reserve_payment(member_id,cid,20);
+ blocked:=false;
+ begin perform public.manage_record('round',rid,patch||'{"amount":130}',actor_id);
+ exception when others then if sqlerrm like '%รอบนี้มีการชำระ%' then blocked:=true;else raise;end if;end;
+ if not blocked then raise exception 'Pending payment protection failed';end if;
+ update public.payments set drive_file_id='rollback-evidence' where id=pid;
+ perform public.decide_payment(pid,'approved','test','rollback-'||pid::text,actor_id);
+ blocked:=false;
+ begin perform public.manage_record('charge',cid,'{"amount":10,"reason":"test"}',actor_id);
+ exception when others then if sqlerrm like '%มีการชำระ%' then blocked:=true;else raise;end if;end;
+ if not blocked then raise exception 'Approved protection failed';end if;
+ perform public.manage_record('round',rid,patch||'{"archived":true}',actor_id);
+ blocked:=false;
+ begin perform public.reserve_payment(member_id,cid,20);
+ exception when others then if sqlerrm like '%ปิดรับชำระ%' then blocked:=true;else raise;end if;end;
+ if not blocked then raise exception 'Archive protection failed';end if;
+ blocked:=false;
+ begin perform public.manage_record('member',actor_id,'{"name":"test","year":"","role":"member","active":false}',actor_id);
+ exception when others then if sqlerrm like '%ตนเอง%' then blocked:=true;else raise;end if;end;
+ if not blocked then raise exception 'Admin self protection failed';end if;
+ if not exists(select 1 from public.audit where details->'before'->>'id'=rid::text) then raise exception 'Audit missing';end if;
+ insert into public.expenses(title,category,amount,spent_on,created_by,drive_file_id) values('rollback expense','test',50,current_date,actor_id,'original') returning id into eid;
+ perform public.manage_record('expense',eid,jsonb_build_object('title','updated','category','test','amount',60,'spent_on',current_date,'note','test','voided',true,'reason','correction','drive_file_id','replacement'),actor_id);
+ if not exists(select 1 from public.expenses where id=eid and voided and drive_file_id='replacement') or not exists(select 1 from public.audit where details->'before'->>'id'=eid::text and details->'before'->>'drive_file_id'='original') then raise exception 'Expense evidence history failed';end if;
+ if has_function_privilege('anon','public.manage_record(text,uuid,jsonb,uuid)','execute') or has_function_privilege('authenticated','public.save_settings(jsonb,uuid)','execute') or has_table_privilege('anon','public.site_settings','select') then raise exception 'Management accessible to public';end if;
+end $$;
+rollback;
+select 'passed: financial guards, archive, admin self protection, audit, evidence history, grants; all test records rolled back' as result;

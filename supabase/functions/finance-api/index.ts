@@ -191,7 +191,7 @@ Deno.serve(async req=>{
     requireAdmin();const p=await query(db.from('profiles').select('*').eq('id',input.profile_id).eq('active',true).is('deleted_at',null).single());
     const recent=await query(db.from('notifications').select('id').eq('profile_id',p.id).gte('created_at',new Date(Date.now()-60000).toISOString()).limit(1));if(recent.length)throw new Error('เพิ่งส่งข้อความ กรุณารออย่างน้อย 1 นาที');
     const activeRounds=await query(db.from('rounds').select('id').is('deleted_at',null));const cs=(await query(db.from('charges').select('id,amount,round_id').eq('profile_id',p.id).is('deleted_at',null))).filter((c:any)=>activeRounds.some((r:any)=>r.id===c.round_id)),ps=(await query(db.from('payments').select('amount,charge_id').eq('profile_id',p.id).eq('status','approved').is('deleted_at',null))).filter((payment:any)=>cs.some((c:any)=>c.id===payment.charge_id));
-    const outstanding=cs.reduce((s:number,c:any)=>s+Number(c.amount),0)-ps.reduce((s:number,x:any)=>s+Number(x.amount),0);if(outstanding<=0)throw new Error('ไม่มีเงินค้างชำระ');
+    const totals=await query(db.rpc('charge_totals',{p_ids:cs.map((c:any)=>c.id)}));const outstanding=cs.reduce((s:number,c:any)=>s+Math.max(0,Number(totals.find((t:any)=>t.id===c.id)?.total_amount||c.amount)-ps.filter((p:any)=>p.charge_id===c.id).reduce((n:number,p:any)=>n+Number(p.amount),0)),0);if(outstanding<=0)throw new Error('ไม่มีเงินค้างชำระ');
     const result=await notify(db,p.id,`finance MEDTECH\nคุณ ${p.name}\nยอดค้างชำระ ${outstanding.toFixed(2)} บาท\nตรวจสอบรายการที่หน้าเว็บของกลุ่ม`);
     return json({message:result==='sent'?'ส่งการแจ้งเตือนแล้ว':result==='unlinked'?'สมาชิกยังไม่ได้เชื่อม LINE':'ส่ง LINE ไม่สำเร็จ ดูประวัติการแจ้งเตือน'});
    }

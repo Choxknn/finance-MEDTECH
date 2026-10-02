@@ -1,1 +1,1 @@
-{"name":"finance-medtech","private":true,"scripts":{"test":"node tests/management.test.cjs && node tests/api.test.cjs && node tests/records.test.cjs"},"devDependencies":{"jsdom":"26.1.0","esbuild":"0.25.10"}}
+{"name":"finance-medtech","private":true,"scripts":{"test":"node tests/management.test.cjs && node tests/api.test.cjs && node tests/records.test.cjs && node tests/bills.test.cjs && node tests/slip.test.cjs && node tests/session-history.test.cjs && node tests/payment-qrs.test.cjs"},"devDependencies":{"jsdom":"26.1.0","esbuild":"0.25.10"}}

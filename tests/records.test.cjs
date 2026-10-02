@@ -6,7 +6,7 @@ w.FINANCE_CONFIG={mode:'demo',siteName:'Test',paymentQrUrl:'',supabaseUrl:'https
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};
 w.URL.createObjectURL=()=> 'blob:https://example.test/private-evidence';let revoked=0;w.URL.revokeObjectURL=()=>revoked++;
 let requests=[];w.fetch=async(url,options)=>{requests.push({url,options});return {ok:true,blob:async()=>({type:'image/png'})}};
-for(const p of ['app.js','management.js','records.js'])vm.runInContext(fs.readFileSync(root+'/web/'+p,'utf8'),context);
+for(const p of ['app.js','management.js','records.js','fund.js'])vm.runInContext(fs.readFileSync(root+'/web/'+p,'utf8'),context);
 const run=s=>vm.runInContext(s,context),tick=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
 run("demoLogin('admin');nav('members')");
@@ -17,10 +17,9 @@ run("nav('trash')");assert.ok(w.document.querySelector('[data-restore-id=u1]'));
 run("deletionModal('member',['u1'],false)");w.document.querySelector('[name=reason]').value='restore';w.document.querySelector('#record-delete').requestSubmit();await tick();assert.equal(run("db.profiles.some(p=>p.id==='u1')"),true);
 run("db.references={rounds:[...db.rounds],charges:[...db.charges],profiles:[...db.profiles]};db.rounds=[];db.charges=[];nav('review')");assert.ok(w.document.body.textContent.includes('อุปกรณ์ห้องปฏิบัติการ'),'historical title resolves after parent deletion');
 run("db.payments.find(p=>p.id==='p2').drive_file_id='private';cfg.mode='live';token='test-session-token';nav('review')");await tick();
-assert.ok(requests.length>0);assert.ok(requests.every(r=>!r.url.includes('test-session-token')&&r.options.headers.Authorization==='Bearer test-session-token'));
-assert.ok(w.document.querySelector('img[data-proof-id=p2]').src.startsWith('blob:'));
+assert.equal(requests.length,0,'tables do not fetch slips');assert.equal(w.document.querySelector('#app img[data-proof-kind=payment]'),null);
 run("reviewModal('p2')");await tick();assert.ok(w.document.querySelector('#dialog .evidence-large img[src]'));assert.equal(w.document.querySelector('#dialog [data-payment-file]'),null,'no click needed to show image');
-run("releaseProofs()");assert.ok(revoked>0,'private image URLs released');
-run("cfg.mode='demo';demoLogin('member');nav('profile')");assert.ok(w.document.querySelector('#self-profile'));assert.equal(w.document.querySelector('[data-delete-entity]'),null);
+assert.ok(requests.every(r=>!r.url.includes('test-session-token')&&r.options.headers.Authorization==='Bearer test-session-token'));run("releaseProofs()");assert.ok(revoked>0,'private image URLs released');
+run("cfg.mode='demo';db.incomes=[{id:'income-test',title:'Donation',category:'Gift',amount:123,received_on:'2026-10-02'}];nav('fund')");assert.ok(w.document.querySelector('[data-new-income]'));assert.equal(w.document.querySelector('[data-income-edit]').getAttribute('aria-label'),'แก้ไขรายรับ');assert.equal(run('reportData().income'),run("db.payments.filter(p=>p.status==='approved').reduce((s,p)=>s+Number(p.amount),0)+123"));run("incomeModal('income-test')");assert.ok(w.document.querySelector('[name=reason]'));run("cfg.mode='demo';demoLogin('member');nav('profile')");assert.ok(w.document.querySelector('#self-profile'));assert.equal(w.document.querySelector('[data-delete-entity]'),null);
 console.log('Deletion/restore UI, profile editing, retained history and automatic authorized evidence checks passed');w.close();
 })().catch(e=>{console.error(e);process.exitCode=1;w.close()});

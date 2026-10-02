@@ -35,6 +35,7 @@ Deno.serve(async req=>{
     const profiles=(await query(isAdmin?db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note'):db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note').eq('id',profile.id))).map((p:any)=>{if(!isAdmin)delete p.profile_note;return {...p,line_linked:accounts.some((a:any)=>a.profile_id===p.id)}});
     const notifications=await query(isAdmin?db.from('notifications').select('id,profile_id,title,body,status,created_at').order('created_at',{ascending:false}).limit(200):db.from('notifications').select('id,profile_id,title,body,status,created_at').eq('profile_id',profile.id).order('created_at',{ascending:false}).limit(100));
     const audit=isAdmin?await query(db.from('audit').select('*').order('created_at',{ascending:false}).limit(200)):[];
+    const paymentQrs=await query(db.from('payment_qrs').select('id,amount_cents,image_url').order('amount_cents'));
     const settings=await query(db.from('site_settings').select('data').eq('id',true).single());
     const expenseTotal=allExpenses.filter((e:any)=>!e.voided&&!e.deleted_at).reduce((s:number,e:any)=>s+Number(e.amount),0),income=allIncomes.filter((i:any)=>!i.deleted_at).reduce((s:number,i:any)=>s+Number(i.amount),0)+allPayments.filter((p:any)=>p.status==='approved'&&!p.deleted_at).reduce((s:number,p:any)=>s+Number(p.amount),0);
     const incomes=isAdmin?allIncomes:allIncomes.map(({created_by,...i}:any)=>i);
@@ -43,7 +44,7 @@ Deno.serve(async req=>{
     const activeRounds=rounds.filter((r:any)=>!r.deleted_at),activeProfiles=profiles.filter((p:any)=>!p.deleted_at);
     const activeCharges=charges.filter((c:any)=>!c.deleted_at&&activeRounds.some((r:any)=>r.id===c.round_id)&&activeProfiles.some((p:any)=>p.id===c.profile_id));
     const trash=isAdmin?{member:profiles.filter((p:any)=>p.deleted_at),round:rounds.filter((r:any)=>r.deleted_at),charge:charges.filter((c:any)=>c.deleted_at),payment:allPayments.filter((p:any)=>p.deleted_at),income:allIncomes.filter((i:any)=>i.deleted_at),expense:allExpenses.filter((e:any)=>e.deleted_at)}:{};
-    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds,charges,profiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
+    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds,charges,profiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
    }
    case 'save-income':{
     requireAdmin();const patch={title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};
@@ -61,6 +62,17 @@ Deno.serve(async req=>{
    }
    case 'unlink-line':{
     requireAdmin();const target=await query(db.from('profiles').select('id,student_id').eq('id',input.id).is('deleted_at',null).single());await query(db.from('line_accounts').delete().eq('profile_id',target.id));await query(db.from('line_link_codes').delete().eq('profile_id',target.id));await query(db.from('audit').insert({actor:profile.name,action:'ยกเลิกการเชื่อม LINE '+target.student_id}));return json({ok:true});
+   }
+   case 'save-payment-qr':{
+    requireAdmin();const n=input.amount===''||input.amount==null?0:Number(input.amount);
+    if(!Number.isFinite(n)||n<0||n>1000000||Math.abs(n*100-Math.round(n*100))>1e-6)throw new Error('ยอด QR ไม่ถูกต้อง');
+    const image=await validateImage(file);if(image.size>1024*1024)throw new Error('QR ต้องไม่เกิน 1 MB');
+    const bytes=new Uint8Array(await image.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
+    await query(db.rpc('manage_payment_qr',{p_cents:Math.round(n*100),p_image:`data:${image.type};base64,${btoa(binary)}`,p_delete:false,p_actor:profile.id}));return json({ok:true});
+   }
+   case 'delete-payment-qr':{
+    requireAdmin();const n=Number(input.amount_cents);if(!Number.isInteger(n)||n<0||n>100000000)throw new Error('ยอด QR ไม่ถูกต้อง');
+    await query(db.rpc('manage_payment_qr',{p_cents:n,p_image:null,p_delete:true,p_actor:profile.id}));return json({ok:true});
    }
    case 'save-settings':{
     requireAdmin();const s=input.settings||{},value:any={siteName:text(s.siteName,80),bankName:text(s.bankName,120),accountName:text(s.accountName,120),accountNumber:text(s.accountNumber,40),lineOaUrl:String(s.lineOaUrl||''),paymentQrUrl:String(s.paymentQrUrl||'')};
@@ -182,4 +194,5 @@ Deno.serve(async req=>{
   }
  }catch(e){return json({error:e instanceof Error?e.message:'ทำรายการไม่สำเร็จ'},400)}
 });
+
 

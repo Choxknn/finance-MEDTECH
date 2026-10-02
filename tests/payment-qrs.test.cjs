@@ -1,0 +1,10 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path'),{JSDOM}=require('jsdom');
+const root=path.resolve(__dirname,'..'),dom=new JSDOM('<div id="app"></div><dialog id="dialog"></dialog><div id="toast"></div>',{url:'https://example.test',runScripts:'outside-only'}),w=dom.window,ctx=dom.getInternalVMContext();
+w.FINANCE_CONFIG={mode:'demo',paymentQrUrl:'https://example.test/main.png'};w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};
+for(const name of ['app.js','management.js','payment-qrs.js'])vm.runInContext(fs.readFileSync(root+'/web/'+name,'utf8'),ctx);
+const run=s=>vm.runInContext(s,ctx);run("demoLogin('member');db.payment_qrs=[{amount_cents:10000,image_url:'https://example.test/100.png'},{amount_cents:1234,image_url:'https://example.test/12.png'},{amount_cents:0,image_url:'https://example.test/zero.png'}];payModal(db.charges[0].id)");
+const input=w.document.querySelector('#pay-amount');const set=n=>{input.value=n;input.dispatchEvent(new w.Event('input',{bubbles:true}));return w.document.querySelector('#payment-qr')};
+assert.equal(set('100').src,'https://example.test/100.png');assert.equal(set('100.00').src,'https://example.test/100.png');assert.equal(set('12.34').src,'https://example.test/12.png');assert.equal(set('80').src,'https://example.test/zero.png');assert.match(w.document.querySelector('#payment-qr-hint').textContent,/กรอกยอด/);
+run('db.payment_qrs=db.payment_qrs.filter(q=>q.amount_cents!==0)');assert.equal(set('80').src,'https://example.test/main.png');assert.equal(set('').hidden,true);assert.equal(set('-1').hidden,true);assert.equal(set('12.345').hidden,true);
+run("demoLogin('admin');nav('settings')");assert.ok(w.document.querySelector('#payment-qr-form'));assert.equal(w.document.querySelectorAll('[data-qr-delete]').length,2);
+run("demoLogin('member');view='settings';render()");assert.equal(w.document.querySelector('#payment-qr-form'),null);w.close();console.log('Exact cents, partial amount changes, zero/main fallback, invalid amount and admin UI checks passed');

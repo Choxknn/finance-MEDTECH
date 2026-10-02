@@ -1,0 +1,12 @@
+/* Clear field boundaries on glass surfaces. */
+input:not([type="checkbox"]):not([type="radio"]),select,textarea{
+ border:1.5px solid #a994a1;
+ background:rgba(255,255,255,.82);
+ box-shadow:inset 0 1px 3px rgba(62,30,45,.06);
+}
+input:not([type="checkbox"]):not([type="radio"]):hover,select:hover,textarea:hover{border-color:#8c7180}
+input:not([type="checkbox"]):not([type="radio"]):focus,select:focus,textarea:focus{
+ border-color:#b42336;background:#fff;box-shadow:0 0 0 3px rgba(180,35,54,.13);outline:2px solid transparent;
+}
+input::placeholder,textarea::placeholder{color:#746774;opacity:1}
+input:disabled,select:disabled,textarea:disabled{background:#f1edf0;border-color:#c5b7c0}

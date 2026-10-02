@@ -65,7 +65,7 @@ Deno.serve(async req=>{
    }
    case 'save-payment-qr':{
     requireAdmin();const n=input.amount===''||input.amount==null?0:Number(input.amount);
-    if(!Number.isFinite(n)||n<0||n>1000000||Math.abs(n*100-Math.round(n*100))>1e-6)throw new Error('ยอด QR ไม่ถูกต้อง');
+    if(!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>1e-6)throw new Error('ยอด QR ไม่ถูกต้อง');
     const image=await validateImage(file);if(image.size>1024*1024)throw new Error('QR ต้องไม่เกิน 1 MB');
     const bytes=new Uint8Array(await image.arrayBuffer());let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
     await query(db.rpc('manage_payment_qr',{p_cents:Math.round(n*100),p_image:`data:${image.type};base64,${btoa(binary)}`,p_delete:false,p_actor:profile.id}));return json({ok:true});
@@ -194,5 +194,4 @@ Deno.serve(async req=>{
   }
  }catch(e){return json({error:e instanceof Error?e.message:'ทำรายการไม่สำเร็จ'},400)}
 });
-
 

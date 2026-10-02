@@ -12,8 +12,9 @@ export function matchesReceiver(detail:any,expected:string){
  const candidates=[detail?.receiver?.proxy?.value,detail?.receiver?.account?.value,detail?.toMerchantId].filter((x:any)=>typeof x==='string');
  return candidates.some((value:string)=>{const compact=value.replace(/[\s\-]/g,'').toLowerCase();if(compact===target)return true;if(compact.length!==target.length||compact.replace(/[^0-9]/g,'').length<4)return false;return [...compact].every((ch,i)=>/^[x*]$/.test(ch)||ch===target[i])});
 }
+export function slipOkBranch(value:string){const v=value.trim();if(/^\d+$/.test(v))return v;return v.match(/^https:\/\/api\.slipok\.com\/api\/line\/apikey\/(\d+)\/?$/)?.[1]||null}
 export async function checkSlip(file:File,amount:number,expectedReceiver:string){
- const branch=secret('SLIPOK_BRANCH_ID').trim();if(!/^\d+$/.test(branch))return {ok:false,body:{code:'LOCAL_BRANCH_ID',message:'SLIPOK_BRANCH_ID ต้องเป็นรหัสสาขาตัวเลข'}};
+ const branch=slipOkBranch(secret('SLIPOK_BRANCH_ID'));if(!branch)return {ok:false,body:{code:'LOCAL_BRANCH_ID',message:'SLIPOK_BRANCH_ID ต้องเป็นรหัสสาขาตัวเลข'}};
  const body=new FormData();const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'} as Record<string,string>)[file.type];if(!ext)throw new Error('ชนิดไฟล์ไม่รองรับ');body.set('files',file,`slip.${ext}`);body.set('log','true');body.set('amount',String(amount));
  const r=await fetch(`https://api.slipok.com/api/line/apikey/${encodeURIComponent(branch)}`,{method:'POST',headers:{'x-authorization':secret('SLIPOK_API_KEY').trim()},body,signal:AbortSignal.timeout(30000)});
  const j=await r.json(),receiverMatched=matchesReceiver(j.data,expectedReceiver);

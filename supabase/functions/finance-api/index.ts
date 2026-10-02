@@ -56,10 +56,7 @@ Deno.serve(async req=>{
     const ids=input.ids.map((id:unknown)=>{const s=text(id,36);if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s))throw new Error('รหัสรายการไม่ถูกต้อง');return s});
     await query(db.rpc('delete_records',{p_entity:entity,p_ids:ids,p_deleted:input.deleted,p_reason:text(input.reason,500),p_actor:profile.id}));return json({ok:true});
    }
-   case 'edit-self':{
-    const year=String(input.year||'');if(!['1','2','3','4',''].includes(year))throw new Error('ชั้นปีไม่ถูกต้อง');const email=String(input.contact_email||'').trim();if(email&&(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254))throw new Error('อีเมลไม่ถูกต้อง');
-    await query(db.rpc('update_own_profile',{p_actor:profile.id,p_name:text(input.name,120),p_year:year,p_phone:String(input.phone||'').slice(0,30),p_email:email}));return json({ok:true});
-   }
+   case 'edit-self':return json({error:'ข้อมูลโปรไฟล์แก้ไขได้โดยแอดมินเท่านั้น'},403);
    case 'unlink-line':{
     requireAdmin();const target=await query(db.from('profiles').select('id,student_id').eq('id',input.id).is('deleted_at',null).single());await query(db.from('line_accounts').delete().eq('profile_id',target.id));await query(db.from('line_link_codes').delete().eq('profile_id',target.id));await query(db.from('audit').insert({actor:profile.name,action:'ยกเลิกการเชื่อม LINE '+target.student_id}));return json({ok:true});
    }
@@ -194,4 +191,5 @@ Deno.serve(async req=>{
   }
  }catch(e){return json({error:e instanceof Error?e.message:'ทำรายการไม่สำเร็จ'},400)}
 });
+
 

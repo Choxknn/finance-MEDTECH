@@ -1,0 +1,5 @@
+.brand-home{display:inline-flex;justify-content:center;align-items:center;padding:0;width:66px;height:66px;flex-shrink:0;background:white;border:1px solid #cbbbc4;border-radius:14px;overflow:hidden;box-shadow:none}
+.brand-home img{display:block;width:100%;height:100%;object-fit:contain}
+.brand-home:focus-visible{outline:3px solid #b42336;outline-offset:3px}
+.mobile-brand{display:none}.remember-login{display:flex;align-items:center;gap:10px;margin:18px 0}.remember-login input{width:18px;height:18px;accent-color:#b42336}
+@media(max-width:900px){.mobile-brand{display:inline-flex;width:52px;height:52px}.topbar-title{display:none}.topbar{gap:10px}.topbar .user{margin-left:auto}.topbar .user>div:last-child{max-width:140px;overflow:hidden;text-overflow:ellipsis}.login-art .brand-home{width:80px;height:80px}}

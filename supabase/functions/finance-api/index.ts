@@ -26,6 +26,11 @@ Deno.serve(async req=>{
   let input:any,file:File|null=null;
   if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null}else input=await req.json();
   switch(input.action){
+   case 'cleanup-preview':case 'cleanup-history':{
+    requireAdmin();const months=Number(input.months);if(!['notifications','audit'].includes(input.kind)||!Number.isInteger(months)||months<1||months>120)throw new Error('เลือกชนิดข้อมูลและจำนวนเดือน 1–120');
+    const confirmed=input.action==='cleanup-history';if(confirmed&&(input.confirmation!=='ลบข้อมูล'||typeof input.anchor!=='string'||!Number.isFinite(Date.parse(input.anchor))))throw new Error('กรุณาตรวจสอบจำนวนรายการและยืนยันก่อนลบ');
+    const result=await query(db.rpc('clear_old_messages',{p_kind:input.kind,p_months:months,p_actor:profile.id,p_confirmed:confirmed,p_anchor:confirmed?input.anchor:null}));return json(result);
+   }
    case 'bootstrap':{
     await query(db.rpc('purge_trash',{p_all:false,p_actor:null}));
     const cleanup=await query(db.from('trash_cleanup_queue').select('*').order('created_at').limit(3));

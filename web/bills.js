@@ -11,3 +11,5 @@ document.addEventListener('submit',async e=>{const f=e.target;if(!['bill-create'
 // Recalculate the displayed daily fee when the page stays open across midnight.
 function updateDisplayedFees(){if(!db)return;const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());for(const c of db.charges){const r=round(c.round_id);if(!r.penalty_enabled){c.fee_amount=0;continue}if(c.fee_settled!=null&&paid(c)>=Number(c.amount)+Number(c.fee_settled)){c.fee_amount=Number(c.fee_settled);continue}if(hasPending(c))continue;const days=Math.max(0,Math.round((Date.parse(today)-Date.parse(r.due_date))/86400000));c.fee_amount=Math.round(days*Number(r.penalty_per_day)*100)/100}}
 const feeRender=render;render=function(){updateDisplayedFees();feeRender()};
+
+const feePayModal=payModal;payModal=function(id){updateDisplayedFees();return feePayModal(id)};

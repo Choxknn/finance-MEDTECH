@@ -10,6 +10,7 @@ w.HTMLDialogElement.prototype.close=function(){this.open=false};
 const context=dom.getInternalVMContext(),vm=require('node:vm');
 vm.runInContext(fs.readFileSync(root+'/web/app.js','utf8'),context);
 vm.runInContext(fs.readFileSync(root+'/web/management.js','utf8'),context);
+vm.runInContext(fs.readFileSync(root+'/web/records.js','utf8'),context);
 const run=s=>vm.runInContext(s,context);
 run("demoLogin('admin')");
 for(const view of ['dashboard','members','rounds','fund','reports','audit','settings','review']){

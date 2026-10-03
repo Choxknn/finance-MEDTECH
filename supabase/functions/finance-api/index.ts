@@ -1,5 +1,5 @@
 import {changeStudentLogin} from '../_shared/student-login.ts';
-import {adminDb,query,secret,hash,uploadDrive,deleteDrive,driveToken,checkSlip,isRecentSlip,notify,deliverNotification,validateImage,validateReceipt} from '../_shared/services.ts';
+import {adminDb,query,secret,hash,uploadDrive,deleteDrive,driveToken,checkSlip,isRecentSlip,notify,paymentSuccess,deliverNotification,validateImage,validateReceipt} from '../_shared/services.ts';
 const text=(v:unknown,max=500)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw new Error('ข้อมูลข้อความไม่ถูกต้อง');return v.trim()};
 const amount=(v:unknown)=>{const n=Number(v);if(!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>1e-6)throw new Error('จำนวนเงินไม่ถูกต้อง');return n};
 const memberIds=(v:any)=>{if(!Array.isArray(v)||!v.length||v.length>500||v.some(x=>typeof x!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x)))throw new Error('เลือกสมาชิกที่ถูกต้อง 1–500 คน');return [...new Set(v)]};
@@ -32,6 +32,10 @@ Deno.serve(async req=>{
     const confirmed=input.action==='cleanup-history';if(confirmed&&(input.confirmation!=='ลบข้อมูล'||typeof input.anchor!=='string'||!Number.isFinite(Date.parse(input.anchor))))throw new Error('กรุณาตรวจสอบจำนวนรายการและยืนยันก่อนลบ');
     const result=await query(db.rpc('clear_old_messages',{p_kind:input.kind,p_months:months,p_actor:profile.id,p_confirmed:confirmed,p_anchor:confirmed?input.anchor:null}));return json(result);
    }
+   case 'publish-announcement':{requireAdmin();const id=await query(db.rpc('publish_web_announcement',{p_title:text(input.title,120),p_body:text(input.body,2000),p_members:memberIds(input.profile_ids),p_actor:profile.id}));return json({id});}
+   case 'dismiss-announcement':{await query(db.from('web_announcement_recipients').update({dismissed_at:new Date().toISOString()}).eq('announcement_id',text(input.id,36)).eq('profile_id',profile.id));return json({ok:true});}
+   case 'delete-announcement':{requireAdmin();await query(db.from('web_announcements').delete().eq('id',text(input.id,36)));return json({ok:true});}
+   case 'read-notification':{await query(db.from('notifications').update({seen_at:new Date().toISOString()}).eq('id',text(input.id,36)).eq('profile_id',profile.id));return json({ok:true});}
    case 'send-campaign':case 'process-campaign':{
     requireAdmin();const id=text(input.campaign_id,36);if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw Error('รหัสชุดข้อความไม่ถูกต้อง');
     if(input.action==='send-campaign'){if(input.confirmation!=='ส่งข้อความ')throw Error('ยืนยันส่งข้อความก่อน');if(!['message','announcement','password'].includes(input.kind))throw Error('ประเภทข้อความไม่ถูกต้อง');await query(db.rpc('enqueue_campaign',{p_id:id,p_kind:input.kind,p_title:text(input.title,120),p_body:text(input.body,2000),p_members:memberIds(input.profile_ids),p_actor:profile.id}))}
@@ -52,8 +56,10 @@ Deno.serve(async req=>{
     const allExpenses=await query(db.from('expenses').select('*').order('spent_on',{ascending:false}));
     const accounts=await query(isAdmin?db.from('line_accounts').select('profile_id'):db.from('line_accounts').select('profile_id').eq('profile_id',profile.id));
     const profiles=(await query(isAdmin?db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note'):db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note').eq('id',profile.id))).map((p:any)=>{if(!isAdmin)delete p.profile_note;return {...p,line_linked:accounts.some((a:any)=>a.profile_id===p.id)}});
-    const notifications=await query(isAdmin?db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id').order('created_at',{ascending:false}).limit(200):db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id').eq('profile_id',profile.id).order('created_at',{ascending:false}).limit(100));
-    let announcementsQuery=db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id').eq('message_kind','announcement');if(!isAdmin)announcementsQuery=announcementsQuery.eq('profile_id',profile.id);const announcements=await query(announcementsQuery.order('created_at',{ascending:false}).limit(100));
+    const notifications=await query(db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id,seen_at').eq('profile_id',profile.id).order('created_at',{ascending:false}).limit(100));
+    const recipients=await query(db.from('web_announcement_recipients').select('announcement_id,dismissed_at').eq('profile_id',profile.id));
+    const allAnnouncements=await query(isAdmin?db.from('web_announcements').select('*').order('created_at',{ascending:false}).limit(100):db.from('web_announcements').select('*').in('id',recipients.map((r:any)=>r.announcement_id)).order('created_at',{ascending:false}).limit(100));
+    const announcements=allAnnouncements.map((a:any)=>({...a,dismissed_at:recipients.find((r:any)=>r.announcement_id===a.id)?.dismissed_at||null,recipient:recipients.some((r:any)=>r.announcement_id===a.id)}));
     const campaigns=isAdmin?await query(db.rpc('campaign_summary',{p_actor:profile.id,p_id:null})):[];
     const audit=isAdmin?await query(db.from('audit').select('*').order('created_at',{ascending:false}).limit(200)):[];
     const paymentQrs=await query(db.from('payment_qrs').select('id,amount_cents,image_url').order('amount_cents'));
@@ -152,6 +158,7 @@ Deno.serve(async req=>{
     await query(db.from('audit').insert({actor:profile.name,action:'เพิ่มสมาชิก '+sid}));return json({ok:true});
    }
    case 'submit-payment':{
+    if(!await query(db.rpc('payment_window_open')))throw Error('พักรับชำระเวลา 23:50–01:00 น. กรุณากลับมาเวลา 01:00 น.');
     const image=await validateImage(file),value=amount(input.amount),charge=await query(db.from('charges').select('*,rounds(title,created_at)').eq('id',input.charge_id).single());if(charge.profile_id!==profile.id)throw new Error('ไม่มีสิทธิ์ในรายการนี้');
     // Check required configuration before reserving or charging vendor quota.
     for(const k of ['SLIPOK_BRANCH_ID','SLIPOK_API_KEY','GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GOOGLE_REFRESH_TOKEN','GOOGLE_DRIVE_FOLDER_ID'])secret(k);
@@ -169,8 +176,8 @@ Deno.serve(async req=>{
      else note=!validDate&&(result.ok||detail?.transTimestamp)?'สลิปเกิน 48 ชั่วโมง ก่อนสร้างบิล หรือวันเวลาบนสลิปไม่ถูกต้อง':'ผลตรวจต้องตรวจเพิ่มเติม: '+String(result.body.message||detail?.message||'ยอดหรือบัญชีไม่ตรง');
     }catch{note='ตรวจสอบอัตโนมัติไม่สำเร็จ หรือพบเลขอ้างอิงซ้ำ รอแอดมินตรวจ';}
     if(!verified)await query(db.from('payments').update({status:'review',note:note.slice(0,500)}).eq('id',pid).eq('status','pending'));
-    if(verified)await notify(db,profile.id,`finance MEDTECH\nยืนยันชำระ ${charge.rounds.title}\nจำนวน ${value.toFixed(2)} บาท`);
-    return json({message:verified?'ยืนยันการชำระแล้ว':'บันทึกสลิปแล้ว รอแอดมินตรวจสอบ',payment_id:pid});
+    if(verified)await paymentSuccess(db,profile.id,`finance MEDTECH\nยืนยันชำระ ${charge.rounds.title}\nจำนวน ${value.toFixed(2)} บาท`);
+    return json({message:verified?'ยืนยันการชำระแล้ว':'บันทึกสลิปแล้ว รอแอดมินตรวจสอบ',status:verified?'approved':'review',payment_id:pid});
    }
    case 'retry-payment':{
     requireAdmin();
@@ -184,7 +191,7 @@ Deno.serve(async req=>{
     const validDate=isRecentSlip(detail,p.charges.rounds.created_at);
     if(result.ok&&validDate){
      await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK (ตรวจซ้ำ)',p_ref:String(detail.transRef),p_actor:null}));
-     await notify(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`);
+     await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`);
      return json({message:'SlipOK ยืนยันการชำระแล้ว'});
     }
     const note=!validDate&&(result.ok||detail?.transTimestamp)?'สลิปเกิน 48 ชั่วโมง ก่อนสร้างบิล หรือวันเวลาบนสลิปไม่ถูกต้อง':'ผลตรวจต้องตรวจเพิ่มเติม: '+String(result.body.message||detail?.message||'ยอดหรือบัญชีไม่ตรง');
@@ -194,7 +201,7 @@ Deno.serve(async req=>{
    case 'review':{
     requireAdmin();const decision=text(input.decision,20);if(!['approved','rejected'].includes(decision))throw new Error('สถานะไม่ถูกต้อง');const p=await query(db.from('payments').select('*').eq('id',input.payment_id).single());
     await query(db.rpc('decide_payment',{p_id:p.id,p_decision:decision,p_note:text(input.note,500),p_ref:String(input.trans_ref||'').slice(0,100),p_actor:profile.id}));
-    await notify(db,p.profile_id,`finance MEDTECH\n${decision==='approved'?'ยืนยันรับเงินแล้ว':'กรุณาแก้ไขหลักฐาน'}\nจำนวน ${Number(p.amount).toFixed(2)} บาท\n${input.note}`);return json({ok:true});
+    await (decision==='approved'?paymentSuccess:notify)(db,p.profile_id,`finance MEDTECH\n${decision==='approved'?'ยืนยันรับเงินแล้ว':'กรุณาแก้ไขหลักฐาน'}\nจำนวน ${Number(p.amount).toFixed(2)} บาท\n${input.note}`);return json({ok:true});
    }
    case 'new-expense':{
     requireAdmin();const title=text(input.title,120),category=text(input.category,100),value=amount(input.amount),spentOn=day(input.spent_on),responsible=text(input.responsible_name||profile.name,120),id=crypto.randomUUID();if(!file&&!receiptFile)throw Error('กรุณาแนบสลิปหรือใบเสร็จอย่างน้อยหนึ่งไฟล์');const uploaded:string[]=[];

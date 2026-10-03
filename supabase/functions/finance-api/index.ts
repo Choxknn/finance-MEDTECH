@@ -1,4 +1,5 @@
-import {adminDb,query,secret,hash,uploadDrive,deleteDrive,driveToken,checkSlip,isRecentSlip,notify,validateImage} from '../_shared/services.ts';
+import {changeStudentLogin} from '../_shared/student-login.ts';
+import {adminDb,query,secret,hash,uploadDrive,deleteDrive,driveToken,checkSlip,isRecentSlip,notify,validateImage,validateReceipt} from '../_shared/services.ts';
 const text=(v:unknown,max=500)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw new Error('ข้อมูลข้อความไม่ถูกต้อง');return v.trim()};
 const amount=(v:unknown)=>{const n=Number(v);if(!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>1e-6)throw new Error('จำนวนเงินไม่ถูกต้อง');return n};
 const memberIds=(v:any)=>{if(!Array.isArray(v)||!v.length||v.length>500||v.some(x=>typeof x!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x)))throw new Error('เลือกสมาชิกที่ถูกต้อง 1–500 คน');return [...new Set(v)]};
@@ -17,14 +18,14 @@ Deno.serve(async req=>{
   const isAdmin=profile.role==='admin';const requireAdmin=()=>{if(!isAdmin)throw new Error('ไม่มีสิทธิ์ดำเนินการ')};
   if(req.method==='GET'){
    const url=new URL(req.url),kind=url.searchParams.get('kind'),id=url.searchParams.get('id');
-   if(url.searchParams.get('action')!=='download'||!['payment','expense'].includes(kind||''))return json({error:'Not found'},404);
-   if(kind==='expense')requireAdmin();const record=await query(db.from(kind==='payment'?'payments':'expenses').select('*').eq('id',id).single());
+   if(url.searchParams.get('action')!=='download'||!['payment','expense','expense-receipt','income','income-receipt'].includes(kind||''))return json({error:'Not found'},404);
+   const table=kind==='payment'?'payments':kind?.startsWith('income')?'manual_incomes':'expenses';const record=await query(db.from(table).select('*').eq('id',id).single());if(kind!=='payment'&&!isAdmin&&(record.deleted_at||record.voided))throw Error('ไม่มีสิทธิ์เข้าถึงหลักฐานรายการนี้');
    if(kind==='payment'&&!isAdmin&&record.profile_id!==profile.id)throw new Error('ไม่มีสิทธิ์เข้าถึงหลักฐาน');
-   if(!record.drive_file_id)throw new Error('ยังไม่มีไฟล์หลักฐาน');const access=await driveToken();
-   const r=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(record.drive_file_id)}?alt=media&supportsAllDrives=true`,{headers:{Authorization:`Bearer ${access}`},signal:AbortSignal.timeout(20000)});if(!r.ok)throw new Error('เปิดหลักฐานไม่สำเร็จ');return new Response(r.body,{headers:{...cors,'Content-Type':r.headers.get('Content-Type')||'application/octet-stream','X-Content-Type-Options':'nosniff'}});
+   const fileId=kind?.endsWith('-receipt')?record.receipt_file_id:record.drive_file_id;if(!fileId)throw new Error('ยังไม่มีไฟล์หลักฐาน');const access=await driveToken();
+   const r=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`,{headers:{Authorization:`Bearer ${access}`},signal:AbortSignal.timeout(20000)});if(!r.ok)throw new Error('เปิดหลักฐานไม่สำเร็จ');return new Response(r.body,{headers:{...cors,'Content-Type':r.headers.get('Content-Type')||'application/octet-stream','X-Content-Type-Options':'nosniff'}});
   }
-  let input:any,file:File|null=null;
-  if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null}else input=await req.json();
+  let input:any,file:File|null=null,receiptFile:File|null=null;
+  if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null;receiptFile=fd.get('receipt') as File|null}else input=await req.json();
   switch(input.action){
    case 'cleanup-preview':case 'cleanup-history':{
     requireAdmin();const months=Number(input.months);if(!['notifications','audit'].includes(input.kind)||!Number.isInteger(months)||months<1||months>120)throw new Error('เลือกชนิดข้อมูลและจำนวนเดือน 1–120');
@@ -51,7 +52,7 @@ Deno.serve(async req=>{
     const settings=await query(db.from('site_settings').select('data').eq('id',true).single());
     const expenseTotal=allExpenses.filter((e:any)=>!e.voided&&!e.deleted_at).reduce((s:number,e:any)=>s+Number(e.amount),0),income=allIncomes.filter((i:any)=>!i.deleted_at).reduce((s:number,i:any)=>s+Number(i.amount),0)+allPayments.filter((p:any)=>p.status==='approved'&&!p.deleted_at).reduce((s:number,p:any)=>s+Number(p.amount),0);
     const incomes=isAdmin?allIncomes:allIncomes.map(({created_by,...i}:any)=>i);
-    const expenses=isAdmin?allExpenses:allExpenses.map(({drive_file_id,created_by,...e}:any)=>e);
+    const expenses=isAdmin?allExpenses:allExpenses.map(({created_by,...e}:any)=>e);
     const visiblePayments=(isAdmin?allPayments:allPayments.filter((p:any)=>p.profile_id===profile.id));
     const activeRounds=rounds.filter((r:any)=>!r.deleted_at),activeProfiles=profiles.filter((p:any)=>!p.deleted_at);
     const activeCharges=charges.filter((c:any)=>!c.deleted_at&&activeRounds.some((r:any)=>r.id===c.round_id)&&activeProfiles.some((p:any)=>p.id===c.profile_id));
@@ -63,9 +64,9 @@ Deno.serve(async req=>{
     return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
    }
    case 'save-income':{
-    requireAdmin();const patch={title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};
+    requireAdmin();const patch:any={responsible_name:text(input.responsible_name||profile.name,120),title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};
     if(input.id&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.id))throw new Error('รหัสรายการไม่ถูกต้อง');
-    await query(db.rpc('save_manual_income',{p_id:input.id||null,p_patch:patch,p_actor:profile.id}));return json({ok:true});
+    const uploaded:string[]=[];try{if(file){patch.drive_file_id=await uploadDrive(await validateImage(file),`income-${crypto.randomUUID()}`);uploaded.push(patch.drive_file_id)}if(receiptFile){patch.receipt_file_id=await uploadDrive(await validateReceipt(receiptFile),`income-receipt-${crypto.randomUUID()}`);uploaded.push(patch.receipt_file_id)}await query(db.rpc('save_manual_income',{p_id:input.id||null,p_patch:patch,p_actor:profile.id}))}catch(e){for(const id of uploaded)await deleteDrive(id);throw e}return json({ok:true});
    }
    case 'purge-trash':{
     requireAdmin();if(input.confirmation!=='ลบถาวร')throw new Error('ยืนยันลบถาวรก่อนดำเนินการ');const count=await query(db.rpc('purge_trash',{p_all:true,p_actor:profile.id}));return json({ok:true,count});
@@ -102,21 +103,21 @@ Deno.serve(async req=>{
     requireAdmin();const entity=text(input.entity,20),s=input.patch||{};let patch:any;
     if(entity==='member'){if(!['member','admin'].includes(s.role)||typeof s.active!=='boolean'||!['1','2','3','4',''].includes(String(s.year)))throw new Error('สิทธิ์ สถานะ หรือชั้นปีไม่ถูกต้อง');patch={name:text(s.name,120),year:String(s.year),role:s.role,active:s.active,phone:String(s.phone||'').slice(0,30),contact_email:String(s.contact_email||'').slice(0,254),profile_note:String(s.profile_note||'').slice(0,1000)}}
     else if(entity==='round'){if(typeof s.archived!=='boolean')throw new Error('สถานะไม่ถูกต้อง');patch={title:text(s.title,120),description:String(s.description||'').slice(0,1000),amount:amount(s.amount),due_date:day(s.due_date),archived:s.archived,profile_ids:memberIds(s.profile_ids),penalty_enabled:s.penalty_enabled===true,penalty_per_day:s.penalty_enabled===true?amount(s.penalty_per_day):0,penalty_max:s.penalty_enabled===true&&s.penalty_max!=null?amount(s.penalty_max):null}}
-    else if(entity==='expense'){if(typeof s.voided!=='boolean')throw new Error('สถานะไม่ถูกต้อง');patch={title:text(s.title,120),category:text(s.category,100),amount:amount(s.amount),spent_on:day(s.spent_on),note:String(s.note||'').slice(0,500),voided:s.voided,reason:text(s.reason,500)}}
+    else if(entity==='expense'){if(typeof s.voided!=='boolean')throw new Error('สถานะไม่ถูกต้อง');patch={responsible_name:text(s.responsible_name||profile.name,120),title:text(s.title,120),category:text(s.category,100),amount:amount(s.amount),spent_on:day(s.spent_on),note:String(s.note||'').slice(0,500),voided:s.voided,reason:text(s.reason,500)}}
     else if(entity==='payment')patch={note:String(s.note||'').slice(0,500)};
     else if(entity==='charge')patch={amount:amount(s.amount),reason:text(s.reason,500)};
     else throw new Error('ชนิดรายการไม่ถูกต้อง');
     const table={member:'profiles',round:'rounds',charge:'charges',payment:'payments',expense:'expenses'}[entity];await query(db.from(table!).select('id').eq('id',input.id).is('deleted_at',null).single());
-    let driveId:string|undefined;if(file){if(entity!=='expense')throw new Error('รายการนี้ไม่รองรับไฟล์');const image=await validateImage(file);driveId=await uploadDrive(image,`expense-edit-${crypto.randomUUID()}.${image.type.split('/')[1]}`);patch.drive_file_id=driveId}
-    try{await query(db.rpc('manage_record',{p_entity:entity,p_id:text(input.id,36),p_patch:patch,p_actor:profile.id}))}catch(e){if(driveId)await deleteDrive(driveId);throw e}
+    let driveId:string|undefined,receiptId:string|undefined;if(file){if(entity!=='expense')throw new Error('รายการนี้ไม่รองรับไฟล์');const image=await validateImage(file);driveId=await uploadDrive(image,`expense-edit-${crypto.randomUUID()}.${image.type.split('/')[1]}`);patch.drive_file_id=driveId}
+    try{if(receiptFile){if(entity!=='expense')throw Error('รายการนี้ไม่รองรับใบเสร็จ');receiptId=await uploadDrive(await validateReceipt(receiptFile),`expense-receipt-${crypto.randomUUID()}`);patch.receipt_file_id=receiptId}await query(db.rpc('manage_record',{p_entity:entity,p_id:text(input.id,36),p_patch:patch,p_actor:profile.id}))}catch(e){if(driveId)await deleteDrive(driveId);if(receiptId)await deleteDrive(receiptId);throw e}
     return json({ok:true});
    }
    case 'change-student-id':{
     requireAdmin();const sid=text(input.student_id,20);if(!/^\d{5,20}$/.test(sid))throw new Error('รหัสนักศึกษาไม่ถูกต้อง');const target=await query(db.from('profiles').select('id,student_id,role').eq('id',input.id).is('deleted_at',null).single());
     if(target.student_id===sid)return json({ok:true});const duplicate=await query(db.from('profiles').select('id').eq('student_id',sid).maybeSingle());if(duplicate)throw new Error('รหัสนี้มีบัญชีแล้ว');
-    const domain=Deno.env.get('STUDENT_EMAIL_DOMAIN')||'students.finance-medtech.invalid',authResult=await db.auth.admin.updateUserById(target.id,{email:`${sid}@${domain}`,email_confirm:true});if(authResult.error)throw new Error('เปลี่ยนข้อมูลเข้าสู่ระบบไม่สำเร็จ');
-    try{await query(db.from('profiles').update({student_id:sid}).eq('id',target.id))}catch(e){const rollback=await db.auth.admin.updateUserById(target.id,{email:`${target.student_id}@${domain}`,email_confirm:true});if(rollback.error)throw new Error('ข้อมูลเข้าสู่ระบบเปลี่ยนแล้ว แต่บันทึกรหัสไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ');throw e}
-    await query(db.from('audit').insert({actor:profile.name,action:'เปลี่ยนรหัสนักศึกษา',details:{profile_id:target.id,before:target.student_id,after:sid}}));return json({ok:true});
+    const domain=Deno.env.get('STUDENT_EMAIL_DOMAIN')||'students.finance-medtech.invalid',loginChange=await changeStudentLogin(db,target.id,sid,domain);
+    try{await query(db.from('profiles').update({student_id:sid}).eq('id',target.id))}catch(e){const rollback=await db.auth.admin.updateUserById(target.id,{email:loginChange.oldEmail,email_confirm:true});if(rollback.error)throw new Error('ข้อมูลเข้าสู่ระบบเปลี่ยนแล้ว แต่บันทึกรหัสไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ');throw e}
+    await query(db.from('audit').insert({actor:profile.name,action:'เปลี่ยนรหัสนักศึกษา',details:{profile_id:target.id,before:target.student_id,after:sid,retired_login_user_id:loginChange.retiredId}}));return json({ok:true});
    }
    case 'reset-password':{
     requireAdmin();const target=await query(db.from('profiles').select('id,student_id,role').eq('id',input.id).is('deleted_at',null).single());if(target.id===profile.id)throw new Error('ใช้ปุ่มเปลี่ยนรหัสผ่านของฉันสำหรับบัญชีตัวเอง');const password=text(input.password,128);if(password.length<12)throw new Error('รหัสผ่านต้องมีอย่างน้อย 12 ตัวอักษร');
@@ -188,8 +189,8 @@ Deno.serve(async req=>{
     await notify(db,p.profile_id,`finance MEDTECH\n${decision==='approved'?'ยืนยันรับเงินแล้ว':'กรุณาแก้ไขหลักฐาน'}\nจำนวน ${Number(p.amount).toFixed(2)} บาท\n${input.note}`);return json({ok:true});
    }
    case 'new-expense':{
-    requireAdmin();const image=await validateImage(file),title=text(input.title,120),category=text(input.category,100),value=amount(input.amount),spentOn=day(input.spent_on),id=crypto.randomUUID();const driveId=await uploadDrive(image,`expense-${id}.${image.type.split('/')[1]}`);
-    try{await query(db.from('expenses').insert({id,title,category,amount:value,spent_on:spentOn,note:String(input.note||'').slice(0,500),drive_file_id:driveId,created_by:profile.id}))}catch(e){await deleteDrive(driveId);throw e}
+    requireAdmin();const title=text(input.title,120),category=text(input.category,100),value=amount(input.amount),spentOn=day(input.spent_on),responsible=text(input.responsible_name||profile.name,120),id=crypto.randomUUID();if(!file&&!receiptFile)throw Error('กรุณาแนบสลิปหรือใบเสร็จอย่างน้อยหนึ่งไฟล์');const uploaded:string[]=[];
+    try{const driveId=file?await uploadDrive(await validateImage(file),`expense-${id}`):null;if(driveId)uploaded.push(driveId);const receiptId=receiptFile?await uploadDrive(await validateReceipt(receiptFile),`expense-receipt-${id}`):null;if(receiptId)uploaded.push(receiptId);await query(db.from('expenses').insert({id,title,category,amount:value,spent_on:spentOn,responsible_name:responsible,note:String(input.note||'').slice(0,500),drive_file_id:driveId,receipt_file_id:receiptId,created_by:profile.id}))}catch(e){for(const f of uploaded)await deleteDrive(f);throw e}
     await query(db.from('audit').insert({actor:profile.name,action:'บันทึกรายจ่าย '+title}));return json({ok:true});
    }
    case 'remind':{

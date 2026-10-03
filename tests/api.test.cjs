@@ -2,7 +2,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict'),vm=require('nod
 const esbuild=require('esbuild');
 let handler,role='member',rpcCalls=[];
 const db={auth:{getUser:async()=>({data:{user:{id:'actor'}},error:null})},from:()=>({select:()=>({eq(){return this},is(){return this},single:async()=>({data:{id:'actor',name:'Test',role,active:true},error:null})})}),rpc:async(name,args)=>{rpcCalls.push({name,args});return {data:null,error:null}}};
-const src=fs.readFileSync(require('node:path').resolve(__dirname,'../supabase/functions/finance-api/index.ts'),'utf8').replace(/^import .*;\n/,'');
+const src=fs.readFileSync(require('node:path').resolve(__dirname,'../supabase/functions/finance-api/index.ts'),'utf8').replace(/^import .*;\n/gm,'');
 vm.runInNewContext(esbuild.transformSync(src,{loader:'ts',format:'esm'}).code,{Deno:{env:{get:k=>k==='ALLOWED_ORIGINS'?'https://example.test':undefined},serve:f=>handler=f},adminDb:()=>db,query:async q=>{const r=await q;if(r.error)throw r.error;return r.data},Response,Request,URL,AbortSignal,crypto,File,Uint8Array,Date,Set,Number,String,JSON,Error});
 const request=data=>new Request('https://project.test/functions/v1/finance-api',{method:'POST',headers:{origin:'https://example.test',authorization:'Bearer fake','content-type':'application/json'},body:JSON.stringify(data)});
 (async()=>{

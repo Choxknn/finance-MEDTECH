@@ -1,5 +1,5 @@
 import {changeStudentLogin} from '../_shared/student-login.ts';
-import {adminDb,query,secret,hash,uploadDrive,deleteDrive,driveToken,checkSlip,isRecentSlip,notify,validateImage,validateReceipt} from '../_shared/services.ts';
+import {adminDb,query,secret,hash,uploadDrive,deleteDrive,driveToken,checkSlip,isRecentSlip,notify,deliverNotification,validateImage,validateReceipt} from '../_shared/services.ts';
 const text=(v:unknown,max=500)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw new Error('ข้อมูลข้อความไม่ถูกต้อง');return v.trim()};
 const amount=(v:unknown)=>{const n=Number(v);if(!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>1e-6)throw new Error('จำนวนเงินไม่ถูกต้อง');return n};
 const memberIds=(v:any)=>{if(!Array.isArray(v)||!v.length||v.length>500||v.some(x=>typeof x!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x)))throw new Error('เลือกสมาชิกที่ถูกต้อง 1–500 คน');return [...new Set(v)]};
@@ -32,6 +32,12 @@ Deno.serve(async req=>{
     const confirmed=input.action==='cleanup-history';if(confirmed&&(input.confirmation!=='ลบข้อมูล'||typeof input.anchor!=='string'||!Number.isFinite(Date.parse(input.anchor))))throw new Error('กรุณาตรวจสอบจำนวนรายการและยืนยันก่อนลบ');
     const result=await query(db.rpc('clear_old_messages',{p_kind:input.kind,p_months:months,p_actor:profile.id,p_confirmed:confirmed,p_anchor:confirmed?input.anchor:null}));return json(result);
    }
+   case 'send-campaign':case 'process-campaign':{
+    requireAdmin();const id=text(input.campaign_id,36);if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw Error('รหัสชุดข้อความไม่ถูกต้อง');
+    if(input.action==='send-campaign'){if(input.confirmation!=='ส่งข้อความ')throw Error('ยืนยันส่งข้อความก่อน');if(!['message','announcement','password'].includes(input.kind))throw Error('ประเภทข้อความไม่ถูกต้อง');await query(db.rpc('enqueue_campaign',{p_id:id,p_kind:input.kind,p_title:text(input.title,120),p_body:text(input.body,2000),p_members:memberIds(input.profile_ids),p_actor:profile.id}))}
+    const jobs=await query(db.rpc('claim_campaign',{p_id:id,p_actor:profile.id}));for(let i=0;i<jobs.length;i+=5)await Promise.all(jobs.slice(i,i+5).map((n:any)=>deliverNotification(db,n)));
+    const summary=await query(db.rpc('campaign_summary',{p_actor:profile.id,p_id:id}));if(!summary.length)throw Error('ไม่พบชุดข้อความ');return json({campaign:summary[0],processed:jobs.length});
+   }
    case 'bootstrap':{
     await query(db.rpc('purge_trash',{p_all:false,p_actor:null}));
     const cleanup=await query(db.from('trash_cleanup_queue').select('*').order('created_at').limit(3));
@@ -46,7 +52,9 @@ Deno.serve(async req=>{
     const allExpenses=await query(db.from('expenses').select('*').order('spent_on',{ascending:false}));
     const accounts=await query(isAdmin?db.from('line_accounts').select('profile_id'):db.from('line_accounts').select('profile_id').eq('profile_id',profile.id));
     const profiles=(await query(isAdmin?db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note'):db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note').eq('id',profile.id))).map((p:any)=>{if(!isAdmin)delete p.profile_note;return {...p,line_linked:accounts.some((a:any)=>a.profile_id===p.id)}});
-    const notifications=await query(isAdmin?db.from('notifications').select('id,profile_id,title,body,status,created_at').order('created_at',{ascending:false}).limit(200):db.from('notifications').select('id,profile_id,title,body,status,created_at').eq('profile_id',profile.id).order('created_at',{ascending:false}).limit(100));
+    const notifications=await query(isAdmin?db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id').order('created_at',{ascending:false}).limit(200):db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id').eq('profile_id',profile.id).order('created_at',{ascending:false}).limit(100));
+    let announcementsQuery=db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id').eq('message_kind','announcement');if(!isAdmin)announcementsQuery=announcementsQuery.eq('profile_id',profile.id);const announcements=await query(announcementsQuery.order('created_at',{ascending:false}).limit(100));
+    const campaigns=isAdmin?await query(db.rpc('campaign_summary',{p_actor:profile.id,p_id:null})):[];
     const audit=isAdmin?await query(db.from('audit').select('*').order('created_at',{ascending:false}).limit(200)):[];
     const paymentQrs=await query(db.from('payment_qrs').select('id,amount_cents,image_url').order('amount_cents'));
     const settings=await query(db.from('site_settings').select('data').eq('id',true).single());
@@ -61,7 +69,7 @@ Deno.serve(async req=>{
     const refRounds=[...rounds,...refCharges.filter((c:any)=>c.round_snapshot&&!rounds.some((r:any)=>r.id===c.round_snapshot.id)).map((c:any)=>c.round_snapshot)];
     const refProfiles=[...profiles,...refCharges.map((c:any)=>c.profile_snapshot).filter(Boolean),...(isAdmin?allPayments:visiblePayments).map((p:any)=>p.member_snapshot).filter(Boolean)];
     for(const p of allPayments){p.charge_id??=p.charge_snapshot?.id;p.profile_id??=p.member_snapshot?.id;delete p.charge_snapshot;delete p.member_snapshot}
-    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
+    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{campaigns,announcements,payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
    }
    case 'save-income':{
     requireAdmin();const patch:any={responsible_name:text(input.responsible_name||profile.name,120),title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};

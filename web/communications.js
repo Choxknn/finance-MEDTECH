@@ -11,5 +11,29 @@ const communicationsRender=render;render=function(){communicationsRender();if(us
 document.getElementById('dialog').addEventListener('close',()=>queueMicrotask(showPaymentSuccess));
 document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b||!user)return;if(b.hasAttribute('data-web-announcement')&&user.role==='admin')return composeMessage('announcement',true);if(b.dataset.announcementTab){document.querySelectorAll('[data-announcement-pane]').forEach(p=>p.hidden=p.dataset.announcementPane!==b.dataset.announcementTab);document.querySelectorAll('[data-announcement-tab]').forEach(t=>t.setAttribute('aria-selected',String(t===b)))}if(b.dataset.dismissAnnouncement){b.disabled=true;try{if(cfg.mode==='live')await api('dismiss-announcement',{id:b.dataset.dismissAnnouncement});const n=db.announcements.find(x=>x.id===b.dataset.dismissAnnouncement);if(n)n.dismissed_at=new Date().toISOString();render()}catch(err){toast(err.message);b.disabled=false}}if(b.dataset.deleteAnnouncement&&user.role==='admin')modal('ลบประกาศในเว็บ',`<p>นำประกาศนี้ออกจากเว็บของผู้รับทุกคน?</p><form id="delete-web-announcement" data-id="${esc(b.dataset.deleteAnnouncement)}"><div class="actions"><button type="button" class="secondary" data-action="close">ยกเลิก</button><button type="submit" class="danger">ลบประกาศ</button></div><div class="form-error"></div></form>`)});
 document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='delete-web-announcement')return;e.preventDefault();e.stopImmediatePropagation();const b=f.querySelector('[type=submit]');b.disabled=true;try{if(user.role!=='admin')throw Error('ไม่มีสิทธิ์');if(cfg.mode==='live')await api('delete-announcement',{id:f.dataset.id});db.announcements=db.announcements.filter(n=>n.id!==f.dataset.id);document.getElementById('dialog').close();render();toast('ลบประกาศแล้ว')}catch(err){f.querySelector('.form-error').textContent=err.message}finally{b.disabled=false}},true);
-setInterval(async()=>{if(cfg.mode==='live'&&user&&!document.hidden&&!document.getElementById('dialog').open&&!busyJobs.size){try{await refresh();render()}catch{}}},60000);
+let backgroundRefreshRunning=false;
+async function refreshInBackground(){
+ if(backgroundRefreshRunning||cfg.mode!=='live'||!user||document.hidden||document.getElementById('dialog').open||busyJobs.size)return;
+ backgroundRefreshRunning=true;const scope=user.id+'|'+user.role,screen=view;
+ try{
+  const result=await api('bootstrap');
+  if(!user||scope!==user.id+'|'+user.role||view!==screen||document.hidden||document.getElementById('dialog').open||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]'))return;
+  const changed=JSON.stringify(db)!==JSON.stringify(result.data)||JSON.stringify(user)!==JSON.stringify(result.profile);
+  if(!changed)return;
+  db=result.data;user=result.profile;for(const key of settingKeys)if(typeof db.settings?.[key]==='string')cfg[key]=db.settings[key];
+  const scroll=window.scrollY,activeAnnouncement=document.querySelector('[data-announcement-tab][aria-selected=true]')?.dataset.announcementTab;
+  const detailKey=el=>el.classList.contains('completed-bills')?'completed-bills':el.closest('.activity-card')?.textContent;
+  const openDetails=new Set([...document.querySelectorAll('main .completed-bills[open],main .activity-changes[open]')].map(detailKey));
+  render();
+  document.querySelectorAll('main .completed-bills,main .activity-changes').forEach(el=>el.open=openDetails.has(detailKey(el)));
+  if(activeAnnouncement&&[...document.querySelectorAll('[data-announcement-tab]')].some(el=>el.dataset.announcementTab===activeAnnouncement)){
+   document.querySelectorAll('[data-announcement-tab]').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.announcementTab===activeAnnouncement)));
+   document.querySelectorAll('[data-announcement-pane]').forEach(el=>el.hidden=el.dataset.announcementPane!==activeAnnouncement);
+  }
+  document.querySelectorAll('main .mobile-record-table tr,main .clay-bill-body,main .record-original-content,main .individual-bill-body').forEach(el=>el.style.animation='none');
+  window.scrollTo({top:scroll,behavior:'instant'});
+ }catch{/* Background sync retries on the next interval; user actions still report errors. */}
+ finally{backgroundRefreshRunning=false}
+}
+setInterval(refreshInBackground,60000);
 operationLabels['publish-announcement']='กำลังเผยแพร่ประกาศ';operationLabels['dismiss-announcement']='กำลังปิดประกาศ';operationLabels['read-notification']='กำลังบันทึกการอ่าน';if(user)render();

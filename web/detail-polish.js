@@ -52,10 +52,10 @@ function polishInformation(root=document) {
   });
   root.querySelectorAll('.record-original-content>small').forEach(el=>{if(/\d{2}:\d{2}/.test(el.textContent))el.classList.add('record-timestamp')});
   root.querySelectorAll('.activity-meta time,.message-content footer time,.announcement-card>small,.record-timestamp').forEach(el=>{
-    if(el.querySelector('svg'))return;el.classList.add('time-caption');el.insertAdjacentHTML('afterbegin',icon('clock'));
+    if(el.querySelector('.record-stamp,svg'))return;el.classList.add('time-caption');el.insertAdjacentHTML('afterbegin',icon('clock'));
   });
 }
 const informationRender=render;render=function(){informationRender();if(user)polishInformation();else polishInformation(document.getElementById('app'))};
 const informationModal=modal;modal=function(...args){informationModal(...args);polishInformation(document.getElementById('dialog'))};
-const informationReview=reviewModal;reviewModal=function(id){informationReview(id);const p=db.payments.find(p=>p.id===id);if(!p)return;document.querySelector('#dialog .modal-head').insertAdjacentHTML('afterend',`<div class="detail-grid payment-times">${detailCard('แจ้งชำระเมื่อ',esc(dateTime(p.created_at)))}${p.reviewed_at?detailCard('ตรวจสอบเมื่อ',esc(dateTime(p.reviewed_at))):''}</div>`)};
+const informationReview=reviewModal;reviewModal=function(id){informationReview(id);const p=db.payments.find(p=>p.id===id);if(!p)return;document.querySelector('#dialog .modal-head').insertAdjacentHTML('afterend',`<div class="detail-grid payment-times">${recordStamp(p.created_at,'แจ้งชำระ')}${p.reviewed_at?recordStamp(p.reviewed_at,'ตรวจสอบ'):''}</div>`)};
 if(user)render();else polishInformation(document.getElementById('app'));

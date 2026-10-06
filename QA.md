@@ -22,3 +22,10 @@
 - การส่งคำขอพร้อมกันหลายเครื่อง/โหลดสูง และการกู้คืนบริการล่มกลางขั้นตอน
 
 ผลทดสอบโหมดทดลองและฐานข้อมูลในเครื่องไม่ใช่การรับรองว่าการเชื่อมต่อภายนอกพร้อมใช้งานเงินจริง ทำการทดสอบตาม README หลังตั้งค่าบริการจริงก่อนเปิดรับเงิน
+
+## Record windows and admin bill status — 2026-10-06
+- Existing 19 Node test suites pass, including automatic reference selection and forged-actor protection.
+- `tests/admin-bill-status.sql` passes against Supabase within a rolled-back fixture transaction: partial payment settlement, repeat-request idempotency, unpaid reversal, retained bank references/history, stale totals, member denial, pending-slip guard and service-only RPC permissions.
+- `scripts/modal-browser-qa.cjs` checks record/bill windows, status edits, background scroll locking, nested modal replacement, Escape restoration, mobile overflow and separate Thai date/time fields using demo data only. Set `PLAYWRIGHT_MODULE` and `CHROMIUM_PATH` to installed browser tooling.
+- Admin status editing supports paid/unpaid. Pending slips must be reviewed before changing the bill status. Reversing payment retains evidence and bank references; it removes the approved amount from fund totals.
+- Manual confirmation keeps any saved SlipOK bank reference. If none exists, it creates a clearly marked `ADMIN-…` internal reference; client reference overrides are ignored.

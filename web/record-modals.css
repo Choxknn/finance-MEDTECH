@@ -1,0 +1,32 @@
+html.modal-page-open{overflow:hidden;overscroll-behavior:none;scroll-behavior:auto!important}
+#dialog{overscroll-behavior:contain;max-height:calc(100dvh - 32px);overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable}
+.record-window{min-width:0;animation:record-window-in .2s ease-out}
+.record-window .detail-card{min-width:0;overflow-wrap:anywhere}
+.record-window .record-original-content{display:block!important}
+.record-window .record-original-title{display:initial!important}
+.record-window .detail-value small{display:block}
+.record-window .bill-row{display:flex;flex-direction:column;align-items:stretch}
+.record-window .bill-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.record-window .button-group,.record-window .record-actions{display:flex;flex-wrap:wrap;gap:6px}
+.record-window .detail-value{min-width:0}
+[data-clay-bill]>summary,[data-individual-id]>summary{cursor:pointer}
+[data-clay-bill]>summary .clay-chevron,[data-individual-id]>summary .clay-chevron,.record-disclosure>svg{transform:rotate(-90deg)!important}
+@keyframes record-window-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:540px){#dialog{width:calc(100% - 24px);max-width:none;padding:20px;max-height:calc(100dvh - 24px)}.record-window.detail-grid{grid-template-columns:1fr}.record-window .bill-info{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.record-window{animation:none}}
+.record-window .bill{display:block;padding:0;border:0;background:transparent;box-shadow:none}
+.record-window .bill-icon{display:none}
+.record-window .bill-info.detail-grid{width:100%;margin:0 0 18px}
+.record-window .bill-right{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0}
+.record-window .bill-price{margin:0}
+.record-window .bill-info .detail-card:last-child:nth-child(odd){grid-column:1/-1}
+.record-stamp{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;white-space:normal;text-align:left;min-width:0}
+.record-stamp .stamp-item{display:flex;align-items:center;gap:9px;min-width:0;padding:10px 12px;border:1px solid #dfcbd7;border-radius:14px;background:#f7f0f5;box-shadow:inset 2px 2px 5px #e9dce5,inset -2px -2px 5px #fff;flex:1 1 130px;color:#513d4b}
+.record-stamp .stamp-item>svg{width:28px;height:28px;flex:0 0 28px;padding:5px;border-radius:9px;background:#efdce7;color:#ac426d}
+.record-stamp .stamp-time>svg{background:#e8e2f2;color:#74618c}
+.record-stamp .stamp-label{display:block;font-size:10px;color:#8a7182;margin-bottom:2px;line-height:1.5}
+.record-stamp time{display:block!important;font-size:12px;font-weight:600;line-height:1.7;white-space:nowrap}
+.payment-times>.record-stamp{grid-column:1/-1;width:100%;margin:0}
+.activity-meta>time:has(.record-stamp){display:block!important;width:100%}
+.record-stamp time>svg{display:none}
+.activity-stamp{display:block;width:100%}

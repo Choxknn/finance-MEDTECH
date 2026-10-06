@@ -198,9 +198,13 @@ Deno.serve(async req=>{
     await query(db.from('payments').update({note:note.slice(0,500)}).eq('id',p.id).in('status',['pending','review']));
     return json({message:note});
    }
+   case 'set-bill-status':{
+    requireAdmin();
+    const result=await query(db.rpc('admin_set_bill_status',{p_charge:input.charge_id,p_status:text(input.status,20),p_reason:text(input.reason,500),p_actor:profile.id,p_expected_paid:Number(input.expected_paid),p_expected_balance:Number(input.expected_balance),p_request:input.request_id}));return json({ok:true,result});
+   }
    case 'review':{
     requireAdmin();const decision=text(input.decision,20);if(!['approved','rejected'].includes(decision))throw new Error('สถานะไม่ถูกต้อง');const p=await query(db.from('payments').select('*').eq('id',input.payment_id).single());
-    await query(db.rpc('decide_payment',{p_id:p.id,p_decision:decision,p_note:text(input.note,500),p_ref:String(input.trans_ref||'').slice(0,100),p_actor:profile.id}));
+    await query(db.rpc('decide_payment',{p_id:p.id,p_decision:decision,p_note:text(input.note,500),p_ref:p.trans_ref||p.verification?.data?.transRef||`ADMIN-${p.id}`,p_actor:profile.id}));
     await (decision==='approved'?paymentSuccess:notify)(db,p.profile_id,`finance MEDTECH\n${decision==='approved'?'ยืนยันรับเงินแล้ว':'กรุณาแก้ไขหลักฐาน'}\nจำนวน ${Number(p.amount).toFixed(2)} บาท\n${input.note}`);return json({ok:true});
    }
    case 'new-expense':{

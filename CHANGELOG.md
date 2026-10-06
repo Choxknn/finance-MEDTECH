@@ -23,3 +23,9 @@ Recipient details and the displayed QR must agree with the receiver configured i
 Automatic SlipOK verification troubleshooting is still paused. Existing pending transactions still require manual administrator review when the provider fails.
 Synthetic student login emails are not delivery addresses; forgotten passwords are reset by an administrator after verifying the student.
 Backend credentials stay in Supabase secrets. Authenticated members cannot query the private tables directly; all data access goes through the Edge Function.
+
+## 2026-10-06
+- Open bill cards and mobile record rows in modal windows; freeze and restore the background scroll position.
+- Separate record dates and recording times with calendar/clock icons.
+- Add audited, atomic admin paid/unpaid status changes for individual bills with balance checks and retry protection.
+- Generate manual internal payment references automatically and preserve verified bank references.

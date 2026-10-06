@@ -35,3 +35,10 @@
 - SQL rollback fixtures: category deduplication, settings preservation, destination validation, duplicate-recipient rejection and admin/service-only permissions.
 - Bootstrap API test: only approved active payments enter receipt totals; member responses exclude other users' evidence and all LINE destination IDs.
 - No LINE messages were sent during verification.
+
+## Account access and registration — 2026-10-07
+- Browser QA: login recovery form/support link; inline category creation preserves unsaved fields; admin invitation identity/expiry/revocation; public signup accepts six characters and exposes no editable identity fields.
+- SQL fixtures rolled back: member denial, expiration, concurrent/replayed token claims, reserved identity, revocation, recovery throttling and server-only privileges.
+- API tests: generic recovery responses, six-character validation, client identity overrides ignored, and lost-response recovery without deleting accepted accounts.
+- Live Supabase verification using one temporary test account: invite preview, signup with a six-character password, login, direct Auth password update with six characters, and replay rejection all passed. The temporary invitation, account and fixture audit entries were removed afterward.
+- No LINE messages were sent during tests; notification delivery was mocked.

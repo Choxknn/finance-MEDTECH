@@ -1,3 +1,4 @@
+import {financeSite} from '../_shared/line-flex.ts';
 import {changeStudentLogin} from '../_shared/student-login.ts';
 import {adminDb,query,secret,hash,uploadDrive,deleteDrive,driveToken,checkSlip,isRecentSlip,notify,paymentSuccess,deliverNotification,validateImage,validateReceipt} from '../_shared/services.ts';
 const text=(v:unknown,max=500)=>{if(typeof v!=='string'||!v.trim()||v.length>max)throw new Error('ข้อมูลข้อความไม่ถูกต้อง');return v.trim()};
@@ -27,6 +28,13 @@ Deno.serve(async req=>{
   let input:any,file:File|null=null,receiptFile:File|null=null;
   if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null;receiptFile=fd.get('receipt') as File|null}else input=await req.json();
   switch(input.action){
+   case 'create-member-invite':{
+    requireAdmin();const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
+    const id=await query(db.rpc('create_member_invite',{p_student:text(input.student_id,20),p_prefix:text(input.name_prefix,30),p_first:text(input.first_name,60),p_last:text(input.last_name,60),p_year:text(input.year,1),p_expires:input.expires_at,p_hash:await hash(token),p_actor:profile.id}));
+    return json({id,url:financeSite+'register.html#token='+token,expires_at:input.expires_at});
+   }
+   case 'list-member-invites':{requireAdmin();return json({invites:await query(db.from('member_invites').select('id,student_id,name_prefix,first_name,last_name,expires_at,status,created_at').order('created_at',{ascending:false}).limit(100))});}
+   case 'revoke-member-invite':{requireAdmin();await query(db.rpc('revoke_member_invite',{p_id:input.id,p_actor:profile.id}));return json({ok:true});}
    case 'cleanup-preview':case 'cleanup-history':{
     requireAdmin();const months=Number(input.months);if(!['notifications','audit'].includes(input.kind)||!Number.isInteger(months)||months<1||months>120)throw new Error('เลือกชนิดข้อมูลและจำนวนเดือน 1–120');
     const confirmed=input.action==='cleanup-history';if(confirmed&&(input.confirmation!=='ลบข้อมูล'||typeof input.anchor!=='string'||!Number.isFinite(Date.parse(input.anchor))))throw new Error('กรุณาตรวจสอบจำนวนรายการและยืนยันก่อนลบ');
@@ -145,13 +153,13 @@ Deno.serve(async req=>{
     await query(db.from('audit').insert({actor:profile.name,action:'เปลี่ยนรหัสนักศึกษา',details:{profile_id:target.id,before:target.student_id,after:sid,retired_login_user_id:loginChange.retiredId}}));return json({ok:true});
    }
    case 'reset-password':{
-    requireAdmin();const target=await query(db.from('profiles').select('id,student_id,role').eq('id',input.id).is('deleted_at',null).single());if(target.id===profile.id)throw new Error('ใช้ปุ่มเปลี่ยนรหัสผ่านของฉันสำหรับบัญชีตัวเอง');const password=text(input.password,128);if(password.length<12)throw new Error('รหัสผ่านต้องมีอย่างน้อย 12 ตัวอักษร');
+    requireAdmin();const target=await query(db.from('profiles').select('id,student_id,role').eq('id',input.id).is('deleted_at',null).single());if(target.id===profile.id)throw new Error('ใช้ปุ่มเปลี่ยนรหัสผ่านของฉันสำหรับบัญชีตัวเอง');const password=text(input.password,128);if(password.length<6)throw new Error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
     const result=await db.auth.admin.updateUserById(target.id,{password});if(result.error)throw new Error('เปลี่ยนรหัสผ่านไม่สำเร็จ');
     await query(db.from('audit').insert({actor:profile.name,action:'รีเซ็ตรหัสผ่านสมาชิก '+target.student_id}));return json({ok:true});
    }
    case 'import-members':{
     requireAdmin();if(!Array.isArray(input.rows)||!input.rows.length||input.rows.length>25)throw new Error('นำเข้าได้ครั้งละ 1–25 คน');
-    const seen=new Set<string>();const rows=input.rows.map((r:any)=>{const sid=text(r.student_id,20),password=text(r.password,128),name=text(r.name,120),year=text(r.year,1);if(!/^\d{5,20}$/.test(sid)||password.length<12||!['1','2','3','4'].includes(year)||seen.has(sid))throw new Error('ตรวจรหัสนักศึกษา ชั้นปี รหัสผ่าน และข้อมูลซ้ำใน CSV');seen.add(sid);return {sid,password,name,year}});
+    const seen=new Set<string>();const rows=input.rows.map((r:any)=>{const sid=text(r.student_id,20),password=text(r.password,128),name=text(r.name,120),year=text(r.year,1);if(!/^\d{5,20}$/.test(sid)||password.length<6||!['1','2','3','4'].includes(year)||seen.has(sid))throw new Error('ตรวจรหัสนักศึกษา ชั้นปี รหัสผ่าน และข้อมูลซ้ำใน CSV');seen.add(sid);return {sid,password,name,year}});
     const results=[];for(const r of rows){const existing=await query(db.from('profiles').select('id').eq('student_id',r.sid).maybeSingle());if(existing){results.push({student_id:r.sid,status:'skipped',message:'มีบัญชีอยู่แล้ว'});continue}
      const {data,error}=await db.auth.admin.createUser({email:`${r.sid}@${Deno.env.get('STUDENT_EMAIL_DOMAIN')||'students.finance-medtech.invalid'}`,password:r.password,email_confirm:true});if(error){results.push({student_id:r.sid,status:'failed',message:'สร้างบัญชีไม่สำเร็จ'});continue}
      try{await query(db.from('profiles').insert({id:data.user!.id,student_id:r.sid,name:r.name,year:r.year,role:'member'}));await query(db.from('audit').insert({actor:profile.name,action:'นำเข้าสมาชิก CSV '+r.sid}));results.push({student_id:r.sid,status:'created',message:'เพิ่มแล้ว'})}catch{await db.auth.admin.deleteUser(data.user!.id);results.push({student_id:r.sid,status:'failed',message:'บันทึกข้อมูลไม่สำเร็จ'})}
@@ -163,7 +171,7 @@ Deno.serve(async req=>{
    }
    case 'new-round':requireAdmin();await query(db.rpc('create_bill',{p_title:text(input.title,120),p_description:String(input.description||'').slice(0,1000),p_amount:amount(input.amount),p_due:day(input.due_date),p_members:memberIds(input.profile_ids),p_penalty:input.penalty_enabled===true,p_rate:input.penalty_enabled===true?amount(input.penalty_per_day):0,p_actor:profile.id,p_max:input.penalty_enabled===true?amount(input.penalty_max):null}));return json({ok:true});
    case 'new-member':{
-    requireAdmin();const sid=text(input.student_id,20);if(!/^\d{5,20}$/.test(sid))throw new Error('รหัสนักศึกษาไม่ถูกต้อง');const password=text(input.password,128);if(password.length<12)throw new Error('รหัสผ่านต้องมีอย่างน้อย 12 ตัวอักษร');const name=text(input.name,120);const year=text(input.year,2);if(!['1','2','3','4'].includes(year))throw new Error('ชั้นปีไม่ถูกต้อง');
+    requireAdmin();const sid=text(input.student_id,20);if(!/^\d{5,20}$/.test(sid))throw new Error('รหัสนักศึกษาไม่ถูกต้อง');const password=text(input.password,128);if(password.length<6)throw new Error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');const name=text(input.name,120);const year=text(input.year,2);if(!['1','2','3','4'].includes(year))throw new Error('ชั้นปีไม่ถูกต้อง');
     const {data,error}=await db.auth.admin.createUser({email:`${sid}@${Deno.env.get('STUDENT_EMAIL_DOMAIN')||'students.finance-medtech.invalid'}`,password,email_confirm:true});if(error)throw new Error('สร้างบัญชีไม่ได้ รหัสนักศึกษาอาจมีอยู่แล้ว');
     try{await query(db.from('profiles').insert({id:data.user!.id,student_id:sid,name,year,role:'member'}))}catch(e){await db.auth.admin.deleteUser(data.user!.id);throw e}
     await query(db.from('audit').insert({actor:profile.name,action:'เพิ่มสมาชิก '+sid}));return json({ok:true});

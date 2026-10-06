@@ -35,3 +35,9 @@ Backend credentials stay in Supabase secrets. Authenticated members cannot query
 - Show aggregate approved bill receipts in the fund ledger without exposing other members' evidence or counting income twice.
 - Group equal category names, reuse category suggestions, and let admins add persistent categories.
 - Replace the member bill-assignment icon and add audited admin LINE User ID destination editing.
+
+## 2026-10-07
+- Set password minimum to six characters for creation, import, reset and recovery.
+- Move category creation into income/expense forms and use a dropdown of existing categories.
+- Add a login-page LINE recovery request with throttling and a support contact link.
+- Add admin-issued, expiring, single-use registration links with reserved student ID, name prefix, first name, surname and year; support revocation before signup.

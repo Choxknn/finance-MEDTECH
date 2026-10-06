@@ -3,3 +3,6 @@ project_id = "sdegiugcttarbsnqvusm"
 verify_jwt = false
 [functions.line-webhook]
 verify_jwt = false
+
+[functions.account-access]
+verify_jwt = false

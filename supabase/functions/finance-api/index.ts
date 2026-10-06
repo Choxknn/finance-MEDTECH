@@ -54,8 +54,8 @@ Deno.serve(async req=>{
     const allPayments=await query(db.from('payments').select('id,charge_id,profile_id,amount,status,drive_file_id,trans_ref,source,note,reviewed_at,created_at,deleted_at,charge_snapshot,member_snapshot').order('created_at'));
     const allIncomes=await query(db.from('manual_incomes').select('*').order('received_on',{ascending:false}));
     const allExpenses=await query(db.from('expenses').select('*').order('spent_on',{ascending:false}));
-    const accounts=await query(isAdmin?db.from('line_accounts').select('profile_id'):db.from('line_accounts').select('profile_id').eq('profile_id',profile.id));
-    const profiles=(await query(isAdmin?db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note'):db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note').eq('id',profile.id))).map((p:any)=>{if(!isAdmin)delete p.profile_note;return {...p,line_linked:accounts.some((a:any)=>a.profile_id===p.id)}});
+    const accounts=await query(isAdmin?db.from('line_accounts').select('profile_id,line_user_id'):db.from('line_accounts').select('profile_id').eq('profile_id',profile.id));
+    const profiles=(await query(isAdmin?db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note'):db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note').eq('id',profile.id))).map((p:any)=>{if(!isAdmin)delete p.profile_note;return {...p,line_linked:accounts.some((a:any)=>a.profile_id===p.id),...(isAdmin?{line_user_id:accounts.find((a:any)=>a.profile_id===p.id)?.line_user_id||''}:{})}});
     const notifications=await query(db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id,seen_at').eq('profile_id',profile.id).order('created_at',{ascending:false}).limit(100));
     const recipients=await query(db.from('web_announcement_recipients').select('announcement_id,dismissed_at').eq('profile_id',profile.id));
     const allAnnouncements=await query(isAdmin?db.from('web_announcements').select('*').order('created_at',{ascending:false}).limit(100):db.from('web_announcements').select('*').in('id',recipients.map((r:any)=>r.announcement_id)).order('created_at',{ascending:false}).limit(100));
@@ -67,6 +67,15 @@ Deno.serve(async req=>{
     const expenseTotal=allExpenses.filter((e:any)=>!e.voided&&!e.deleted_at).reduce((s:number,e:any)=>s+Number(e.amount),0),income=allIncomes.filter((i:any)=>!i.deleted_at).reduce((s:number,i:any)=>s+Number(i.amount),0)+allPayments.filter((p:any)=>p.status==='approved'&&!p.deleted_at).reduce((s:number,p:any)=>s+Number(p.amount),0);
     const incomes=isAdmin?allIncomes:allIncomes.map(({created_by,...i}:any)=>i);
     const expenses=isAdmin?allExpenses:allExpenses.map(({created_by,...e}:any)=>e);
+    // Expose only aggregate bill receipts, never other members' payment evidence or IDs.
+    const collectionCharges=isAdmin?charges:await query(db.from('charges').select('id,round_id,round_snapshot'));
+    const collectionMap=new Map<string,any>();
+    for(const p of allPayments.filter((p:any)=>p.status==='approved'&&!p.deleted_at)){
+     const c=collectionCharges.find((c:any)=>c.id===p.charge_id)||p.charge_snapshot;
+     const rid=c?.round_id||c?.round_snapshot?.id||'archived';const r=rounds.find((r:any)=>r.id===rid)||c?.round_snapshot;
+     const g=collectionMap.get(rid)||{id:rid,title:r?.title||'บิลที่เก็บถาวร',amount:0,count:0,last_at:null};g.amount+=Number(p.amount);g.count++;const at=p.reviewed_at||p.created_at;if(!g.last_at||at>g.last_at)g.last_at=at;collectionMap.set(rid,g);
+    }
+    const fundCollections=[...collectionMap.values()];
     const visiblePayments=(isAdmin?allPayments:allPayments.filter((p:any)=>p.profile_id===profile.id));
     const activeRounds=rounds.filter((r:any)=>!r.deleted_at),activeProfiles=profiles.filter((p:any)=>!p.deleted_at);
     const activeCharges=charges.filter((c:any)=>!c.deleted_at&&activeRounds.some((r:any)=>r.id===c.round_id)&&activeProfiles.some((p:any)=>p.id===c.profile_id));
@@ -75,7 +84,7 @@ Deno.serve(async req=>{
     const refRounds=[...rounds,...refCharges.filter((c:any)=>c.round_snapshot&&!rounds.some((r:any)=>r.id===c.round_snapshot.id)).map((c:any)=>c.round_snapshot)];
     const refProfiles=[...profiles,...refCharges.map((c:any)=>c.profile_snapshot).filter(Boolean),...(isAdmin?allPayments:visiblePayments).map((p:any)=>p.member_snapshot).filter(Boolean)];
     for(const p of allPayments){p.charge_id??=p.charge_snapshot?.id;p.profile_id??=p.member_snapshot?.id;delete p.charge_snapshot;delete p.member_snapshot}
-    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{campaigns,announcements,payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
+    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{fund_collections:fundCollections,campaigns,announcements,payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
    }
    case 'save-income':{
     requireAdmin();const patch:any={responsible_name:text(input.responsible_name||profile.name,120),title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};
@@ -91,6 +100,8 @@ Deno.serve(async req=>{
     await query(db.rpc('delete_records',{p_entity:entity,p_ids:ids,p_deleted:input.deleted,p_reason:text(input.reason,500),p_actor:profile.id}));return json({ok:true});
    }
    case 'edit-self':return json({error:'ข้อมูลโปรไฟล์แก้ไขได้โดยแอดมินเท่านั้น'},403);
+   case 'add-fund-category':{requireAdmin();const result=await query(db.rpc('add_fund_category',{p_name:text(input.name,100),p_actor:profile.id}));return json({ok:true,result});}
+   case 'set-line-destination':{requireAdmin();const lineId=text(input.line_user_id,33);if(!/^U[0-9a-f]{32}$/.test(lineId))throw Error('LINE User ID ไม่ถูกต้อง');await query(db.rpc('set_line_destination',{p_profile:input.id,p_line_user:lineId,p_actor:profile.id,p_reason:text(input.reason,500)}));return json({ok:true});}
    case 'unlink-line':{
     requireAdmin();const target=await query(db.from('profiles').select('id,student_id').eq('id',input.id).is('deleted_at',null).single());await query(db.from('line_accounts').delete().eq('profile_id',target.id));await query(db.from('line_link_codes').delete().eq('profile_id',target.id));await query(db.from('audit').insert({actor:profile.name,action:'ยกเลิกการเชื่อม LINE '+target.student_id}));return json({ok:true});
    }

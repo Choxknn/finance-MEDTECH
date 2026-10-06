@@ -29,3 +29,9 @@
 - `scripts/modal-browser-qa.cjs` checks record/bill windows, status edits, background scroll locking, nested modal replacement, Escape restoration, mobile overflow and separate Thai date/time fields using demo data only. Set `PLAYWRIGHT_MODULE` and `CHROMIUM_PATH` to installed browser tooling.
 - Admin status editing supports paid/unpaid. Pending slips must be reviewed before changing the bill status. Reversing payment retains evidence and bank references; it removes the approved amount from fund totals.
 - Manual confirmation keeps any saved SlipOK bank reference. If none exists, it creates a clearly marked `ADMIN-…` internal reference; client reference overrides are ignored.
+
+## Fund groups / LINE destinations
+- Browser demo QA: category normalization/group totals, add/reuse categories, receipt totals, penalty icons, destination editing, member privacy and mobile width.
+- SQL rollback fixtures: category deduplication, settings preservation, destination validation, duplicate-recipient rejection and admin/service-only permissions.
+- Bootstrap API test: only approved active payments enter receipt totals; member responses exclude other users' evidence and all LINE destination IDs.
+- No LINE messages were sent during verification.

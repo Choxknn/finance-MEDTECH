@@ -29,3 +29,9 @@ Backend credentials stay in Supabase secrets. Authenticated members cannot query
 - Separate record dates and recording times with calendar/clock icons.
 - Add audited, atomic admin paid/unpaid status changes for individual bills with balance checks and retry protection.
 - Generate manual internal payment references automatically and preserve verified bank references.
+
+### Fund groups and recipient management
+- Frame daily penalty settings with icons and cap information.
+- Show aggregate approved bill receipts in the fund ledger without exposing other members' evidence or counting income twice.
+- Group equal category names, reuse category suggestions, and let admins add persistent categories.
+- Replace the member bill-assignment icon and add audited admin LINE User ID destination editing.

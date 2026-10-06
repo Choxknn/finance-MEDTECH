@@ -30,3 +30,5 @@ html.modal-page-open{overflow:hidden;overscroll-behavior:none;scroll-behavior:au
 .activity-meta>time:has(.record-stamp){display:block!important;width:100%}
 .record-stamp time>svg{display:none}
 .activity-stamp{display:block;width:100%}
+
+.compact-record-time{display:inline-flex;align-items:center;gap:7px;line-height:1.7;white-space:normal}.compact-record-time>svg{width:15px;height:15px;flex:0 0 15px;color:#ac426d}.record-window .compact-record-time{font-size:12px}

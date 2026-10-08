@@ -41,3 +41,9 @@ Backend credentials stay in Supabase secrets. Authenticated members cannot query
 - Move category creation into income/expense forms and use a dropdown of existing categories.
 - Add a login-page LINE recovery request with throttling and a support contact link.
 - Add admin-issued, expiring, single-use registration links with reserved student ID, name prefix, first name, surname and year; support revocation before signup.
+
+## 2026-10-08
+- Prepare multiple student identities before signup; select a roster and issue one expiring shared link.
+- Require a signed LINE webhook confirmation before activating each prepared account; keep legacy individual links compatible.
+- Replace admin direct password resets with account-specific recovery links that members use without signing in.
+- Remove fund categories from available choices while retaining historical ledger categories; allow adding a removed name again.

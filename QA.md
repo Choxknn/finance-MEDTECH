@@ -42,3 +42,9 @@
 - API tests: generic recovery responses, six-character validation, client identity overrides ignored, and lost-response recovery without deleting accepted accounts.
 - Live Supabase verification using one temporary test account: invite preview, signup with a six-character password, login, direct Auth password update with six characters, and replay rejection all passed. The temporary invitation, account and fixture audit entries were removed afterward.
 - No LINE messages were sent during tests; notification delivery was mocked.
+
+## 2026-10-08 registration and recovery
+- Full Node suite passed, including target-bound admin recovery links and signed LINE registration webhook routing with mocked replies.
+- Transactional SQL tests passed before and after migration: two students share one batch, unlisted students and unverified LINE are rejected, one-time claims, scoped sessions, revocation, category removal/re-addition, and private table/function privileges. Test records rolled back.
+- Mobile Chromium 390×844: prepare two identities, shared-link selection, inline category deletion, individual recovery-link creation, LINE verification gate and six-character signup; zero page errors or horizontal overflow.
+- LINE messages in QA were mocked; no real messages sent to members.

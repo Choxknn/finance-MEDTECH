@@ -1,0 +1,33 @@
+begin;
+do $$
+declare a uuid;m uuid;sid text:='98'||floor(random()*1000000000000)::bigint::text;ids uuid[];bid uuid;h text:=repeat('a',64);sh text:=repeat('b',64);ch text:=repeat('c',64);lineid text:='U'||replace(gen_random_uuid()::text,'-','');info jsonb;blocked boolean;uid uuid:=gen_random_uuid();
+begin
+ select id into a from profiles where role='admin' and active and deleted_at is null limit 1;
+ select id into m from profiles where role='member' and active and deleted_at is null limit 1;
+ blocked:=false;begin perform prepare_registration_members(jsonb_build_array(jsonb_build_object('student_id',sid,'name_prefix','นาย','first_name','ทดสอบ','last_name','ระบบ','year','1')),m);exception when others then blocked:=true;end;assert blocked;
+ perform prepare_registration_members(jsonb_build_array(jsonb_build_object('student_id',sid,'name_prefix','นาย','first_name','ทดสอบ','last_name','ระบบ','year','1'),jsonb_build_object('student_id',sid||'1','name_prefix','นางสาว','first_name','สอง','last_name','ระบบ','year','2')),a);
+ select array_agg(id) into ids from member_invites where student_id in(sid,sid||'1');assert cardinality(ids)=2;
+ bid:=create_registration_batch(ids,now()+interval '1 day',h,a);
+ blocked:=false;begin perform start_registration_session(h,'00000',sh,ch);exception when others then blocked:=true;end;assert blocked,'Unlisted student blocked';
+ info:=start_registration_session(h,sid,sh,ch);assert info->>'student_id'=sid;
+ assert not (registration_session_state(sh,h,sid,false)->>'linked')::boolean;
+ blocked:=false;begin perform registration_session_state(sh,h,sid,true);exception when others then blocked:=true;end;assert blocked,'LINE required';
+ assert consume_registration_line_code(ch,lineid) is not null;
+ assert consume_registration_line_code(ch,lineid) is null,'LINE code one-time';
+ blocked:=false;begin perform registration_session_state(sh,h,sid||'1',true);exception when others then blocked:=true;end;assert blocked,'Session bound to student';
+ info:=registration_session_state(sh,h,sid,true);
+ blocked:=false;begin perform registration_session_state(sh,h,sid,true);exception when others then blocked:=true;end;assert blocked,'Concurrent signup blocked';
+ insert into auth.users(id,email) values(uid,sid||'@qa.invalid');perform finish_member_invite(info->>'token_hash',uid);
+ assert exists(select 1 from line_accounts where profile_id=uid and line_user_id=lineid);
+ assert exists(select 1 from profiles where id=uid and student_id=sid and role='member');
+ perform start_registration_session(h,sid||'1',repeat('d',64),repeat('e',64));
+ perform revoke_member_invite((select id from member_invites where student_id=sid||'1' and status='pending'),a);
+ blocked:=false;begin perform registration_session_state(repeat('d',64),h,sid||'1',false);exception when others then blocked:=true;end;assert blocked,'Revoked signup blocked';
+ perform add_fund_category('QA category',a);perform delete_fund_category('QA category',a);
+ assert (select data->'fund_categories_deleted' @> '["qa category"]'::jsonb from site_settings where id=true);
+ assert not (select data->'fund_categories' @> '["QA category"]'::jsonb from site_settings where id=true);
+ perform add_fund_category('QA category',a);assert not (select data->'fund_categories_deleted' @> '["qa category"]'::jsonb from site_settings where id=true);
+ assert not has_function_privilege('authenticated','public.registration_session_state(text,text,text,boolean)','execute');
+ assert not has_table_privilege('anon','public.registration_sessions','select');
+end;$$;
+rollback;

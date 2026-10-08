@@ -28,12 +28,27 @@ Deno.serve(async req=>{
   let input:any,file:File|null=null,receiptFile:File|null=null;
   if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null;receiptFile=fd.get('receipt') as File|null}else input=await req.json();
   switch(input.action){
+   case 'prepare-members':{requireAdmin();const count=await query(db.rpc('prepare_registration_members',{p_rows:input.rows,p_actor:profile.id}));return json({count});}
+   case 'create-registration-batch':{
+    requireAdmin();const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
+    const id=await query(db.rpc('create_registration_batch',{p_ids:memberIds(input.ids),p_expires:input.expires_at,p_hash:await hash(token),p_actor:profile.id}));
+    return json({id,url:financeSite+'register.html#token='+token,expires_at:input.expires_at});
+   }
+   case 'delete-fund-category':{requireAdmin();await query(db.rpc('delete_fund_category',{p_name:text(input.name,100),p_actor:profile.id}));return json({ok:true});}
+   case 'create-password-link':{
+    requireAdmin();const target=await query(db.from('profiles').select('id,student_id,name').eq('id',text(input.id,36)).eq('active',true).is('deleted_at',null).single());
+    const account=await db.auth.admin.getUserById(target.id);if(account.error||!account.data.user?.email)throw Error('ไม่พบบัญชีสมาชิก');
+    const link=await db.auth.admin.generateLink({type:'recovery',email:account.data.user.email});
+    if(link.error||!link.data.properties?.hashed_token)throw Error('สร้างลิงก์เปลี่ยนรหัสผ่านไม่สำเร็จ');
+    await query(db.from('audit').insert({actor:profile.name,action:'สร้างลิงก์เปลี่ยนรหัสผ่าน: '+target.student_id}));
+    return json({url:financeSite+'reset-password.html#token_hash='+encodeURIComponent(link.data.properties.hashed_token),student_id:target.student_id,name:target.name});
+   }
    case 'create-member-invite':{
     requireAdmin();const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
     const id=await query(db.rpc('create_member_invite',{p_student:text(input.student_id,20),p_prefix:text(input.name_prefix,30),p_first:text(input.first_name,60),p_last:text(input.last_name,60),p_year:text(input.year,1),p_expires:input.expires_at,p_hash:await hash(token),p_actor:profile.id}));
     return json({id,url:financeSite+'register.html#token='+token,expires_at:input.expires_at});
    }
-   case 'list-member-invites':{requireAdmin();return json({invites:await query(db.from('member_invites').select('id,student_id,name_prefix,first_name,last_name,expires_at,status,created_at').order('created_at',{ascending:false}).limit(100))});}
+   case 'list-member-invites':{requireAdmin();return json({invites:await query(db.from('member_invites').select('id,student_id,name_prefix,first_name,last_name,expires_at,status,created_at,batch_id,year').order('created_at',{ascending:false}).limit(1000))});}
    case 'revoke-member-invite':{requireAdmin();await query(db.rpc('revoke_member_invite',{p_id:input.id,p_actor:profile.id}));return json({ok:true});}
    case 'cleanup-preview':case 'cleanup-history':{
     requireAdmin();const months=Number(input.months);if(!['notifications','audit'].includes(input.kind)||!Number.isInteger(months)||months<1||months>120)throw new Error('เลือกชนิดข้อมูลและจำนวนเดือน 1–120');
@@ -152,11 +167,7 @@ Deno.serve(async req=>{
     try{await query(db.from('profiles').update({student_id:sid}).eq('id',target.id))}catch(e){const rollback=await db.auth.admin.updateUserById(target.id,{email:loginChange.oldEmail,email_confirm:true});if(rollback.error)throw new Error('ข้อมูลเข้าสู่ระบบเปลี่ยนแล้ว แต่บันทึกรหัสไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ');throw e}
     await query(db.from('audit').insert({actor:profile.name,action:'เปลี่ยนรหัสนักศึกษา',details:{profile_id:target.id,before:target.student_id,after:sid,retired_login_user_id:loginChange.retiredId}}));return json({ok:true});
    }
-   case 'reset-password':{
-    requireAdmin();const target=await query(db.from('profiles').select('id,student_id,role').eq('id',input.id).is('deleted_at',null).single());if(target.id===profile.id)throw new Error('ใช้ปุ่มเปลี่ยนรหัสผ่านของฉันสำหรับบัญชีตัวเอง');const password=text(input.password,128);if(password.length<6)throw new Error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
-    const result=await db.auth.admin.updateUserById(target.id,{password});if(result.error)throw new Error('เปลี่ยนรหัสผ่านไม่สำเร็จ');
-    await query(db.from('audit').insert({actor:profile.name,action:'รีเซ็ตรหัสผ่านสมาชิก '+target.student_id}));return json({ok:true});
-   }
+   case 'reset-password':{requireAdmin();throw Error('กรุณาสร้างลิงก์ให้สมาชิกตั้งรหัสผ่านเอง');}
    case 'import-members':{
     requireAdmin();if(!Array.isArray(input.rows)||!input.rows.length||input.rows.length>25)throw new Error('นำเข้าได้ครั้งละ 1–25 คน');
     const seen=new Set<string>();const rows=input.rows.map((r:any)=>{const sid=text(r.student_id,20),password=text(r.password,128),name=text(r.name,120),year=text(r.year,1);if(!/^\d{5,20}$/.test(sid)||password.length<6||!['1','2','3','4'].includes(year)||seen.has(sid))throw new Error('ตรวจรหัสนักศึกษา ชั้นปี รหัสผ่าน และข้อมูลซ้ำใน CSV');seen.add(sid);return {sid,password,name,year}});

@@ -53,3 +53,4 @@ Backend credentials stay in Supabase secrets. Authenticated members cannot query
 - Add LINE Login button, OAuth account linking and registration continuation. Activation requires a LINE Login channel and server-side Login credentials; preserve legacy linking until configured.
 
 - Add optional LINE new-bill notices, off by default. Enqueue atomically for selected linked members, deliver branded Flex with amount and due date, and continue pending delivery through the scheduled worker.
+- Give all six LINE Flex types distinct layouts: receipt-style bill, date-focused reminder, correction steps, announcement banner, dark security card and personal message. Share the same template definitions with admin previews and a public sample gallery.

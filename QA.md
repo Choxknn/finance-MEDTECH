@@ -48,3 +48,5 @@
 - Transactional SQL tests passed before and after migration: two students share one batch, unlisted students and unverified LINE are rejected, one-time claims, scoped sessions, revocation, category removal/re-addition, and private table/function privileges. Test records rolled back.
 - Mobile Chromium 390×844: prepare two identities, shared-link selection, inline category deletion, individual recovery-link creation, LINE verification gate and six-character signup; zero page errors or horizontal overflow.
 - LINE messages in QA were mocked; no real messages sent to members.
+
+- Auth cleanup regression: 64 accounts bypass a blocked Drive job; failed deletions remain retryable; existing profiles are protected. Full existing test suite passed. Verified production Auth queue is empty after repairing previously confirmed permanent deletions.

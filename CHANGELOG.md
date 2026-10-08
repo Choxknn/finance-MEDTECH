@@ -47,3 +47,5 @@ Backend credentials stay in Supabase secrets. Authenticated members cannot query
 - Require a signed LINE webhook confirmation before activating each prepared account; keep legacy individual links compatible.
 - Replace admin direct password resets with account-specific recovery links that members use without signing in.
 - Remove fund categories from available choices while retaining historical ledger categories; allow adding a removed name again.
+
+- Fix permanent member deletion: process Authentication independently of blocked Drive jobs and await account cleanup before reporting success.

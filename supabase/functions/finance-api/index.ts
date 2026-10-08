@@ -5,6 +5,26 @@ const text=(v:unknown,max=500)=>{if(typeof v!=='string'||!v.trim()||v.length>max
 const amount=(v:unknown)=>{const n=Number(v);if(!Number.isFinite(n)||n<=0||n>1000000||Math.abs(n*100-Math.round(n*100))>1e-6)throw new Error('จำนวนเงินไม่ถูกต้อง');return n};
 const memberIds=(v:any)=>{if(!Array.isArray(v)||!v.length||v.length>500||v.some(x=>typeof x!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x)))throw new Error('เลือกสมาชิกที่ถูกต้อง 1–500 คน');return [...new Set(v)]};
 const day=(v:unknown)=>{const s=text(v,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||new Date(s).toISOString().slice(0,10)!==s)throw new Error('วันที่ไม่ถูกต้อง');return s};
+// Auth deletion must never wait behind failed Drive jobs.
+async function cleanupAuthAccounts(db:any,limit=500){
+ const jobs=await query(db.from('trash_cleanup_queue').select('id,target').eq('kind','auth').order('created_at').limit(limit));
+ let failed=0;
+ for(let offset=0;offset<jobs.length;offset+=10)await Promise.all(jobs.slice(offset,offset+10).map(async(job:any)=>{
+  try{
+   const owner=await query(db.from('profiles').select('id').eq('id',job.target).maybeSingle());
+   if(owner)throw Error('Profile still exists');
+   const result=await db.auth.admin.deleteUser(job.target);
+   if(result.error&&result.error.code!=='user_not_found'&&result.error.status!==404)throw result.error;
+   await query(db.from('trash_cleanup_queue').delete().eq('id',job.id));
+  }catch{failed++}
+ }));
+ const remaining=await query(db.from('trash_cleanup_queue').select('id').eq('kind','auth').limit(1));
+ return {processed:jobs.length-failed,failed,pending:remaining.length>0};
+}
+async function cleanupDriveFiles(db:any){
+ const jobs=await query(db.from('trash_cleanup_queue').select('*').eq('kind','drive').order('created_at').limit(3));
+ await Promise.all(jobs.map(async(job:any)=>{try{await deleteDrive(job.target,true);await query(db.from('trash_cleanup_queue').delete().eq('id',job.id))}catch{/* Keep failed file jobs for retry, independently of Auth. */}}));
+}
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'',allowed=(Deno.env.get('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim());
  const cors={'Access-Control-Allow-Origin':allowed.includes(origin)?origin:'null','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,GET,OPTIONS','Vary':'Origin','Cache-Control':'no-store'};
@@ -67,8 +87,7 @@ Deno.serve(async req=>{
    }
    case 'bootstrap':{
     await query(db.rpc('purge_trash',{p_all:false,p_actor:null}));
-    const cleanup=await query(db.from('trash_cleanup_queue').select('*').order('created_at').limit(3));
-    const cleanupTask=(async()=>{for(const job of cleanup){try{if(job.kind==='drive')await deleteDrive(job.target,true);else{const r=await db.auth.admin.deleteUser(job.target);if(r.error)throw r.error}await query(db.from('trash_cleanup_queue').delete().eq('id',job.id))}catch{/* retry on the next bootstrap */}}})();
+    const cleanupTask=Promise.allSettled([cleanupAuthAccounts(db,100),cleanupDriveFiles(db)]);
     const runtime=(globalThis as any).EdgeRuntime;if(runtime?.waitUntil)runtime.waitUntil(cleanupTask);else await cleanupTask;
 
     const rounds=await query(db.from('rounds').select('*').order('created_at'));
@@ -115,7 +134,7 @@ Deno.serve(async req=>{
     const uploaded:string[]=[];try{if(file){patch.drive_file_id=await uploadDrive(await validateImage(file),`income-${crypto.randomUUID()}`);uploaded.push(patch.drive_file_id)}if(receiptFile){patch.receipt_file_id=await uploadDrive(await validateReceipt(receiptFile),`income-receipt-${crypto.randomUUID()}`);uploaded.push(patch.receipt_file_id)}await query(db.rpc('save_manual_income',{p_id:input.id||null,p_patch:patch,p_actor:profile.id}))}catch(e){for(const id of uploaded)await deleteDrive(id);throw e}return json({ok:true});
    }
    case 'purge-trash':{
-    requireAdmin();if(input.confirmation!=='ลบถาวร')throw new Error('ยืนยันลบถาวรก่อนดำเนินการ');const count=await query(db.rpc('purge_trash',{p_all:true,p_actor:profile.id}));return json({ok:true,count});
+    requireAdmin();if(input.confirmation!=='ลบถาวร')throw new Error('ยืนยันลบถาวรก่อนดำเนินการ');const count=await query(db.rpc('purge_trash',{p_all:true,p_actor:profile.id}));const authCleanup=await cleanupAuthAccounts(db);if(authCleanup.pending)throw Error('ลบข้อมูลในถังขยะแล้ว แต่ยังลบบัญชีเข้าสู่ระบบไม่ครบ กรุณากดล้างถังขยะซ้ำเพื่อลองอีกครั้ง');return json({ok:true,count,authCleanup});
    }
    case 'delete-records':{
     requireAdmin();const entity=text(input.entity,20);if(!['member','round','charge','payment','expense','income'].includes(entity)||!Array.isArray(input.ids)||!input.ids.length||input.ids.length>500||typeof input.deleted!=='boolean')throw new Error('ข้อมูลรายการไม่ถูกต้อง');

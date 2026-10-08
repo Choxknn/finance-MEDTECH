@@ -51,3 +51,5 @@ Backend credentials stay in Supabase secrets. Authenticated members cannot query
 - Fix permanent member deletion: process Authentication independently of blocked Drive jobs and await account cleanup before reporting success.
 
 - Add LINE Login button, OAuth account linking and registration continuation. Activation requires a LINE Login channel and server-side Login credentials; preserve legacy linking until configured.
+
+- Add optional LINE new-bill notices, off by default. Enqueue atomically for selected linked members, deliver branded Flex with amount and due date, and continue pending delivery through the scheduled worker.

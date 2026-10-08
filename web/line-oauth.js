@@ -1,0 +1,5 @@
+'use strict';
+window.FinanceLine={
+ async request(data,accessToken){const cfg=window.FINANCE_CONFIG,r=await fetch(cfg.supabaseUrl+'/functions/v1/line-login',{method:'POST',headers:{apikey:cfg.supabaseAnonKey,'Content-Type':'application/json',...(accessToken?{Authorization:'Bearer '+accessToken}:{})},body:JSON.stringify(data)});const j=await r.json();if(!r.ok)throw Error(j.error||'เชื่อมต่อ LINE ไม่สำเร็จ');return j},
+ async start(mode,{accessToken,session,remember=true}={}){const bytes=crypto.getRandomValues(new Uint8Array(32)),encode=b=>btoa(String.fromCharCode(...b)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');const verifier=encode(bytes),challenge=encode(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))));const result=await this.request({action:'start',mode,session,challenge},accessToken);const url=new URL(result.url);if(url.origin!=='https://access.line.me')throw Error('ลิงก์ LINE ไม่ถูกต้อง');sessionStorage.setItem('finance-line-oauth',JSON.stringify({state:result.state,verifier,mode,remember,createdAt:Date.now()}));location.assign(url.href)}
+};

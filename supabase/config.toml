@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.account-access]
 verify_jwt = false
+
+[functions.line-login]
+verify_jwt = false

@@ -50,3 +50,5 @@
 - LINE messages in QA were mocked; no real messages sent to members.
 
 - Auth cleanup regression: 64 accounts bypass a blocked Drive job; failed deletions remain retryable; existing profiles are protected. Full existing test suite passed. Verified production Auth queue is empty after repairing previously confirmed permanent deletions.
+
+- LINE Login tests: signed state, PKCE, invalid audience, unknown LINE rejection, authenticated linking and server-side session issuance; UI button, mismatched callback state and signup continuation verified with mocks. No real LINE Login channel configured or real OAuth account tested at delivery.

@@ -49,3 +49,5 @@ Backend credentials stay in Supabase secrets. Authenticated members cannot query
 - Remove fund categories from available choices while retaining historical ledger categories; allow adding a removed name again.
 
 - Fix permanent member deletion: process Authentication independently of blocked Drive jobs and await account cleanup before reporting success.
+
+- Add LINE Login button, OAuth account linking and registration continuation. Activation requires a LINE Login channel and server-side Login credentials; preserve legacy linking until configured.

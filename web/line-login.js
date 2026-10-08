@@ -1,0 +1,6 @@
+'use strict';
+let lineLoginEnabled=false;
+const lineLoginRender=render;render=function(){lineLoginRender();if(!user){const form=document.getElementById('login-form');if(form&&!document.getElementById('line-login-button'))form.insertAdjacentHTML('afterend','<button type="button" id="line-login-button" class="line-login-button">เข้าสู่ระบบด้วย LINE</button>')}else if(lineLoginEnabled)document.querySelectorAll('[data-action="link-line"]').forEach(b=>b.textContent='เชื่อมบัญชีด้วย LINE Login')};
+document.addEventListener('click',async e=>{const b=e.target.closest('#line-login-button,[data-action="link-line"]');if(!b)return;if(b.dataset.action==='link-line'&&!lineLoginEnabled)return;e.preventDefault();e.stopImmediatePropagation();b.disabled=true;try{if(cfg.mode!=='live')throw Error('โหมดทดลองไม่เชื่อมต่อ LINE จริง');if(user)await ensureLiveSession();await FinanceLine.start(user?'link':'login',{accessToken:user?token:null,remember:document.querySelector('[name=remember]')?.checked??true})}catch(err){toast(err.message);b.disabled=false}},true);
+if(cfg.mode==='live')FinanceLine.request({action:'status'}).then(r=>{lineLoginEnabled=r.enabled;if(user&&lineLoginEnabled)document.querySelectorAll('[data-action="link-line"]').forEach(b=>b.textContent='เชื่อมบัญชีด้วย LINE Login')}).catch(()=>{});
+render();

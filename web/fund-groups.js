@@ -4,7 +4,7 @@ function fundCategoryNames(){return [...new Map([...(db.settings?.fund_categorie
 function groupFundRows(rows,kind,table){
  if(!rows.length)return table(rows,kind);
  const groups=new Map();for(const r of rows){const name=categoryName(r.category),key=name.toLocaleLowerCase('th');if(!groups.has(key))groups.set(key,{name,rows:[]});groups.get(key).rows.push(r)}
- return [...groups.values()].sort((a,b)=>a.name.localeCompare(b.name,'th')).map(g=>`<section class="fund-category"><header><span>${icon('document')} ${esc(g.name)} <small>${g.rows.length} รายการ</small></span><strong>฿${money(g.rows.filter(r=>!r.voided).reduce((sum,r)=>sum+Number(r.amount),0))}</strong></header>${table(g.rows,kind)}</section>`).join('');
+ return [...groups.values()].sort((a,b)=>a.name.localeCompare(b.name,'th')).map(g=>`<section class="fund-category"><header><span>${icon('document')} ${esc(g.name)} <small>${g.rows.length} รายการ</small></span><strong>฿${money(g.rows.filter(r=>!r.voided&&(r.workflow_status||'settled')==='settled').reduce((sum,r)=>sum+Number(r.amount),0))}</strong></header>${table(g.rows,kind)}</section>`).join('');
 }
 function collectionRows(){
  if(cfg.mode==='live')return db.fund_collections||[];

@@ -1,0 +1,9 @@
+/* CSS Aurora wordmark: no React runtime needed for the existing static app. */
+#boot-screen{background:radial-gradient(ellipse at 25% 30%,#f4dce780,transparent 55%),radial-gradient(ellipse at 80% 70%,#eadff780,transparent 55%),#f3edef}
+#boot-screen .boot-card{width:min(850px,94vw);padding:64px 16px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none}
+#boot-screen .boot-wordmark{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:clamp(32px,7.8vw,76px);font-weight:800;letter-spacing:-.055em;line-height:1.2;white-space:nowrap;color:#49313e;margin:0 0 24px}
+.aurora-text{display:inline-block;color:#b43658;background:linear-gradient(100deg,#a91d43 0%,#e15b83 25%,#9762cf 50%,#c93358 75%,#a91d43 100%);background-size:250% 100%;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:finance-aurora 7s ease-in-out infinite}
+#boot-screen #boot-hint{font-size:13px;color:#947987;letter-spacing:.02em}#boot-screen .boot-dots{margin-top:22px}#boot-screen .boot-dots i{width:5px;height:5px;background:#b43658}
+@keyframes finance-aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@media(prefers-reduced-motion:reduce){.aurora-text{animation:none;background-position:50% 50%}}
+@media(forced-colors:active){.aurora-text{background:none;-webkit-text-fill-color:CanvasText;color:CanvasText}}

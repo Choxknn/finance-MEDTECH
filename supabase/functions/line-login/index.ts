@@ -47,7 +47,7 @@ Deno.serve(async req=>{
   }
   if(state.mode==='link'){
    if(linked&&linked.profile_id!==state.profile)throw Error('LINE นี้เชื่อมกับสมาชิกคนอื่นแล้ว');
-   await query(db.from('line_accounts').upsert({profile_id:state.profile,line_user_id:identity.sub},{onConflict:'profile_id'}));
+   await query(db.from('line_accounts').upsert({profile_id:state.profile,line_user_id:identity.sub,display_name:typeof identity.name==='string'?identity.name.slice(0,200):null},{onConflict:'profile_id'}));
    await query(db.from('line_link_codes').delete().eq('profile_id',state.profile));return json({mode:'link',ok:true});
   }
   if(state.mode!=='login'||!linked)throw Error('LINE นี้ยังไม่เชื่อมบัญชี กรุณาเข้าสู่ระบบด้วยรหัสนักศึกษาแล้วเชื่อม LINE ในหน้าโปรไฟล์');

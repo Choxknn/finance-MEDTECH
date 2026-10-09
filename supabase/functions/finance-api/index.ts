@@ -75,8 +75,8 @@ Deno.serve(async req=>{
     const confirmed=input.action==='cleanup-history';if(confirmed&&(input.confirmation!=='ลบข้อมูล'||typeof input.anchor!=='string'||!Number.isFinite(Date.parse(input.anchor))))throw new Error('กรุณาตรวจสอบจำนวนรายการและยืนยันก่อนลบ');
     const result=await query(db.rpc('clear_old_messages',{p_kind:input.kind,p_months:months,p_actor:profile.id,p_confirmed:confirmed,p_anchor:confirmed?input.anchor:null}));return json(result);
    }
-   case 'publish-announcement':{requireAdmin();const id=await query(db.rpc('publish_web_announcement',{p_title:text(input.title,120),p_body:text(input.body,2000),p_members:memberIds(input.profile_ids),p_actor:profile.id}));return json({id});}
-   case 'dismiss-announcement':{await query(db.from('web_announcement_recipients').update({dismissed_at:new Date().toISOString()}).eq('announcement_id',text(input.id,36)).eq('profile_id',profile.id));return json({ok:true});}
+   case 'publish-announcement':{requireAdmin();const id=await query(db.rpc('publish_web_announcement',{p_title:text(input.title,120),p_body:text(input.body,2000),p_members:[],p_actor:profile.id}));return json({id});}
+   case 'dismiss-announcement':{await query(db.from('web_announcement_recipients').upsert({announcement_id:text(input.id,36),profile_id:profile.id,dismissed_at:new Date().toISOString()},{onConflict:'announcement_id,profile_id'}));return json({ok:true});}
    case 'delete-announcement':{requireAdmin();await query(db.from('web_announcements').delete().eq('id',text(input.id,36)));return json({ok:true});}
    case 'read-notification':{await query(db.from('notifications').update({seen_at:new Date().toISOString()}).eq('id',text(input.id,36)).eq('profile_id',profile.id));return json({ok:true});}
    case 'send-campaign':case 'process-campaign':{
@@ -100,8 +100,8 @@ Deno.serve(async req=>{
     const profiles=(await query(isAdmin?db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note'):db.from('profiles').select('id,student_id,name,year,role,active,deleted_at,phone,contact_email,profile_note').eq('id',profile.id))).map((p:any)=>{if(!isAdmin)delete p.profile_note;return {...p,line_linked:accounts.some((a:any)=>a.profile_id===p.id),...(isAdmin?{line_user_id:accounts.find((a:any)=>a.profile_id===p.id)?.line_user_id||''}:{})}});
     const notifications=await query(db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id,seen_at').eq('profile_id',profile.id).order('created_at',{ascending:false}).limit(100));
     const recipients=await query(db.from('web_announcement_recipients').select('announcement_id,dismissed_at').eq('profile_id',profile.id));
-    const allAnnouncements=await query(isAdmin?db.from('web_announcements').select('*').order('created_at',{ascending:false}).limit(100):db.from('web_announcements').select('*').in('id',recipients.map((r:any)=>r.announcement_id)).order('created_at',{ascending:false}).limit(100));
-    const announcements=allAnnouncements.map((a:any)=>({...a,dismissed_at:recipients.find((r:any)=>r.announcement_id===a.id)?.dismissed_at||null,recipient:recipients.some((r:any)=>r.announcement_id===a.id)}));
+    const allAnnouncements=await query(db.from('web_announcements').select('*').order('created_at',{ascending:false}).limit(100));
+    const announcements=allAnnouncements.map((a:any)=>({...a,dismissed_at:recipients.find((r:any)=>r.announcement_id===a.id)?.dismissed_at||null,recipient:true}));
     const campaigns=isAdmin?await query(db.rpc('campaign_summary',{p_actor:profile.id,p_id:null})):[];
     const audit=isAdmin?await query(db.from('audit').select('*').order('created_at',{ascending:false}).limit(200)):[];
     const paymentQrs=await query(db.from('payment_qrs').select('id,amount_cents,image_url').order('amount_cents'));
@@ -284,6 +284,13 @@ Deno.serve(async req=>{
     let sent=0;for(const i of selected){const n=await query(db.from('notifications').insert({profile_id:p.id,title:i.title,body:i.body,message_kind:'reminder',reminder_charge_id:i.charge_id,reminder_key:`${i.charge_id}:${i.due_date}:manual-${crypto.randomUUID()}`,expires_at:new Date(Date.now()+600000).toISOString(),delivery_started_at:new Date().toISOString()}).select('*').single());if(await deliverNotification(db,n)==='sent')sent++;}
     await query(db.from('audit').insert({actor:profile.name,action:`ส่งแจ้งเตือนกำหนดชำระ ${p.student_id} · ${sent}/${selected.length} บิล`}));
     return json({message:`LINE รับคำขอแล้ว ${sent}/${selected.length} บิล`,sent,total:selected.length});
+   }
+   case 'line-profile':{
+    const account=await query(db.from('line_accounts').select('line_user_id,display_name').eq('profile_id',profile.id).maybeSingle());
+    if(!account)return json({linked:false});
+    let name=account.display_name||'';
+    try{const r=await fetch('https://api.line.me/v2/bot/profile/'+encodeURIComponent(account.line_user_id),{headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN')},signal:AbortSignal.timeout(5000)});if(r.ok){const data=await r.json();if(typeof data.displayName==='string'&&data.displayName){name=data.displayName.slice(0,200);await query(db.from('line_accounts').update({display_name:name}).eq('profile_id',profile.id).eq('line_user_id',account.line_user_id));}}}catch{}
+    return json({linked:true,display_name:name});
    }
    case 'link-code':{
     const code=crypto.randomUUID().replaceAll('-','').slice(0,16).toUpperCase();await query(db.from('line_link_codes').delete().eq('profile_id',profile.id));await query(db.from('line_link_codes').insert({profile_id:profile.id,code_hash:await hash(code),expires_at:new Date(Date.now()+600000).toISOString()}));return json({code});

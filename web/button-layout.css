@@ -1,0 +1,35 @@
+/* Shared action sizing, kept separate from navigation and carousel dots. */
+:root{--action-height:42px;--action-gap:8px}
+.page-head{align-items:flex-start;gap:16px}
+.page-head>div:first-child{min-width:0;flex:1 1 260px}
+.page-head>.page-actions{display:flex;flex:0 1 auto;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:var(--action-gap);max-width:100%}
+.page-actions>button,.page-actions>a{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--action-height);max-width:100%;margin:0;font-size:13px;line-height:1.5;padding:10px 14px;white-space:normal;text-wrap:balance}
+.page-actions svg{width:18px;height:18px;flex-shrink:0}
+.button-group,.compact-actions,.fund-file-actions,.individual-actions,.individual-actions>.button-group{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.button-group>button,.compact-actions>button,.fund-file-actions>button{margin:0;max-width:100%}
+main button.icon-button,.record-window button.icon-button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;min-width:40px;height:40px;padding:9px;margin:0}
+main button.icon-button svg,.record-window button.icon-button svg{width:18px;height:18px;flex-shrink:0}
+#dialog .actions{display:flex;align-items:stretch;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid #b48c9c26}
+#dialog .actions>button,#dialog .actions>a{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;max-width:100%;padding:11px 16px;line-height:1.5;white-space:normal;text-wrap:balance;flex:0 1 auto;margin:0}
+#dialog .actions svg{width:18px;height:18px;flex-shrink:0}
+#dialog .modal-head{align-items:center;gap:12px}
+#dialog .modal-head>button{flex:0 0 40px;width:40px;min-width:40px;height:40px;padding:8px}
+#dialog .modal-head h2{min-width:0;overflow-wrap:anywhere}
+.fund-file-actions+.button-group{margin-top:10px;padding-top:10px;border-top:1px solid #b48c9c26}
+.record-window .detail-value .button-group{justify-content:flex-start}
+button:disabled{cursor:not-allowed}button.button-working:disabled{cursor:progress}
+button[hidden],a[hidden]{display:none!important}
+.page-actions button:focus-visible,.button-group button:focus-visible,#dialog button:focus-visible{outline:3px solid #b4365866;outline-offset:3px}
+@media(max-width:760px){
+ :root{--action-height:44px}
+ .page-head>.page-actions{flex:1 1 100%;width:100%;justify-content:flex-start;gap:8px}
+ .page-actions>button,.page-actions>a{flex:1 1 145px;min-width:0}
+ main button.icon-button,.record-window button.icon-button{flex-basis:44px;width:44px;min-width:44px;height:44px}
+ #dialog .actions>button,#dialog .actions>a{flex:1 1 120px;min-width:0}
+ .fund-file-actions>button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;white-space:normal}
+ .member-picker-tools button{min-height:40px}
+ .record-window .bill-right{flex-wrap:wrap}
+ .record-window .bill-right>button{min-height:44px;margin-left:auto}
+ .toolbar{align-items:flex-end}.toolbar>button{min-height:44px;max-width:100%;white-space:normal}
+}
+@media(prefers-reduced-motion:reduce){.page-actions button,#dialog .actions>button{transition:none}}

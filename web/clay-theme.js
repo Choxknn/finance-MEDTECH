@@ -60,7 +60,7 @@ function applyClayPresentation() {
       : [['dashboard','home','หน้าหลัก'],['bills','wallet','รายการบิล'],['history','history','ประวัติ'],['fund','wallet','กองกลาง']];
     layout.insertAdjacentHTML('beforeend', `<nav class="clay-dock" aria-label="เมนูด่วน">${items.map(([v,i,label])=>`<button type="button" data-view="${v}" class="${view===v?'active':''}" ${view===v?'aria-current="page"':''}>${icon(i)}<span>${label}</span></button>`).join('')}<button type="button" data-action="menu" aria-label="เปิดเมนูทั้งหมด">${icon('menu')}<span>เมนู</span></button></nav>`);
   }
-  layout.querySelector('.workspace').insertAdjacentHTML('beforeend', '<footer class="clay-footer">Finance · MEDTECH <span>เงินกองกลางของเรา</span></footer>');
+  layout.querySelector('.workspace').insertAdjacentHTML('beforeend', '<footer class="clay-footer">Finance · MEDTECH <span>การเงิน</span></footer>');
 }
 const clayRender = render;
 render = function () { clayRender(); applyClayPresentation(); };

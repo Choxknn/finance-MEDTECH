@@ -1,3 +1,4 @@
+import {driveHealth} from '../_shared/drive-health.ts';
 import {financeSite} from '../_shared/line-flex.ts';
 import {changeStudentLogin} from '../_shared/student-login.ts';
 import {adminDb,query,secret,hash,uploadDrive,deleteDrive,driveToken,checkSlip,isRecentSlip,notify,paymentSuccess,deliverNotification,validateImage,validateReceipt} from '../_shared/services.ts';
@@ -128,6 +129,7 @@ Deno.serve(async req=>{
     for(const p of allPayments){p.charge_id??=p.charge_snapshot?.id;p.profile_id??=p.member_snapshot?.id;delete p.charge_snapshot;delete p.member_snapshot}
     return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{fund_collections:fundCollections,campaigns,announcements,payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
    }
+   case 'drive-health':{requireAdmin();return json(await driveHealth());}
    case 'set-fund-workflow':{requireAdmin();await query(db.rpc('set_fund_workflow',{p_kind:input.kind,p_id:text(input.id,36),p_status:input.status,p_label:String(input.label||'').slice(0,80),p_actor:profile.id}));return json({ok:true});}
    case 'save-income':{
     requireAdmin();const patch:any={responsible_name:text(input.responsible_name||profile.name,120),title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};

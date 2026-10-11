@@ -43,7 +43,7 @@ function mpShell(layout){
   const nav=sidebar.querySelector('.nav'),groups=[...nav.querySelectorAll('.nav-section')],first=groups[0];if(first){first.querySelector('h2').textContent='YOUR SPACE';for(const key of ['bills','history','fund']){const b=nav.querySelector(`[data-view="${key}"]`);if(b)first.append(b)}for(const g of groups.slice(1))if(!g.querySelector('button'))g.remove()}
   const billButton=nav.querySelector('[data-view=bills]'),n=mpCharges().filter(c=>balance(c)>0&&!round(c.round_id).archived).length;if(billButton&&n)billButton.insertAdjacentHTML('beforeend',`<em class="mp-nav-count">${n}</em>`);
  }
- sidebar.querySelector('.sidebar-bottom').insertAdjacentHTML('beforebegin',`<div class="mp-aside-card">${icon('spark')}<p><strong>เรื่องเงินง่ายขึ้น<br>เมื่อมีเพื่อนช่วยดูแล</strong></p><p>ก้าวเล็ก ๆ ของทุกคน<br>รวมเป็นสิ่งดี ๆ ของ MEDTECH</p></div>`);
+ const mobileBrand=layout.querySelector('.mobile-brand');if(mobileBrand&&!mobileBrand.querySelector('.mp-mobile-wordmark'))mobileBrand.insertAdjacentHTML('beforeend','<span class="mp-mobile-wordmark">Finance<small>MEDTECH</small></span>');
  const title=layout.querySelector('.topbar-title'),page=layout.querySelector('main h1')?.textContent||names[view]||'Finance MEDTECH';title.innerHTML=`${user.role==='admin'?'พื้นที่ผู้ดูแล':'พื้นที่ของฉัน'} <span>/</span> <b>${esc(names[view]||page)}</b>`;
  const box=layout.querySelector('.topbar .user'),avatar=box.querySelector('.avatar'),name=box.querySelector('.material-profile-name');
  if(avatar&&name){const trigger=document.createElement('button');trigger.className='mp-profile-trigger';for(const a of ['aria-label','aria-expanded','aria-haspopup','aria-controls'])trigger.setAttribute(a,avatar.getAttribute(a));trigger.dataset.materialProfileToggle='';trigger.innerHTML=`<span class="avatar">${avatar.innerHTML}</span><span class="mp-profile-text">${esc(user.name)}<small>${user.role==='admin'?'ผู้ดูแลระบบ':'นักศึกษา'}${user.year?' · ชั้นปีที่ '+esc(user.year):''}</small></span><span class="mp-chevron" aria-hidden="true">⌄</span>`;avatar.replaceWith(trigger);name.remove()}
@@ -55,6 +55,14 @@ function mpApply(){if(!user)return;const layout=document.querySelector('.layout'
  if(view==='history'&&user.role!=='admin'){const head=main.querySelector('.page-head'),demo=main.querySelector('.demo-banner');main.replaceChildren();if(demo)main.append(demo);if(head)main.append(head);main.insertAdjacentHTML('beforeend',mpCard('ประวัติการชำระเงิน','history',mpPaymentRows(mpPayments()),'','mp-history-card'))}
  if(view==='fund'){const summary=main.querySelector('.clay-fund-panel');if(summary){const income=Number(db.fund_totals?.income||0),expense=Number(db.fund_totals?.expense||0);summary.outerHTML=`<section class="mp-stats">${mpStat('ยอดเงินส่วนกลาง',income-expense,'ยอดคงเหลือที่ยืนยันแล้ว','main','wallet')}${mpStat('รายรับทั้งหมด',income,'รวมรายรับจากการเก็บเงิน','mint','check')}${mpStat('รายจ่ายทั้งหมด',expense,'รายการจ่ายที่เสร็จสิ้นแล้ว','purple','document')}</section>`}}
 }
-const mpRender=render;render=function(){mpRender();mpApply()};
+function mpUnifyStats(main){
+ main.querySelectorAll('.stats').forEach(group=>{
+  const cards=[...group.children];if(!cards.length||cards.some(card=>!card.matches('.stat')))return;
+  const replacement=document.createElement('section');replacement.className='mp-stats';replacement.setAttribute('aria-label','สรุปการเงิน');
+  cards.forEach((card,index)=>{const label=card.querySelector('.label')?.textContent||'',value=card.querySelector('.amount')?.textContent||'',note=card.querySelector('small')?.textContent||'';replacement.insertAdjacentHTML('beforeend',`<article class="mp-stat mp-stat-${index===0?'main':index===1?'mint':'purple'}"><div class="mp-stat-label">${icon(index===0?'wallet':index===1?'document':'check')}${esc(label)}</div><strong>${esc(value)}</strong><small>${esc(note)}</small></article>`)});
+  group.replaceWith(replacement);
+ });
+}
+const mpRender=render;render=function(){mpRender();mpApply();if(user)mpUnifyStats(document.querySelector('.material-shell main'))};
 document.addEventListener('click',e=>{const button=e.target.closest('[data-mp-bill]');if(!button||!user)return;e.preventDefault();e.stopImmediatePropagation();const id=button.dataset.mpBill;if(mpCharges().some(c=>c.id===id&&c.profile_id===user.id))materialOpenCharge(id)},true);
 if(user)render();

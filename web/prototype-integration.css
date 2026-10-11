@@ -145,3 +145,16 @@ button,input,select,textarea{font-family:inherit}body{font-weight:400}h1,h2,h3{f
 @media(max-width:600px){.reminder-filters{grid-template-columns:1fr}.reminder-selection-tools{align-items:flex-start;flex-wrap:wrap}.reminder-members{max-height:340px}.reminder-charge{padding-left:12px}.material-shell[data-clay-view=rounds] .round-summary{gap:12px 20px}.material-shell[data-clay-view=rounds] .round-summary>.info-frame{flex-basis:120px}.mp-bill-top>.badge{margin-left:40px}.mp-bill-title{min-width:120px}.activity-card,.mp-card .activity-card{gap:10px}.material-shell .mobile-brand{font-size:13px}.material-shell .mobile-brand .brand-illustration{width:52px;height:52px}.reference-brand small{font-size:9px}.material-shell .mobile-brand .brand-illustration{transform:scale(1.14)}#payment-qr{width:170px;max-height:215px}}
 
 .material-shell[data-clay-view=rounds] .completed-bills{border:0;border-radius:0;background:none;box-shadow:none;padding:20px 0}
+
+/* Login identity: larger transparent mark and a recognizable LINE sign-in. */
+.login-page .login-art .brand-row{gap:18px;align-items:center}
+.login-page .login-art .brand-home{width:160px;height:160px;flex:0 0 160px;padding:0}
+.login-page .login-art .brand-home img{width:100%;height:100%;object-fit:contain}
+.login-page .line-login-button{gap:11px;min-height:52px;padding:12px 18px;line-height:1.5}
+.login-page .line-login-icon{display:block;width:28px;height:28px;flex:0 0 28px}
+.login-page .line-login-button span{display:block}
+@media(max-width:600px){
+ .login-page .login-art .brand-row{gap:12px}
+ .login-page .login-art .brand-home{width:124px;height:124px;flex-basis:124px}
+ .login-page .login-art .brand{font-size:24px}
+}

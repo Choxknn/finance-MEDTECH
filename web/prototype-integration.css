@@ -158,3 +158,25 @@ button,input,select,textarea{font-family:inherit}body{font-weight:400}h1,h2,h3{f
  .login-page .login-art .brand-home{width:124px;height:124px;flex-basis:124px}
  .login-page .login-art .brand{font-size:24px}
 }
+
+/* Compact mobile login and matching framed list entries. */
+.login-page .login-art .eyebrow{display:none}
+@media(max-width:600px){
+ .login-page .login-art{padding:10px 22px;gap:0;min-height:0}
+ .login-page .login-art .brand-home{height:86px}
+ .login-page .login-art .brand-home img{width:124px;height:124px;max-width:none;flex:none}
+}
+.activity-card,.mp-card .activity-card{border:1px solid var(--line);border-radius:18px;background:#fcfafb;padding:16px;margin-bottom:10px;box-shadow:none}
+.activity-card:last-child,.mp-card .activity-card:last-child{margin-bottom:0}
+.material-shell[data-clay-view=rounds] main .stack{gap:14px}
+.material-shell[data-clay-view=rounds] main .stack>.panel{border:1px solid var(--line);border-radius:20px;background:#fff;padding:20px;box-shadow:none}
+.mp-bill{border:1px solid var(--line);border-radius:18px;background:#fcfafb;padding:18px;box-shadow:none}
+.mp-bill+.mp-bill{margin-top:12px}
+.individual-list{display:grid;gap:12px}
+.individual-bill{border:1px solid var(--line);border-radius:18px;background:#fcfafb;box-shadow:none;overflow:hidden}
+.individual-bill>summary{padding:16px}
+@media(max-width:600px){
+ .activity-card,.mp-card .activity-card{padding:14px;border-radius:16px}
+ .material-shell[data-clay-view=rounds] main .stack>.panel{padding:16px;border-radius:18px}
+ .mp-bill{padding:15px;border-radius:16px}
+}

@@ -89,3 +89,16 @@
  .mp-fund-row{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px 12px;align-items:start}.mp-fund-row>.mp-fund-actions{grid-column:2;max-width:none;justify-content:flex-start}.mp-fund-row .mp-proof{font-size:10px;padding:9px 11px;gap:5px}.mp-fund-row .mp-proof svg{display:block;width:14px;height:14px}
  .reading-summary{gap:10px;flex-wrap:wrap}.reading-summary strong{font-size:27px}.reading-summary .badge{font-size:10px}.reading-row{padding:15px 0}.reading-row dd{font-size:13px}#dialog .detail-value{font-size:13px}
 }
+
+/* Disclosure titles are text controls, independent of the primary-button color. */
+.material-shell .record-disclosure,#dialog .record-disclosure{color:var(--ink);-webkit-text-fill-color:var(--ink);background:transparent;border:0;box-shadow:none;text-align:left;font-weight:600}
+.material-shell .record-disclosure>span,#dialog .record-disclosure>span{color:inherit;-webkit-text-fill-color:inherit}
+.material-shell .record-disclosure:hover:not(:disabled),#dialog .record-disclosure:hover:not(:disabled){color:var(--red);-webkit-text-fill-color:var(--red);background:#fff7fa;transform:none;box-shadow:none}
+.material-shell summary,.material-shell summary strong{color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.material-shell summary small{color:var(--muted);-webkit-text-fill-color:var(--muted)}
+#dialog .admin-record .reading-row dd{white-space:normal}#dialog .admin-record .reading-row dd small{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+#dialog .admin-record .reading-actions{align-items:center;gap:8px}#dialog .admin-record .reading-actions>.button-group{margin-left:auto;gap:6px}
+#dialog .reading-hint{display:flex;align-items:flex-start;gap:9px;color:var(--muted);font-size:11px;line-height:1.8;margin:16px 0}#dialog .reading-hint svg{width:16px;height:16px;flex:0 0 16px;margin-top:2px}
+#dialog .admin-record .reading-row .record-stamp{margin:0;padding:0}#dialog .admin-record .reading-row .stamp-item{padding:0;background:none;border:0;box-shadow:none}
+#dialog .admin-record .reading-actions .button-group{display:flex;flex-wrap:wrap}
+@media(max-width:540px){#dialog .admin-record .reading-actions{justify-content:space-between}#dialog .admin-record .reading-actions>button{font-size:11px}.material-shell .record-disclosure{font-size:14px;line-height:1.7}}

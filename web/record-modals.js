@@ -16,15 +16,29 @@ function unlockModalPage(){
 const recordModal=modal;modal=function(...args){lockModalPage();try{recordModal(...args);document.getElementById('dialog').setAttribute('aria-label',String(args[0]))}catch(error){unlockModalPage();throw error}};
 document.getElementById('dialog').addEventListener('close',unlockModalPage);
 new MutationObserver(()=>{if(document.getElementById('dialog').open)lockModalPage();else unlockModalPage()}).observe(document.getElementById('dialog'),{attributes:true,attributeFilter:['open']});
+function recordReadingRow(label,value,name=detailIcon(label)){
+ return `<div class="reading-row"><span class="reading-icon" aria-hidden="true">${icon(name)}</span><div><dt>${esc(label)}</dt><dd>${value}</dd></div></div>`;
+}
 function showRecordWindow(button){
  const row=button.closest('tr');if(!row)return;
+ const actions=[];
  const cells=[...row.cells].map(cell=>{
   const copy=cell.cloneNode(true);copy.querySelectorAll('.record-disclosure,.detail-cell-label').forEach(el=>el.remove());
   copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
-  return detailCard(cell.dataset.label||'รายละเอียด',copy.innerHTML);
+  copy.querySelectorAll('.record-original-content,.record-original-title').forEach(el=>el.replaceWith(...el.childNodes));
+  if(!copy.textContent.trim()&&!copy.querySelector('button,img'))return '';
+  const label=cell.dataset.label||'รายละเอียด';
+  if(/จัดการ/.test(label)&&!copy.querySelector('img,[data-proof-id]')){actions.push(copy.innerHTML);return '';}
+  return recordReadingRow(label,copy.innerHTML);
  }).join('');
- modal(button.querySelector('span')?.textContent||'รายละเอียดรายการ',`<div class="record-window detail-grid">${cells}</div>`);
+ modal(button.querySelector('span')?.textContent||'รายละเอียดรายการ',`<section class="reading-record admin-record"><dl class="reading-list">${cells}</dl>${actions.length?`<div class="reading-actions">${actions.join('')}</div>`:''}</section>`);
  if(typeof watchProofs==='function')watchProofs();
+}
+function showAdminBillWindow(card){
+ if(user?.role!=='admin')return;
+ const c=db.charges.find(c=>c.id===card.dataset.individualId&&!c.deleted_at);if(!c)return;
+ const p=db.profiles.find(p=>p.id===c.profile_id),r=round(c.round_id),actions=card.querySelector('.individual-actions')?.innerHTML||'';
+ modal(r.title,`<section class="reading-record admin-record"><div class="reading-summary"><span class="reading-summary-icon">${icon('document')}</span><div><small>ยอดค้างชำระ</small><strong>฿${money(balance(c))}</strong></div>${badge(status(c))}</div><dl class="reading-list">${recordReadingRow('สมาชิก',esc(p?.name||'—'),'users')}${recordReadingRow('รหัสนักศึกษา',esc(p?.student_id||'—'),'identity')}${recordReadingRow('ยอดบิล','฿'+money(c.amount),'wallet')}${recordReadingRow('ค่าปรับ','฿'+money(c.fee_amount||0),'clock')}${recordReadingRow('ชำระแล้ว','฿'+money(paid(c)),'check')}${recordReadingRow('ครบกำหนด',esc(date(r.due_date)),'calendar')}${r.description?recordReadingRow('รายละเอียด',esc(r.description),'note'):''}</dl>${r.archived?'<p class="sub">บิลนี้ปิดรับชำระแล้ว</p>':''}${individualLocked(c)?`<p class="reading-hint">${icon('lock')}มีการชำระหรือรอตรวจแล้ว จึงแก้ยอดบิลไม่ได้</p>`:''}<div class="reading-actions">${actions}</div></section>`);
 }
 document.addEventListener('click',e=>{
  const disclosure=e.target.closest('.record-disclosure');
@@ -32,6 +46,7 @@ document.addEventListener('click',e=>{
  const summary=e.target.closest('[data-clay-bill]>summary,[data-individual-id]>summary');
  if(summary){
   e.preventDefault();e.stopImmediatePropagation();const card=summary.parentElement;
+  if(card.dataset.individualId){showAdminBillWindow(card);return;}
   const body=card.querySelector('.clay-bill-body,.individual-bill-body');
   const c=db.charges.find(c=>c.id===card.dataset.individualId),person=c&&db.profiles.find(p=>p.id===c.profile_id);
   const member=person?`<div class="detail-grid payment-times">${detailCard('สมาชิก',esc(person.name)+'<small>'+esc(person.student_id)+'</small>')}</div>`:'';

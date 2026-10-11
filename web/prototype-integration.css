@@ -102,3 +102,46 @@
 #dialog .admin-record .reading-row .record-stamp{margin:0;padding:0}#dialog .admin-record .reading-row .stamp-item{padding:0;background:none;border:0;box-shadow:none}
 #dialog .admin-record .reading-actions .button-group{display:flex;flex-wrap:wrap}
 @media(max-width:540px){#dialog .admin-record .reading-actions{justify-content:space-between}#dialog .admin-record .reading-actions>button{font-size:11px}.material-shell .record-disclosure{font-size:14px;line-height:1.7}}
+
+/* A single Thai typeface and open lists, without nested card borders. */
+:root,body{font-family:'Noto Sans Thai',Tahoma,system-ui,sans-serif}
+button,input,select,textarea{font-family:inherit}body{font-weight:400}h1,h2,h3{font-weight:600}
+.material-shell .page-head h1,.mp-card-head h2,.mp-bill-title h3{font-weight:600}
+.brand-illustration{display:block;width:72px;height:72px;object-fit:contain;flex:none;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 1px 5px #fff);transform:scale(1.18)}
+.reference-brand{gap:3px;font-size:15px}.reference-brand small{font-size:10px;letter-spacing:1.3px}
+.brand-home,.login-art .brand-home{background:transparent;border:0;box-shadow:none;overflow:visible}
+.brand-home img{filter:drop-shadow(0 0 2px #fff) drop-shadow(0 2px 6px #fff)}
+.sidebar-compact .brand-illustration{width:48px;height:48px}
+.material-shell .mobile-brand .brand-illustration{width:60px;height:60px}
+.material-shell[data-clay-view=audit] main>.panel,.mp-card:has(.activity-timeline){border:0;border-radius:0;background:none;box-shadow:none}
+.material-shell[data-clay-view=audit] main>.panel>.panel-head{padding:0 0 18px;border:0}
+.material-shell[data-clay-view=audit] main>.panel>.panel-body{padding:0}
+.mp-card:has(.activity-timeline){padding:0;margin-top:26px}
+.activity-timeline{padding:0}.activity-day{display:flex;align-items:center;gap:12px;font-size:11px;color:#958292;letter-spacing:.15px;padding:18px 0 4px}
+.activity-day:after{content:'';height:1px;flex:1;background:var(--line)}
+.activity-card,.mp-card .activity-card{padding:18px 0;gap:14px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;box-shadow:none}
+.activity-card .message-symbol{background:none;border:0;box-shadow:none;width:28px;height:30px;flex:0 0 28px;color:#ae6888;border-radius:0;margin-top:3px}
+.activity-card .message-content{flex:1;min-width:0}.activity-card h3,.mp-card .activity-card h3{font-size:13px;line-height:1.8;font-weight:600}
+.activity-description,.mp-card .activity-description{font-size:12px;margin:4px 0;color:#777080}.activity-meta,.mp-card .activity-meta{font-size:10px;gap:6px 12px}
+.activity-card .record-stamp{margin:0;gap:8px}.activity-card .stamp-item{border:0;border-radius:0;background:none;box-shadow:none;padding:0;gap:6px;flex:0 1 auto}
+.activity-card .stamp-item>svg{width:14px;height:14px;flex-basis:14px;padding:0;border-radius:0;background:none;color:#a08b9b}.activity-card .stamp-label{display:none}.activity-card .record-stamp time{font-size:10px;font-weight:400;color:#978692}
+.activity-changes{border:0;border-radius:0;background:none;margin-top:9px}.activity-changes summary{padding:7px 0;font-size:11px;font-weight:500}.change-row,.change-labels{padding:10px 0;gap:12px}
+.material-shell[data-clay-view=rounds] main .stack>.panel,.material-shell[data-clay-view=bills] main>.panel,.material-shell[data-clay-view=bills] .completed-bills,.mp-card:has(>.mp-bill){border:0;border-radius:0;background:none;box-shadow:none}
+.material-shell[data-clay-view=rounds] main .stack{gap:0}.material-shell[data-clay-view=rounds] main .stack>.panel{border-bottom:1px solid var(--line);padding:22px 0}
+.material-shell[data-clay-view=rounds] .panel-head{padding:0 0 12px}.material-shell[data-clay-view=rounds] .panel-body{padding:0}.material-shell[data-clay-view=rounds] .round-summary{display:flex;flex-wrap:wrap;gap:18px 32px;margin-top:12px}
+.material-shell[data-clay-view=rounds] .round-summary>.info-frame{border:0;border-radius:0;background:none;box-shadow:none;padding:0;flex:1 1 150px}
+.material-shell[data-clay-view=rounds] .bill-penalty-frame{border:0;border-radius:0;background:none;box-shadow:none;padding:10px 0;margin:0}.material-shell[data-clay-view=rounds] .bill-payment-progress{padding:0;margin:16px 0 0}
+.material-shell[data-clay-view=bills] main>.panel>.panel-head{padding:0 0 16px}.material-shell[data-clay-view=bills] .mp-bill-wrap{padding:0}.mp-card:has(>.mp-bill){padding:0}
+.mp-bill{border:0;border-radius:0;background:none;box-shadow:none;padding:20px 0;border-bottom:1px solid var(--line)}.mp-bill+.mp-bill{margin-top:0}.mp-bill-symbol{background:none;border:0;border-radius:0;width:28px;height:34px;color:#b26787}
+.mp-bill-bottom{margin-top:14px}.mp-bill-detail{margin-top:11px}.mp-bill-title h3{font-size:14px;line-height:1.8}.mp-bill-title p{font-size:11px}
+.individual-list{display:block}.individual-bill{border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;box-shadow:none}.individual-bill>summary{padding:20px 0;background:none}.individual-bill>summary>.detail-symbol{border:0;background:none;box-shadow:none;border-radius:0}.individual-bill>summary strong{font-weight:600}
+#payment-qr{display:block;width:min(190px,100%);height:auto;max-height:240px;object-fit:contain;margin:18px auto 8px;padding:8px;background:#fff;border-radius:10px}
+.material-shell img.settings-qr,#dialog img.settings-qr{display:block;width:104px;max-width:100%;height:104px;object-fit:contain;background:#fff;padding:5px;border-radius:8px}
+#settings-edit img.settings-qr{width:140px;height:140px;margin:12px 0}
+.reminder-filters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 12px}.reminder-selection-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted)}
+.reminder-members{max-height:390px;overflow-y:auto;overscroll-behavior:contain;margin:8px 0 12px}.reminder-member{border-bottom:1px solid var(--line);padding:14px 0}.reminder-person{display:flex;align-items:center;gap:10px;margin:0 0 9px;font-size:13px;font-weight:600}.reminder-person small{display:block;font-size:10px;color:var(--muted);font-weight:400}
+.reminder-charge{display:flex;align-items:center;gap:10px;margin:0;padding:10px 0 10px 28px;font-size:11px}.reminder-charge>span{flex:1;min-width:0}.reminder-charge strong{display:block;font-weight:500;overflow-wrap:anywhere}.reminder-charge small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.reminder-charge b{font-size:12px;white-space:nowrap;font-weight:500}
+.reminder-person input,.reminder-charge input,.reminder-preview-item input{width:18px;height:18px;margin:0;flex:0 0 18px;accent-color:var(--red)}.reminder-preview-summary{font-size:15px;color:var(--red)}.reminder-preview-groups>section{border-bottom:1px solid var(--line);padding:14px 0}.reminder-preview-groups h3{display:flex;flex-wrap:wrap;gap:7px;align-items:center;font-size:13px}.reminder-preview-groups h3 small{color:var(--muted);font-size:10px}.reminder-preview-item>label{display:flex;align-items:center;gap:9px;font-size:12px}.reminder-preview-item>details{padding-left:27px}.reminder-preview-item summary{font-size:11px;color:#a56a7d;cursor:pointer}#bulk-reminder-progress{font-size:12px;line-height:1.8}#bulk-reminder-progress li{margin:8px 0}
+@media(max-width:600px){.reminder-filters{grid-template-columns:1fr}.reminder-selection-tools{align-items:flex-start;flex-wrap:wrap}.reminder-members{max-height:340px}.reminder-charge{padding-left:12px}.material-shell[data-clay-view=rounds] .round-summary{gap:12px 20px}.material-shell[data-clay-view=rounds] .round-summary>.info-frame{flex-basis:120px}.mp-bill-top>.badge{margin-left:40px}.mp-bill-title{min-width:120px}.activity-card,.mp-card .activity-card{gap:10px}.material-shell .mobile-brand{font-size:13px}.material-shell .mobile-brand .brand-illustration{width:52px;height:52px}.reference-brand small{font-size:9px}.material-shell .mobile-brand .brand-illustration{transform:scale(1.14)}#payment-qr{width:170px;max-height:215px}}
+
+.material-shell[data-clay-view=rounds] .completed-bills{border:0;border-radius:0;background:none;box-shadow:none;padding:20px 0}

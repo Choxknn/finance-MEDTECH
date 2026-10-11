@@ -40,7 +40,7 @@ function mpDashboard(main){
 }
 function mpShell(layout){
  layout.classList.add('material-shell');layout.querySelector('.clay-notifications')?.classList.remove('secondary');const sidebar=layout.querySelector('.sidebar');
- const brandMarkup='<span class="reference-brandmark" aria-hidden="true"><i></i><i></i><i></i></span><div>Finance<br><small>MEDTECH</small></div>';sidebar.querySelector('.brand-row').innerHTML='<button type="button" class="reference-brand" data-view="dashboard" aria-label="หน้าหลัก">'+brandMarkup+'</button>';
+ const brandMarkup='<img class="brand-illustration" src="./medtech-mark-20261011.png" alt="MEDTECH PTU" width="72" height="72"><div>Finance<br><small>MEDTECH</small></div>';sidebar.querySelector('.brand-row').innerHTML='<button type="button" class="reference-brand" data-view="dashboard" aria-label="หน้าหลัก">'+brandMarkup+'</button>';
  const names={dashboard:'ภาพรวม',bills:'รายการบิล',history:'ประวัติชำระเงิน',fund:'การเงิน'};
  sidebar.querySelectorAll('button[data-view]').forEach(b=>{const name=names[b.dataset.view];if(name&&b.querySelector('.nav-label')){b.querySelector('.nav-label').textContent=name;b.title=name;b.setAttribute('aria-label',name)}});
  if(user.role!=='admin'){

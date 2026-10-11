@@ -185,3 +185,15 @@ button,input,select,textarea{font-family:inherit}body{font-weight:400}h1,h2,h3{f
 .mp-paid-avatar{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;height:30px;border:2px solid #fff;border-radius:50%;background:#f8e5ee;color:#a04e73;font-size:10px;font-weight:600;box-shadow:0 1px 4px #66435512}
 .mp-paid-avatar:nth-child(3n+2){background:#e4f2e9;color:#588269}.mp-paid-avatar:nth-child(3n){background:#eee6f7;color:#87669d}
 .mp-paid-avatar.mp-paid-more{background:#f0edf2;color:#84728c;font-size:18px}.mp-paid-caption{display:block;margin-top:7px;font-size:9px;color:var(--muted)}
+
+/* White summary and activity cards; review timestamps match the activity feed. */
+.individual-totals>.detail-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:none}
+.activity-card,.mp-card .activity-card{background:#fff}
+.material-shell[data-clay-view=audit] main>.panel,.mp-card:has(.activity-timeline){background:#fff;border:1px solid var(--line);border-radius:25px;padding:23px;box-shadow:none}
+.review-record-time{display:block;margin-top:5px}
+.review-record-time .record-stamp{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.review-record-time .stamp-item{display:inline-flex;align-items:center;gap:6px;flex:0 1 auto;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+.review-record-time .stamp-item>svg{width:14px;height:14px;flex:0 0 14px;padding:0;border-radius:0;background:none;color:#a08b9b}
+.review-record-time .stamp-label{display:none}
+.review-record-time .record-stamp time{font-size:10px;font-weight:400;color:#978692}
+@media(max-width:600px){.individual-totals>.detail-card{padding:14px;border-radius:16px}.material-shell[data-clay-view=audit] main>.panel,.mp-card:has(.activity-timeline){padding:18px;border-radius:20px}}

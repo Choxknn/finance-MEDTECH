@@ -129,6 +129,19 @@ Deno.serve(async req=>{
      const g=collectionMap.get(rid)||{id:rid,title:r?.title||'บิลที่เก็บถาวร',amount:0,count:0,last_at:null};g.amount+=Number(p.amount);g.count++;const at=p.reviewed_at||p.created_at;if(!g.last_at||at>g.last_at)g.last_at=at;collectionMap.set(rid,g);
     }
     const fundCollections=[...collectionMap.values()];
+    // Minimal public display summary: no full IDs, names, amounts or evidence.
+    const payerCharges=await query(db.from('charges').select('id,profile_id,round_id').is('deleted_at',null));
+    const openRoundIds=new Set(rounds.filter((r:any)=>!r.deleted_at&&!r.archived).map((r:any)=>r.id));
+    const eligibleCharges=payerCharges.filter((c:any)=>openRoundIds.has(c.round_id));
+    const payerTotals=eligibleCharges.length?await query(db.rpc('charge_totals',{p_ids:eligibleCharges.map((c:any)=>c.id)})):[];
+    const approvedByCharge=new Map<string,{amount:number,at:string}>();
+    for(const p of allPayments){if(p.status!=='approved'||p.deleted_at||!p.charge_id)continue;const prior=approvedByCharge.get(p.charge_id)||{amount:0,at:''};prior.amount+=Number(p.amount);const at=p.reviewed_at||p.created_at;if(at>prior.at)prior.at=at;approvedByCharge.set(p.charge_id,prior);}
+    const latestByPerson=new Map<string,string>();
+    for(const c of eligibleCharges){const receipt=approvedByCharge.get(c.id),total=payerTotals.find((t:any)=>t.id===c.id);if(!receipt||!total||Math.round(receipt.amount*100)<Math.round(Number(total.total_amount)*100))continue;if(receipt.at>(latestByPerson.get(c.profile_id)||''))latestByPerson.set(c.profile_id,receipt.at);}
+    const payerProfiles=latestByPerson.size?await query(db.from('profiles').select('id,student_id').in('id',[...latestByPerson.keys()]).eq('active',true).is('deleted_at',null)):[];
+    payerProfiles.sort((a:any,b:any)=>(latestByPerson.get(b.id)||'').localeCompare(latestByPerson.get(a.id)||'')||a.id.localeCompare(b.id));
+    const recentPayers={total:payerProfiles.length,people:payerProfiles.slice(0,10).map((p:any)=>({suffix:String(p.student_id||'—').slice(-2)}))};
+
     const visiblePayments=(isAdmin?allPayments:allPayments.filter((p:any)=>p.profile_id===profile.id));
     const activeRounds=rounds.filter((r:any)=>!r.deleted_at),activeProfiles=profiles.filter((p:any)=>!p.deleted_at);
     const activeCharges=charges.filter((c:any)=>!c.deleted_at&&activeRounds.some((r:any)=>r.id===c.round_id)&&activeProfiles.some((p:any)=>p.id===c.profile_id));
@@ -137,7 +150,7 @@ Deno.serve(async req=>{
     const refRounds=[...rounds,...refCharges.filter((c:any)=>c.round_snapshot&&!rounds.some((r:any)=>r.id===c.round_snapshot.id)).map((c:any)=>c.round_snapshot)];
     const refProfiles=[...profiles,...refCharges.map((c:any)=>c.profile_snapshot).filter(Boolean),...(isAdmin?allPayments:visiblePayments).map((p:any)=>p.member_snapshot).filter(Boolean)];
     for(const p of allPayments){p.charge_id??=p.charge_snapshot?.id;p.profile_id??=p.member_snapshot?.id;delete p.charge_snapshot;delete p.member_snapshot}
-    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{fund_monthly:fundMonthly(allPayments,allIncomes,allExpenses),fund_collections:fundCollections,campaigns,announcements,payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
+    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{recent_payers:recentPayers,fund_monthly:fundMonthly(allPayments,allIncomes,allExpenses),fund_collections:fundCollections,campaigns,announcements,payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
    }
    case 'storage-delete':{requireAdmin();if(input.confirmation!=='ลบรูปถาวร')throw Error('ยืนยันลบรูปถาวรก่อน');await deleteEvidenceByAdmin(db,text(input.path,100),profile.name);return json({ok:true});}
    case 'replace-evidence':{requireAdmin();const kinds:any={'payment':['payments','drive_file_id'],'expense':['expenses','drive_file_id'],'expense-receipt':['expenses','receipt_file_id'],'income':['manual_incomes','drive_file_id'],'income-receipt':['manual_incomes','receipt_file_id']};const target=kinds[input.kind];if(!target)throw Error('ประเภทรายการไม่ถูกต้อง');const record=await query(db.from(target[0]).select('id,deleted_at').eq('id',text(input.id,36)).single());if(record.deleted_at)throw Error('กู้คืนรายการก่อนอัปโหลดหลักฐาน');const image=input.kind.endsWith('receipt')?await validateReceipt(file):await validateImage(file);const stored=await uploadDrive(image,input.kind+'-replacement-'+record.id);try{await query(db.from(target[0]).update({[target[1]]:stored}).eq('id',record.id));}catch(e){await deleteDrive(stored);throw e}await query(db.from('audit').insert({actor:profile.name,action:'เปลี่ยนหลักฐาน '+input.kind+' '+record.id}));return json({ok:true});}

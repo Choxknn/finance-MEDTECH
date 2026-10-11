@@ -80,7 +80,6 @@ function materialApply(){
   const heading=layout.querySelector('main .page-head');if(heading){heading.classList.add('material-dashboard-heading');heading.insertAdjacentHTML('beforebegin',materialHero(s));}
  }
  materialAlertKey=user.id+'|'+s.today+'|'+s.overdue.map(c=>c.id+':'+Math.round(balance(c)*100)).sort().join(',');
- if(s.overdue.length&&!materialDismissed.has(materialAlertKey))layout.insertAdjacentHTML('beforeend',`<aside class="meddy-overdue" role="status" aria-label="แจ้งเตือนบิลเกินกำหนด"><span class="meddy-alert-mark" aria-hidden="true">!</span><div><strong>${user.role==='admin'?'มีบิลเกินกำหนด':'คุณมีบิลเกินกำหนด'} ${s.overdue.length} รายการ</strong><p>ยอดค้างรวม ฿${money(s.overdueAmount)}</p></div><button type="button" data-meddy-overdue>ดูบิล ↗</button><button type="button" data-meddy-dismiss aria-label="ปิดแถบแจ้งเตือน">×</button></aside>`);
 }
 function materialToggleProfile(open){const menu=document.getElementById('material-profile-menu');if(!menu)return;menu.hidden=!open;document.querySelectorAll('[data-material-profile-toggle]').forEach(b=>b.setAttribute('aria-expanded',String(open)))}
 const materialRender=render;render=function(){const menu=document.getElementById('material-profile-menu'),keepOpen=!!menu&&!menu.hidden,owner=user?.id,oldView=view,scrollTop=menu?.scrollTop||0;materialRender();materialApply();if(keepOpen&&user?.id===owner&&view===oldView){materialToggleProfile(true);const next=document.getElementById('material-profile-menu');if(next)next.scrollTop=scrollTop}};

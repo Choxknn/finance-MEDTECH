@@ -1,0 +1,4 @@
+const fs=require('fs'),path=require('path');
+const root=path.resolve(__dirname,'../web');
+const files=["style.css", "evidence.css", "actions.css", "form-fields.css", "session-history.css", "bills.css", "experience.css", "layout-polish.css", "fund-evidence.css", "line-messages.css", "communications.css", "mobile-refinement.css", "detail-polish.css", "record-modals.css", "fund-groups.css", "account-access.css", "aurora-boot.css", "button-layout.css", "evidence-storage.css"];
+fs.writeFileSync(path.join(root,'application.css'),'/* Functional layouts only. Historical visual themes are not loaded. */\n@layer functionality, controls;\n@layer functionality {\n'+files.map(name=>'/* '+name+' */\n'+fs.readFileSync(path.join(root,name),'utf8')).join('\n')+'\n}\n'+fs.readFileSync(path.join(root,'design-controls.css'),'utf8'));

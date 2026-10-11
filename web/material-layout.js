@@ -61,11 +61,34 @@ function mpFundChart(){
  const bars=rows.map(r=>{const label=new Intl.DateTimeFormat('th-TH',{month:'short',timeZone:'Asia/Bangkok'}).format(new Date(r.month+'-01T00:00:00+07:00'));return `<div class="mp-bar-pair" role="img" aria-label="${esc(label)} รายรับ ${money(r.income)} รายจ่าย ${money(r.expense)}"><i style="--h:${Math.max(0,Number(r.income)||0)/max*100}%" title="รายรับ ${money(r.income)}"></i><i style="--h:${Math.max(0,Number(r.expense)||0)/max*100}%" title="รายจ่าย ${money(r.expense)}"></i><small>${esc(label)}</small></div>`}).join('');
  return mpCard('รายรับ–รายจ่าย 6 เดือน','wallet',`<div class="mp-chart">${bars}</div><p class="mp-chart-legend"><span>● รายรับ</span><span>● รายจ่าย</span></p><p class="sub">เฉพาะรายการที่ยืนยันแล้ว ตามเดือนรับ–จ่าย</p>`,'','mp-fund-chart');
 }
+function mpFundFiles(r,kind){return `${r.drive_file_id||r.preview?`<button type="button" class="mp-proof secondary" data-fund-proof="${kind}" data-id="${esc(r.id)}">${icon('eye')}ดูสลิป</button>`:''}${r.receipt_file_id||r.receipt_preview?`<button type="button" class="mp-proof secondary" data-fund-proof="${kind}-receipt" data-id="${esc(r.id)}">${icon('document')}ใบเสร็จ</button>`:''}`;}
+function mpFundRows(rows,kind){
+ if(!rows.length)return '<div class="mp-empty">ยังไม่มีรายการ</div>';
+ return `<div class="mp-activity mp-fund-list">${[...rows].sort((a,b)=>String(b.created_at||b.last_at||'').localeCompare(String(a.created_at||a.last_at||''))).map(r=>{
+ const collection=kind==='collection',when=collection?r.last_at:r.created_at;
+ return `<article class="mp-history-row mp-fund-row"><span class="mp-activity-icon ${kind==='expense'?'is-expense':''}">${icon(kind==='expense'?'wallet':'check')}</span><div class="mp-fund-copy"><button type="button" class="mp-record-title" ${collection?`data-collection-id="${esc(r.id)}"`:`data-fund-detail="${kind}" data-id="${esc(r.id)}"`}>${esc(r.title)}</button><p class="sub">${esc(mpDateTime(when))}${collection?' · '+r.count+' รายการรับเงิน':''}</p><p class="mp-fund-meta">${!collection&&r.responsible_name?`${icon('users')}${esc(r.responsible_name)}`:''}</p><div class="mp-activity-value"><strong>฿${mpAmount(r.amount)}</strong>${collection?'<span class="badge approved">รับเงินแล้ว</span>':fundWorkflowBadge(r,kind)}</div></div><div class="mp-fund-actions">${collection?'':mpFundFiles(r,kind)}<button type="button" class="mp-proof secondary" ${collection?`data-collection-id="${esc(r.id)}"`:`data-fund-detail="${kind}" data-id="${esc(r.id)}"`}>${icon('document')}รายละเอียด</button></div></article>`;
+ }).join('')}</div>`;
+}
+function mpFundLedger(main){
+ const sections=[...main.querySelectorAll('.fund-ledger-section')];if(!sections.length)return;
+ const admin=user.role==='admin',expenses=(db.expenses||[]).filter(r=>!r.deleted_at&&(admin||!r.voided)),incomes=(db.incomes||[]).filter(r=>!r.deleted_at);
+ const cards=mpCard('รายจ่าย','wallet',groupFundRows(expenses,'expense',mpFundRows),'','mp-fund-ledger')+mpCard('รายรับเพิ่มเติม','up',groupFundRows(incomes,'income',mpFundRows),'','mp-fund-ledger')+mpCard('รายรับจากการเก็บเงิน','check',mpFundRows(collectionRows(),'collection'),'','mp-fund-ledger');
+ sections[0].insertAdjacentHTML('beforebegin',cards);sections.forEach(el=>el.remove());
+}
+function mpReadingRow(label,value,name=detailIcon(label)){return `<div class="reading-row"><span class="reading-icon">${icon(name)}</span><div><dt>${esc(label)}</dt><dd>${value}</dd></div></div>`;}
+function mpFundDetail(kind,id){
+ if(!user||!['income','expense'].includes(kind))return;
+ const r=(kind==='expense'?db.expenses:db.incomes||[]).find(r=>r.id===id&&!r.deleted_at&&(user.role==='admin'||!r.voided));if(!r)return;
+ const admin=user.role==='admin';
+ modal(r.title,`<section class="reading-record"><div class="reading-summary"><span class="reading-summary-icon">${icon(kind==='expense'?'wallet':'up')}</span><div><small>${kind==='expense'?'รายจ่าย':'รายรับ'}</small><strong>฿${mpAmount(r.amount)}</strong></div>${fundWorkflowBadge(r,kind)}</div><dl class="reading-list">${mpReadingRow('หมวดหมู่',esc(categoryName(r.category)),'document')}${mpReadingRow('วันที่และเวลาบันทึก',esc(mpDateTime(r.created_at)),'clock')}${mpReadingRow('ผู้รับผิดชอบ',esc(r.responsible_name||'ยังไม่ระบุ'),'users')}${mpReadingRow('หมายเหตุ',esc(r.note||'ไม่มีหมายเหตุ'),'note')}${mpReadingRow('หลักฐาน',`<div class="reading-files">${mpFundFiles(r,kind)||'<span class="sub">ไม่มีไฟล์แนบ</span>'}</div>`,'document')}</dl>${admin?`<div class="reading-actions">${kind==='income'?`<button class="secondary small" data-income-edit="${esc(r.id)}">แก้ไขรายรับ</button>`:editButton(kind,r.id)}${deleteButton(kind,r.id)}</div>`:''}</section>`);
+}
+const mpReadingModal=modal;modal=function(...args){mpReadingModal(...args);const dialog=document.getElementById('dialog');dialog.classList.toggle('reading-dialog',!!dialog.querySelector('.record-window,.reading-record,.detail-grid'));};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-fund-detail]');if(!b)return;e.preventDefault();mpFundDetail(b.dataset.fundDetail,b.dataset.id);});
 function mpApply(){if(!user)return;const layout=document.querySelector('.layout');if(!layout)return;mpShell(layout);const main=layout.querySelector('main');
  if(view==='dashboard')mpDashboard(main);
  if(view==='bills'&&user.role!=='admin')main.querySelectorAll('[data-clay-bill]').forEach(original=>{const c=mpCharges().find(c=>c.id===original.dataset.clayBill);if(!c)return;const wrapper=document.createElement('div');wrapper.className='mp-bill-wrap';original.before(wrapper);wrapper.innerHTML=mpBill(c);const source=document.createElement('div');source.className='mp-bill-source';source.hidden=true;source.append(original);wrapper.append(source)});
  if(view==='history'&&user.role!=='admin'){const head=main.querySelector('.page-head'),demo=main.querySelector('.demo-banner');main.replaceChildren();if(demo)main.append(demo);if(head)main.append(head);main.insertAdjacentHTML('beforeend',mpCard('ประวัติการชำระเงิน','history',mpPaymentRows(mpPayments(),false,true),'','mp-history-card'))}
- if(view==='fund'){const summary=main.querySelector('.clay-fund-panel');if(summary){const income=Number(db.fund_totals?.income||0),expense=Number(db.fund_totals?.expense||0);summary.outerHTML=`<section class="mp-stats">${mpStat('ยอดเงินส่วนกลาง',income-expense,'ยอดคงเหลือที่ยืนยันแล้ว','main','wallet')}${mpStat('รายรับทั้งหมด',income,'รวมรายรับจากการเก็บเงิน','mint','check')}${mpStat('รายจ่ายทั้งหมด',expense,'รายการจ่ายที่เสร็จสิ้นแล้ว','purple','document')}</section>${mpFundChart()}`}}
+ if(view==='fund'){mpFundLedger(main);const summary=main.querySelector('.clay-fund-panel');if(summary){const income=Number(db.fund_totals?.income||0),expense=Number(db.fund_totals?.expense||0);summary.outerHTML=`<section class="mp-stats">${mpStat('ยอดเงินส่วนกลาง',income-expense,'ยอดคงเหลือที่ยืนยันแล้ว','main','wallet')}${mpStat('รายรับทั้งหมด',income,'รวมรายรับจากการเก็บเงิน','mint','check')}${mpStat('รายจ่ายทั้งหมด',expense,'รายการจ่ายที่เสร็จสิ้นแล้ว','purple','document')}</section>${mpFundChart()}`}}
 }
 function mpUnifyStats(main){
  main.querySelectorAll('.stats').forEach(group=>{
@@ -75,6 +98,6 @@ function mpUnifyStats(main){
   group.replaceWith(replacement);
  });
 }
-const mpRender=render;render=function(){mpRender();mpApply();if(user){const main=document.querySelector('.material-shell main');mpUnifyStats(main);if(user.role!=='admin'&&['bills','history','fund'].includes(view)&&!main.querySelector('.meddy-hero'))main.querySelector('.page-head')?.insertAdjacentHTML('beforebegin',materialHero(materialBillState()));}};
+const mpRender=render;render=function(){mpRender();mpApply();if(user)mpUnifyStats(document.querySelector('.material-shell main'));};
 document.addEventListener('click',e=>{const button=e.target.closest('[data-mp-bill]');if(!button||!user)return;e.preventDefault();e.stopImmediatePropagation();const id=button.dataset.mpBill;if(mpCharges().some(c=>c.id===id&&c.profile_id===user.id))materialOpenCharge(id)},true);
 if(user)render();

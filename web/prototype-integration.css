@@ -58,3 +58,34 @@
  #dialog .actions>button,#dialog .actions>a{flex:1 1 auto}
 }
 @media(max-width:359px){.mp-bill-title{flex-basis:calc(100% - 52px)}.mp-bill-top>.badge{margin-left:52px}.mp-bill-bottom>.mp-primary,.mp-bill-bottom>.mp-secondary{font-size:11px;padding:10px 12px}.meddy-hero .meddy-stage{width:76px;min-width:76px}.meddy-hero .meddy-svg{width:92px}.meddy-hero .meddy-layout{gap:8px}}
+
+/* Full-width mobile announcements and reading-first record details. */
+@media(max-width:850px){
+ .mp-side-column>.mp-announcement{grid-column:1/-1;width:100%}
+ .mp-announcement .announcement-banner{display:block;padding-right:25px;position:relative}
+ .mp-announcement .announcement-banner>div{width:100%}
+ .mp-announcement .announcement-banner>button{position:absolute;top:0;right:0}
+ .mp-announcement p{max-width:none;width:100%;font-size:12px;line-height:1.9}
+ .mp-announcement h3{overflow-wrap:anywhere}.mp-announcement .mp-flower{opacity:.22;right:14px;bottom:12px}
+}
+.mp-fund-ledger{margin-bottom:22px}.mp-fund-ledger .fund-category{border:0;border-radius:0;margin:8px 0 20px;background:none}.mp-fund-ledger .fund-category:last-child{margin-bottom:0}
+.mp-fund-ledger .fund-category>header{padding:10px 0;background:none;border-bottom:1px solid var(--line);font-size:11px;gap:8px}.mp-fund-ledger .fund-category>header strong{font-size:12px}.mp-fund-ledger .fund-category>header svg{width:16px;height:16px}
+.mp-fund-row:last-child{border-bottom:0;padding-bottom:0}.mp-fund-row>.mp-fund-copy{flex:1;min-width:0}.mp-fund-row>.mp-fund-actions{flex:0 1 auto;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:45%}
+.mp-record-title{display:block;text-align:left;color:var(--ink);background:none;border:0;padding:0;box-shadow:none;font-size:13px;font-weight:bold;line-height:1.7;white-space:normal;overflow-wrap:anywhere}
+.mp-record-title:hover:not(:disabled){background:none;box-shadow:none;transform:none;color:var(--red)}.mp-record-title:focus-visible{outline-offset:5px}
+.mp-fund-meta{display:flex;align-items:center;gap:5px;font-size:10px!important;color:var(--muted)}.mp-fund-meta:empty{display:none}.mp-fund-meta svg{width:13px;height:13px}.mp-fund-row .mp-activity-value{margin:5px 0 0}.mp-fund-row .mp-activity-value strong{font-size:12px;color:var(--ink)}.mp-fund-row .is-expense{color:#bc6a61;background:#fff0e9}
+#dialog.reading-dialog{width:min(600px,calc(100% - 30px))}
+#dialog .detail-grid,#dialog .record-window .bill-info{display:block;margin:0}
+#dialog .detail-card{display:flex;align-items:flex-start;gap:13px;padding:15px 0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;box-shadow:none}
+#dialog .detail-card:last-child{border-bottom:0}#dialog .detail-card>div{flex:1;min-width:0}
+#dialog .detail-symbol{flex:0 0 22px;width:22px;height:24px;border:0;border-radius:0;background:none;color:#b26787;box-shadow:none;padding:0;margin-top:3px}
+#dialog .detail-symbol svg{width:20px;height:20px}#dialog .detail-label{font-size:11px;color:var(--muted);margin:0 0 4px}#dialog .detail-value{font-size:14px;font-weight:normal;color:var(--ink);line-height:1.8}
+#dialog .info-frame,#dialog .bill-penalty-frame{border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;box-shadow:none;padding:13px 0;margin:0}
+#dialog .record-stamp{gap:0;margin:0}#dialog .record-stamp .stamp-item{border:0;border-radius:0;background:none;box-shadow:none;padding:13px 0;flex:1 1 200px}#dialog .record-stamp .stamp-item>svg{background:none;border-radius:0;width:22px;flex-basis:22px;padding:0;color:#b26787}
+#dialog .bill-right{padding-top:20px;border-top:1px solid var(--line);margin-top:10px}
+.reading-summary{display:flex;align-items:center;gap:14px;padding:8px 0 24px;border-bottom:1px solid var(--line)}.reading-summary-icon{display:grid;place-items:center;width:48px;height:48px;background:#fff0f4;color:var(--red);border-radius:16px;flex:none}.reading-summary>div{flex:1;min-width:0}.reading-summary small{color:var(--muted);font-size:11px}.reading-summary strong{display:block;font-size:30px;color:var(--ink);line-height:1.5;overflow-wrap:anywhere}
+.reading-list{margin:0}.reading-row{display:flex;gap:13px;align-items:flex-start;padding:17px 0;border-bottom:1px solid var(--line)}.reading-row:last-child{border-bottom:0}.reading-icon{width:22px;flex:0 0 22px;color:#b26787;padding-top:2px}.reading-icon svg{width:20px;height:20px}.reading-row>div{flex:1;min-width:0}.reading-row dt{font-size:11px;color:var(--muted);margin-bottom:5px}.reading-row dd{margin:0;font-size:14px;line-height:1.8;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}.reading-files,.reading-actions{display:flex;flex-wrap:wrap;gap:8px}.reading-actions{justify-content:flex-end;border-top:1px solid var(--line);padding-top:18px;margin-top:4px}
+@media(max-width:540px){
+ .mp-fund-row{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px 12px;align-items:start}.mp-fund-row>.mp-fund-actions{grid-column:2;max-width:none;justify-content:flex-start}.mp-fund-row .mp-proof{font-size:10px;padding:9px 11px;gap:5px}.mp-fund-row .mp-proof svg{display:block;width:14px;height:14px}
+ .reading-summary{gap:10px;flex-wrap:wrap}.reading-summary strong{font-size:27px}.reading-summary .badge{font-size:10px}.reading-row{padding:15px 0}.reading-row dd{font-size:13px}#dialog .detail-value{font-size:13px}
+}

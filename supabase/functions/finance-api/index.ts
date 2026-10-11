@@ -117,7 +117,7 @@ Deno.serve(async req=>{
     const audit=isAdmin?await query(db.from('audit').select('*').order('created_at',{ascending:false}).limit(200)):[];
     const paymentQrs=await query(db.from('payment_qrs').select('id,amount_cents,image_url').order('amount_cents'));
     const settings=await query(db.from('site_settings').select('data').eq('id',true).single());
-    const expenseTotal=allExpenses.filter((e:any)=>!e.voided&&!e.deleted_at&&(e.workflow_status||'settled')==='settled').reduce((s:number,e:any)=>s+Number(e.amount),0),income=allIncomes.filter((i:any)=>!i.deleted_at&&(i.workflow_status||'settled')==='settled').reduce((s:number,i:any)=>s+Number(i.amount),0)+allPayments.filter((p:any)=>p.status==='approved'&&!p.deleted_at).reduce((s:number,p:any)=>s+Number(p.amount),0);
+    const expenseTotal=allExpenses.filter((e:any)=>!e.voided&&!e.deleted_at&&(e.workflow_status||'settled')==='settled').reduce((s:number,e:any)=>s+Number(e.amount),0),income=allIncomes.filter((i:any)=>!i.deleted_at&&(i.workflow_status||'settled')==='settled').reduce((s:number,i:any)=>s+Number(i.amount),0);
     const incomes=isAdmin?allIncomes:allIncomes.map(({created_by,...i}:any)=>i);
     const expenses=isAdmin?allExpenses:allExpenses.map(({created_by,...e}:any)=>e);
     // Expose only aggregate bill receipts, never other members' payment evidence or IDs.
@@ -150,7 +150,7 @@ Deno.serve(async req=>{
     const refRounds=[...rounds,...refCharges.filter((c:any)=>c.round_snapshot&&!rounds.some((r:any)=>r.id===c.round_snapshot.id)).map((c:any)=>c.round_snapshot)];
     const refProfiles=[...profiles,...refCharges.map((c:any)=>c.profile_snapshot).filter(Boolean),...(isAdmin?allPayments:visiblePayments).map((p:any)=>p.member_snapshot).filter(Boolean)];
     for(const p of allPayments){p.charge_id??=p.charge_snapshot?.id;p.profile_id??=p.member_snapshot?.id;delete p.charge_snapshot;delete p.member_snapshot}
-    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{recent_payers:recentPayers,fund_monthly:fundMonthly(allPayments,allIncomes,allExpenses),fund_collections:fundCollections,campaigns,announcements,payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
+    return json({profile:profiles.find((p:any)=>p.id===profile.id),data:{recent_payers:recentPayers,fund_monthly:fundMonthly([],allIncomes,allExpenses),fund_collections:fundCollections,campaigns,announcements,payment_qrs:paymentQrs,settings:settings.data,rounds:activeRounds,charges:activeCharges,profiles:activeProfiles,payments:visiblePayments.filter((p:any)=>!p.deleted_at),incomes:incomes.filter((i:any)=>!i.deleted_at),expenses:expenses.filter((e:any)=>!e.deleted_at),references:{rounds:refRounds,charges:refCharges,profiles:refProfiles},trash,notifications,audit,fund_totals:{income,expense:expenseTotal}}});
    }
    case 'storage-delete':{requireAdmin();if(input.confirmation!=='ลบรูปถาวร')throw Error('ยืนยันลบรูปถาวรก่อน');await deleteEvidenceByAdmin(db,text(input.path,100),profile.name);return json({ok:true});}
    case 'replace-evidence':{requireAdmin();const kinds:any={'payment':['payments','drive_file_id'],'expense':['expenses','drive_file_id'],'expense-receipt':['expenses','receipt_file_id'],'income':['manual_incomes','drive_file_id'],'income-receipt':['manual_incomes','receipt_file_id']};const target=kinds[input.kind];if(!target)throw Error('ประเภทรายการไม่ถูกต้อง');const record=await query(db.from(target[0]).select('id,deleted_at').eq('id',text(input.id,36)).single());if(record.deleted_at)throw Error('กู้คืนรายการก่อนอัปโหลดหลักฐาน');const image=input.kind.endsWith('receipt')?await validateReceipt(file):await validateImage(file);const stored=await uploadDrive(image,input.kind+'-replacement-'+record.id);try{await query(db.from(target[0]).update({[target[1]]:stored}).eq('id',record.id));}catch(e){await deleteDrive(stored);throw e}await query(db.from('audit').insert({actor:profile.name,action:'เปลี่ยนหลักฐาน '+input.kind+' '+record.id}));return json({ok:true});}
@@ -159,6 +159,17 @@ Deno.serve(async req=>{
    case 'storage-settings':{requireAdmin();const mb=Number(input.budget_mb);if(!Number.isInteger(mb)||mb<100||mb>102400||typeof input.auto_cleanup!=='boolean')throw Error('กำหนดพื้นที่ 100–102400 MB');await query(db.from('evidence_storage_settings').update({budget_bytes:mb*1048576,auto_cleanup:input.auto_cleanup}).eq('id',true));await query(db.from('audit').insert({actor:profile.name,action:`ตั้งพื้นที่หลักฐาน ${mb} MB · ลบอัตโนมัติ ${input.auto_cleanup?'เปิด':'ปิด'}`}));return json({ok:true});}
    case 'drive-health':{requireAdmin();return json(await driveHealth());}
    case 'set-fund-workflow':{requireAdmin();await query(db.rpc('set_fund_workflow',{p_kind:input.kind,p_id:text(input.id,36),p_status:input.status,p_label:String(input.label||'').slice(0,80),p_actor:profile.id}));return json({ok:true});}
+   case 'import-bill-income':{
+    requireAdmin();const rid=text(input.round_id,36),r=await query(db.from('rounds').select('id,title').eq('id',rid).is('deleted_at',null).single());
+    const cs=await query(db.from('charges').select('id,profile_id,amount').eq('round_id',rid).is('deleted_at',null));
+    const ps=cs.length?await query(db.from('payments').select('charge_id,profile_id,amount').in('charge_id',cs.map((c:any)=>c.id)).eq('status','approved').is('deleted_at',null)):[];
+    const sums=new Map<string,number>();for(const p of ps)sums.set(p.charge_id,(sums.get(p.charge_id)||0)+Number(p.amount));
+    const collected=ps.reduce((n:number,p:any)=>n+Number(p.amount),0),penalties=cs.reduce((n:number,c:any)=>n+Math.max(0,(sums.get(c.id)||0)-Number(c.amount)),0);
+    const snapshot={title:r.title,paid_people:new Set(ps.map((p:any)=>p.profile_id)).size,principal:Math.round((collected-penalties)*100)/100,penalties:Math.round(penalties*100)/100,collected:Math.round(collected*100)/100,captured_at:new Date().toISOString()};
+    if(collected<=0)throw Error('บิลนี้ยังไม่มีการชำระที่ยืนยันแล้ว');
+    const patch={title:text(input.title||'รับเงินจากบิล '+r.title,120),category:text(input.category||'เงินเก็บประจำเดือน',100),amount:amount(input.amount),received_on:day(input.received_on),responsible_name:text(input.responsible_name||profile.name,120),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'นำรายรับจากบิลเข้ากองกลาง'};
+    const id=await query(db.rpc('save_bill_fund_income',{p_round:rid,p_id:input.id||null,p_patch:patch,p_snapshot:snapshot,p_actor:profile.id}));return json({ok:true,id});
+   }
    case 'save-income':{
     requireAdmin();const patch:any={responsible_name:text(input.responsible_name||profile.name,120),title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};
     if(input.id&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.id))throw new Error('รหัสรายการไม่ถูกต้อง');
@@ -244,7 +255,7 @@ Deno.serve(async req=>{
     if(!await query(db.rpc('payment_window_open')))throw Error('พักรับชำระเวลา 23:50–01:00 น. กรุณากลับมาเวลา 01:00 น.');
     const image=await validateImage(file),value=amount(input.amount),charge=await query(db.from('charges').select('*,rounds(title,created_at)').eq('id',input.charge_id).single());if(charge.profile_id!==profile.id)throw new Error('ไม่มีสิทธิ์ในรายการนี้');
     // Check required configuration before reserving or charging vendor quota.
-    for(const k of ['SLIPOK_BRANCH_ID','SLIPOK_API_KEY','GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GOOGLE_REFRESH_TOKEN','GOOGLE_DRIVE_FOLDER_ID'])secret(k);
+    for(const k of ['SLIPOK_BRANCH_ID','SLIPOK_API_KEY'])secret(k);
     const pid=await query(db.rpc('reserve_payment',{p_profile:profile.id,p_charge:charge.id,p_amount:value}));
     let driveId:string;
     try{driveId=await uploadDrive(image,`slip-${pid}.${image.type.split('/')[1]}`);await query(db.from('payments').update({drive_file_id:driveId}).eq('id',pid))}
@@ -255,6 +266,7 @@ Deno.serve(async req=>{
      // Old transfers must not automatically pay a newly created round.
      const validDate=isRecentSlip(detail,charge.rounds.created_at);
      await query(db.from('payments').update({verification:result.body}).eq('id',pid));
+     if(result.body.diagnostics?.receiverMismatch){const correction='บัญชีผู้รับไม่ตรง กรุณาตรวจสอบบัญชีปลายทางและอัปโหลดสลิปที่ถูกต้องใหม่';await query(db.rpc('decide_payment',{p_id:pid,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:null}));await notify(db,profile.id,'finance MEDTECH\nกรุณาแก้ไขหลักฐาน\n'+correction).catch(()=>{});return json({message:correction,status:'rejected',payment_id:pid});}
      if(result.ok&&validDate){await query(db.rpc('decide_payment',{p_id:pid,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK',p_ref:String(detail.transRef),p_actor:null}));verified=true;note='ยืนยันการชำระเงินแล้ว'}
      else note=!validDate&&(result.ok||detail?.transTimestamp)?'สลิปเกิน 48 ชั่วโมง ก่อนสร้างบิล หรือวันเวลาบนสลิปไม่ถูกต้อง':'ผลตรวจต้องตรวจเพิ่มเติม: '+String(result.body.message||detail?.message||'ยอดหรือบัญชีไม่ตรง');
     }catch{note='ตรวจสอบอัตโนมัติไม่สำเร็จ หรือพบเลขอ้างอิงซ้ำ รอแอดมินตรวจ';}
@@ -272,6 +284,7 @@ Deno.serve(async req=>{
     const settings=await query(db.from('site_settings').select('data').eq('id',true).single());const result=await checkSlip(image,Number(p.amount),String(settings.data.accountNumber||'')),detail=result.body.data;
     await query(db.from('payments').update({verification:result.body}).eq('id',p.id));
     const validDate=isRecentSlip(detail,p.charges.rounds.created_at);
+    if(result.body.diagnostics?.receiverMismatch){const correction='บัญชีผู้รับไม่ตรง กรุณาตรวจสอบบัญชีปลายทางและอัปโหลดสลิปที่ถูกต้องใหม่';await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:profile.id}));await notify(db,p.profile_id,'finance MEDTECH\nกรุณาแก้ไขหลักฐาน\n'+correction).catch(()=>{});return json({message:correction,status:'rejected'});}
     if(result.ok&&validDate){
      await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK (ตรวจซ้ำ)',p_ref:String(detail.transRef),p_actor:null}));
      await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`);
@@ -291,7 +304,7 @@ Deno.serve(async req=>{
     await (decision==='approved'?paymentSuccess:notify)(db,p.profile_id,`finance MEDTECH\n${decision==='approved'?'ยืนยันรับเงินแล้ว':'กรุณาแก้ไขหลักฐาน'}\nจำนวน ${Number(p.amount).toFixed(2)} บาท\n${input.note}`);return json({ok:true});
    }
    case 'new-expense':{
-    requireAdmin();const title=text(input.title,120),category=text(input.category,100),value=amount(input.amount),spentOn=day(input.spent_on),responsible=text(input.responsible_name||profile.name,120),id=crypto.randomUUID();if(!file&&!receiptFile)throw Error('กรุณาแนบสลิปหรือใบเสร็จอย่างน้อยหนึ่งไฟล์');const uploaded:string[]=[];
+    requireAdmin();const title=text(input.title,120),category=text(input.category,100),value=amount(input.amount),spentOn=day(input.spent_on),responsible=text(input.responsible_name||profile.name,120),id=crypto.randomUUID();const uploaded:string[]=[];
     try{const driveId=file?await uploadDrive(await validateImage(file),`expense-${id}`):null;if(driveId)uploaded.push(driveId);const receiptId=receiptFile?await uploadDrive(await validateReceipt(receiptFile),`expense-receipt-${id}`):null;if(receiptId)uploaded.push(receiptId);await query(db.from('expenses').insert({id,title,category,amount:value,spent_on:spentOn,responsible_name:responsible,note:String(input.note||'').slice(0,500),drive_file_id:driveId,receipt_file_id:receiptId,created_by:profile.id}))}catch(e){for(const f of uploaded)await deleteDrive(f);throw e}
     await query(db.from('audit').insert({actor:profile.name,action:'บันทึกรายจ่าย '+title}));return json({ok:true});
    }

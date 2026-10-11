@@ -16,13 +16,18 @@ export function matchesReceiver(detail:any,expected:string){
  const candidates=[detail?.receiver?.proxy?.value,detail?.receiver?.account?.value,detail?.toMerchantId].filter((x:any)=>typeof x==='string');
  return candidates.some((value:string)=>{const compact=value.replace(/[\s\-]/g,'').toLowerCase();if(compact===target)return true;if(compact.length!==target.length||compact.replace(/[^0-9]/g,'').length<4)return false;return [...compact].every((ch,i)=>/^[x*]$/.test(ch)||ch===target[i])});
 }
+export function receiverDefinitelyWrong(detail:any,expected:string){
+ const target=expected.replace(/[^0-9]/g,'');if(!target||matchesReceiver(detail,expected))return false;
+ const values=[detail?.receiver?.proxy?.value,detail?.receiver?.account?.value,detail?.toMerchantId].filter((v:any)=>typeof v==='string').map((v:string)=>v.replace(/[\s-]/g,''));
+ return values.some((v:string)=>v.length===target.length&&/^[0-9]+$/.test(v)&&v!==target);
+}
 export function slipOkBranch(value:string){const v=value.trim();if(/^\d+$/.test(v))return v;return v.match(/^https:\/\/api\.slipok\.com\/api\/line\/apikey\/(\d+)\/?$/)?.[1]||null}
 export async function checkSlip(file:File,amount:number,expectedReceiver:string){
  const branch=slipOkBranch(secret('SLIPOK_BRANCH_ID'));if(!branch)return {ok:false,body:{code:'LOCAL_BRANCH_ID',message:'SLIPOK_BRANCH_ID ต้องเป็นรหัสสาขาตัวเลข'}};
  const body=new FormData();const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'} as Record<string,string>)[file.type];if(!ext)throw new Error('ชนิดไฟล์ไม่รองรับ');body.set('files',file,`slip.${ext}`);body.set('log','true');body.set('amount',String(amount));
  const r=await fetch(`https://api.slipok.com/api/line/apikey/${encodeURIComponent(branch)}`,{method:'POST',headers:{'x-authorization':secret('SLIPOK_API_KEY').trim()},body,signal:AbortSignal.timeout(30000)});
  const j=await r.json(),receiverMatched=matchesReceiver(j.data,expectedReceiver);
- return {ok:r.ok&&j.success===true&&j.data?.success===true&&Math.round(Number(j.data.amount)*100)===Math.round(amount*100)&&!!j.data.transRef&&receiverMatched,body:{...j,...(!receiverMatched&&j.success?{message:'ข้อมูลบัญชีผู้รับไม่ตรงหรือข้อมูลถูกปิดบังจนตรวจยืนยันไม่ได้'}:{}),diagnostics:{httpStatus:r.status,transport:'image-multipart',receiverMatched,branchNumeric:true}}};
+ return {ok:r.ok&&j.success===true&&j.data?.success===true&&Math.round(Number(j.data.amount)*100)===Math.round(amount*100)&&!!j.data.transRef&&receiverMatched,body:{...j,...(!receiverMatched&&j.success?{message:'ข้อมูลบัญชีผู้รับไม่ตรงหรือข้อมูลถูกปิดบังจนตรวจยืนยันไม่ได้'}:{}),diagnostics:{httpStatus:r.status,transport:'image-multipart',receiverMatched,receiverMismatch:String(j.code)==='1014'||(j.success===true&&j.data?.success===true&&receiverDefinitelyWrong(j.data,expectedReceiver)),branchNumeric:true}}};
 }
 export async function deliverNotification(db:any,n:any){
  const account=await query(db.from('line_accounts').select('line_user_id').eq('profile_id',n.profile_id).maybeSingle());const p=await query(db.from('profiles').select('active,deleted_at').eq('id',n.profile_id).maybeSingle());

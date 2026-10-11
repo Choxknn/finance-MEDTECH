@@ -1,5 +1,6 @@
 'use strict';
 // Presentation-only extension. Financial totals and permissions stay in the existing application.
+const materialAmount=n=>Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:2});
 function materialDay(at=new Date()){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(at);return ['year','month','day'].map(k=>parts.find(p=>p.type===k).value).join('-')}
 function materialBillState(at=new Date()){
  const today=materialDay(at),tomorrow=materialDay(new Date(at.getTime()+86400000));
@@ -14,20 +15,55 @@ function materialBillState(at=new Date()){
   if(overdue.length)return {...base,mood:'overdue',text:`มีบิลเกินกำหนด ${overdue.length} รายการ รวม ฿${money(base.overdueAmount)} ลองเข้าไปติดตามรายคนกันนะ`,label:'จัดการบิลรายบุคคล',destination:'individual-bills'};
   return {...base,mood:'calm',text:'ตอนนี้ไม่มีสลิปรอตรวจหรือบิลเกินกำหนดแล้ว ขอบคุณที่ช่วยดูแลการเงินของพวกเรานะ',label:'ดูรายการบิล',destination:'rounds'};
  }
- if(overdue.length){const c=overdue[0];return {...base,mood:'overdue',chargeId:c.id,text:`มีบิลเลยกำหนด ${overdue.length} รายการ รวม ฿${money(base.overdueAmount)} นะ ถ้าติดปัญหา ติดต่อผู้ดูแลให้ช่วยได้เลย`,label:'ดูบิลเกินกำหนด',destination:'bills'}}
+ if(overdue.length){const c=overdue[0];return {...base,mood:'overdue',chargeId:c.id,text:`บิลนี้เลยกำหนดแล้วนะ 🥺 ตอนนี้รวม ${materialAmount(balance(c))} บาท${overdue.length>1?' และมีบิลเกินกำหนดทั้งหมด '+overdue.length+' รายการ':''} ถ้าติดปัญหา ให้ผู้ดูแลช่วยได้เลย`,label:'ดูบิลเกินกำหนด',destination:'bills'}}
  const rejected=unpaid.find(c=>{const ps=db.payments.filter(p=>p.charge_id===c.id&&!p.deleted_at).sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));return ps[0]?.status==='rejected'});
- if(rejected)return {...base,mood:'rejected',chargeId:rejected.id,text:'มีหลักฐานที่ต้องแก้ไขนะ เข้าไปดูเหตุผลและส่งใหม่ได้เลย ถ้าโอนแล้ว อย่าเพิ่งโอนซ้ำ',label:'ดูบิลที่ต้องแก้ไข',destination:'bills'};
+ if(rejected)return {...base,mood:'rejected',chargeId:rejected.id,text:'มีสลิปที่ต้องแก้ไขนะ 📷 เข้าไปดูเหตุผลและส่งหลักฐานใหม่ได้เลย ถ้าโอนแล้ว ไม่ต้องโอนซ้ำนะ',label:'ดูบิลที่ต้องแก้ไข',destination:'bills'};
  const soon=unpaid.find(c=>{const due=round(c.round_id).due_date;return due&&due<=tomorrow});
- if(soon)return {...base,mood:'soon',chargeId:soon.id,text:`บิล “${round(soon.round_id).title}” ครบกำหนด${round(soon.round_id).due_date===today?'วันนี้':'พรุ่งนี้'} ยอดค้าง ฿${money(balance(soon))} นะ ให้เราพาไปดูไหม?`,label:'ดูบิลใกล้ครบกำหนด',destination:'bills'};
- if(unpaid.length)return {...base,mood:'open',chargeId:unpaid[0].id,text:`มีบิลรอชำระ ${unpaid.length} รายการ รวม ฿${money(unpaid.reduce((n,c)=>n+balance(c),0))} นะ พร้อมเมื่อไหร่ เข้าไปดูรายละเอียดได้เลย`,label:'ไปดูบิลของฉัน',destination:'bills'};
- if(pending.length)return {...base,mood:'review',chargeId:pending.find(p=>all.some(c=>c.id===p.charge_id))?.charge_id,text:`ได้รับสลิปแล้ว ${pending.length} รายการ กำลังรอตรวจสอบอยู่นะ ยังไม่ต้องโอนซ้ำ เดี๋ยวผลจะอัปเดตที่นี่`,label:'ติดตามผลตรวจสลิป',destination:'history'};
- if(all.length&&all.every(c=>balance(c)===0))return {...base,mood:'paid',text:'เย้! บิลทั้งหมดชำระครบแล้ว ขอบคุณที่ช่วยดูแลส่วนกลางนะ วันนี้สบายใจได้เลย!',label:'ดูประวัติและหลักฐาน',destination:'history'};
+ if(soon)return {...base,mood:'soon',chargeId:soon.id,text:`แวะมาเตือนเบา ๆ 🔔 บิล ${materialAmount(balance(soon))} บาทครบกำหนด${round(soon.round_id).due_date===today?'วันนี้':'พรุ่งนี้'}แล้วนะ พร้อมให้เราพาไปชำระไหม?`,label:'ดูบิลใกล้ครบกำหนด',destination:'bills'};
+ if(unpaid.length){const c=unpaid[0],due=round(c.round_id).due_date,days=due?Math.max(0,Math.round((Date.parse(due)-Date.parse(today))/86400000)):null;return {...base,mood:'open',chargeId:c.id,text:`ฮัลโหล${user.name?' '+user.name.split(' ')[0]:''}! 💗 มีบิล ${materialAmount(balance(c))} บาทรออยู่นะ ${days!==null?'ยังมีเวลาอีก '+days+' วัน ':''}ค่อย ๆ เตรียมตัวได้เลย`,label:'ไปดูบิล · ฿'+materialAmount(balance(c)),destination:'bills'}};
+ if(pending.length)return {...base,mood:'review',chargeId:pending.find(p=>all.some(c=>c.id===p.charge_id))?.charge_id,text:`ได้รับสลิปแล้ว! 📨 ${pending.length} รายการกำลังรอตรวจสอบอยู่นะ ยังไม่ต้องโอนซ้ำ เดี๋ยวผลจะอัปเดตที่นี่`,label:'ติดตามผลตรวจสลิป',destination:'history'};
+ if(all.length&&all.every(c=>balance(c)===0))return {...base,mood:'paid',text:'เย้! ชำระเรียบร้อยครบแล้ว 🎉 ขอบคุณที่ช่วยดูแลส่วนกลางนะ วันนี้สบายใจได้เลย!',label:'ดูประวัติและหลักฐาน',destination:'history'};
  return {...base,mood:'calm',text:'ตอนนี้ไม่มีบิลที่เปิดรอให้ชำระนะ ถ้ามีรายการใหม่ เราจะช่วยบอกตรงนี้เอง',label:'ดูรายการบิล',destination:'bills'};
 }
 let materialPaused=false;try{materialPaused=localStorage.getItem('finance-mascot-paused')==='true'}catch{}
 let materialScope='',materialDismissed=new Set(),materialAlertKey='';
-function materialMascotSvg(mood){return MATERIAL_MASCOT_SVG.replace('id="material-mouth" d="M72 91q8 10 16 0"',`id="material-mouth" d="${mood==='paid'?'M69 89q11 19 22 0Z':['overdue','rejected'].includes(mood)?'M73 96q7-6 14 0':mood==='review'?'M76 93h8':'M72 91q8 10 16 0'}"`).replace('id="material-worry" visibility="hidden"',`id="material-worry" visibility="${['overdue','rejected'].includes(mood)?'visible':'hidden'}"`).replace('id="material-stars" visibility="hidden"',`id="material-stars" visibility="${mood==='paid'?'visible':'hidden'}"`)}
-function materialHero(s){return `<section class="meddy-hero meddy-${s.mood}" aria-label="สถานะบิลของคุณ"><div class="meddy-layout"><div class="meddy-stage"><div class="meddy-shadow" aria-hidden="true"></div><button class="meddy-character" data-meddy-wave aria-label="ทักทายน้องเม็ดเลือด">${materialMascotSvg(s.mood)}</button><span class="meddy-spark" aria-hidden="true">✦</span></div><div class="meddy-talk"><div class="meddy-name">MEDDY · ${user.role==='admin'?'เพื่อนช่วยดูแลการเงิน':'เพื่อนดูแลบิลของคุณ'}</div><div class="meddy-bubble">${esc(s.text)}</div><button type="button" class="meddy-link" data-meddy-go>${esc(s.label)} ${icon('arrow')}</button></div></div></section>`}
+function materialMascotSvg(mood){return MATERIAL_MASCOT_SVG.replace('id="material-mouth" d="M72 91q8 10 16 0"',`id="material-mouth" d="${mood==='paid'?'M69 89q11 19 22 0Z':['overdue','rejected'].includes(mood)?'M73 96q7-6 14 0':mood==='review'?'M76 93h8':'M72 91q8 10 16 0'}"`).replace('fill="none" stroke="#7c3c52" stroke-width="3"',`fill="${mood==='paid'?'#7c3c52':'none'}" stroke="#7c3c52" stroke-width="3"`).replace('id="material-worry" visibility="hidden"',`id="material-worry" visibility="${['overdue','rejected'].includes(mood)?'visible':'hidden'}"`).replace('id="material-stars" visibility="hidden"',`id="material-stars" visibility="${mood==='paid'?'visible':'hidden'}"`)}
+// Keep the selected reply through quiet data refreshes, but reset when its bill changes.
+let materialConversation={key:'',question:''};
+function materialChatKey(s){const c=(db.charges||[]).find(c=>c.id===s.chargeId);return JSON.stringify([user.id,user.role,s.mood,s.chargeId,s.today,s.text,c&&balance(c),c&&round(c.round_id).due_date,c?.fee_amount]);}
+function materialReply(s,question){
+ const c=(db.charges||[]).find(c=>c.id===s.chargeId&&(user.role==='admin'||c.profile_id===user.id)),r=c?round(c.round_id):null;
+ if(user.role==='admin'){
+  if(question==='amount')return s.overdue.length?`มีบิลเกินกำหนด ${s.overdue.length} รายการ รวม ${materialAmount(s.overdueAmount)} บาทนะ 💗 เปิดจัดการบิลรายบุคคลเพื่อติดตามได้เลย`:'ตอนนี้ไม่มีบิลเกินกำหนดนะ 💚 ดูยอดรวมได้ในการ์ดสรุปด้านล่าง';
+  if(question==='date')return 'เปิดรายการบิลเพื่อดูวันครบกำหนดของแต่ละรายการได้เลยนะ 💌';
+  return s.mood==='review'?'กด “เปิดรายการรอตรวจ” เพื่อดูหลักฐานและตรวจสอบทีละรายการได้เลย 📩':'กดปุ่มด้านล่างเพื่อดูและจัดการบิลของสมาชิกได้เลย เราอยู่ช่วยตรงนี้นะ 💗';
+ }
+ if(question==='amount'){
+  if(s.mood==='paid')return 'ตอนนี้ไม่มียอดค้างแล้วนะ ชำระครบทุกบิลแล้ว 💚 ดูหลักฐานในประวัติได้เลย';
+  if(s.mood==='review'){const ps=(db.payments||[]).filter(p=>p.profile_id===user.id&&!p.deleted_at&&['pending','review'].includes(p.status)&&(!c||p.charge_id===c.id));return `ส่งสลิปแล้ว${ps.length?' ยอด '+materialAmount(ps.reduce((n,p)=>n+Number(p.amount||0),0))+' บาท':''} กำลังรอตรวจ ไม่ต้องโอนซ้ำนะ 💜`;}
+  if(c)return `ยอดบิลนี้ ${materialAmount(balance(c))} บาท${Number(c.fee_amount)>0?' รวมค่าปรับ '+materialAmount(c.fee_amount)+' บาท':''} นะ 💗${s.mood==='rejected'?' ถ้าโอนแล้ว ส่งหลักฐานใหม่ได้เลย ไม่ต้องโอนซ้ำ':''}`;
+  return 'ตอนนี้ไม่มีบิลที่เปิดรอให้ชำระนะ 💚 ถ้ามีรายการใหม่ เราจะช่วยบอกตรงนี้เอง';
+ }
+ if(question==='date'){
+  if(s.mood==='paid')return 'ชำระครบแล้ว ไม่มีบิลค้างให้กังวลนะ 💚 วันเวลาที่แจ้งชำระและสลิปอยู่ในหน้าประวัติ';
+  if(!r?.due_date)return 'ตอนนี้ยังไม่มีวันครบกำหนดของบิลที่เปิดอยู่ ถ้ามีรายการใหม่ เราจะช่วยเตือนนะ 💌';
+  return `บิล “${r.title}” ครบกำหนด ${date(r.due_date)} 💌${s.mood==='review'?' ส่งหลักฐานแล้ว รอผลตรวจได้เลย ไม่ต้องโอนซ้ำนะ':s.mood==='overdue'?' เลยกำหนดแล้ว กดดูรายละเอียดเพื่อจัดการต่อได้เลย':''}`;
+ }
+ const replies={open:'พร้อมเมื่อไหร่ กดปุ่มด้านล่างเพื่อไปชำระบิลได้เลยนะ เราจะอยู่เป็นเพื่อนตรงนี้ 💗',soon:'ชำระก่อนครบกำหนดจะได้ไม่ต้องกังวลทีหลัง กดปุ่มด้านล่างให้เราพาไปได้เลย 🔔',overdue:'กดดูบิลเกินกำหนดเพื่อตรวจยอดและชำระได้เลย ถ้าติดปัญหา ติดต่อผู้ดูแลให้ช่วยได้นะ 🥺',review:'ตอนนี้รอผลตรวจได้เลย ไม่ต้องโอนหรือส่งสลิปซ้ำนะ เราจะอัปเดตสถานะให้เมื่อมีผล 💜',paid:'ดูหลักฐานในประวัติได้เลย หรือพักผ่อนให้เต็มที่ เราไม่มีบิลค้างแล้ว! 🎉',rejected:'กดดูบิลที่ต้องแก้ไข อ่านเหตุผล แล้วแนบสลิปที่เห็นยอดเงินและวันเวลาชัด ๆ ได้เลย 📷',calm:'พักได้เลยนะ ตอนนี้ยังไม่มีบิลที่เปิดรอชำระ ดูรายการบิลหรือประวัติได้จากเมนู 💗'};
+ return replies[s.mood]||s.text;
+}
+function materialSay(s,question=''){
+ materialConversation={key:materialChatKey(s),question};
+ const bubble=document.querySelector('.meddy-bubble');if(!bubble)return;
+ bubble.textContent=question?materialReply(s,question):s.mood==='paid'?'ไฮไฟฟ์! 🙌 วันนี้ไม่มีบิลค้างแล้ว ขอบคุณนะ':s.text;
+ bubble.classList.remove('chat-arrive');void bubble.offsetWidth;bubble.classList.add('chat-arrive');
+ document.querySelectorAll('[data-meddy-question]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.meddyQuestion===question)));
+}
+function materialHero(s){
+ const key=materialChatKey(s);if(materialConversation.key!==key)materialConversation={key,question:''};
+ const questions=user.role==='admin'?[['amount','ยอดเกินกำหนดเท่าไหร่?'],['date','ดูกำหนดชำระ'],['next','ทำยังไงต่อ?']]:[['amount','ต้องจ่ายเท่าไหร่?'],['date','ครบกำหนดเมื่อไหร่?'],['next','ทำยังไงต่อ?']];
+ return `<section class="meddy-hero meddy-${s.mood}" aria-label="สถานะบิลของคุณ"><div class="meddy-layout"><div class="meddy-stage"><div class="meddy-shadow" aria-hidden="true"></div><button type="button" class="meddy-character" data-meddy-wave aria-label="ทักทายน้องเม็ดเลือด">${materialMascotSvg(s.mood)}</button><span class="meddy-spark" aria-hidden="true">✦</span></div><div class="meddy-talk"><p class="meddy-name">MEDDY · ${user.role==='admin'?'เพื่อนช่วยดูแลการเงิน':'เพื่อนดูแลบิลของคุณ'}</p><div class="meddy-bubble" role="status" aria-live="polite" aria-atomic="true">${esc(materialConversation.question?materialReply(s,materialConversation.question):s.text)}</div><div class="quick-replies" role="group" aria-label="คุยกับน้องเม็ดเลือด">${questions.map(([q,label])=>`<button type="button" data-meddy-question="${q}" aria-pressed="${materialConversation.question===q}">${label}</button>`).join('')}</div><button type="button" class="meddy-link" data-meddy-go>${esc(s.label)} ${icon('arrow')}</button></div></div></section>`;
+}
 function materialProfileMenu(){return `<div class="material-profile-menu" id="material-profile-menu" role="menu" aria-label="เมนูโปรไฟล์" hidden><div class="material-profile-heading"><strong>${esc(user.name)}</strong><small>${esc(user.student_id)} · ${user.role==='admin'?'ผู้ดูแลระบบ':'นักศึกษา'}</small></div><button role="menuitem" data-material-profile="profile">${icon('person')}<span>ข้อมูลโปรไฟล์</span></button><button role="menuitem" data-material-profile="line">${icon('chat')}<span>บัญชี LINE</span></button><button role="menuitem" data-material-profile="password">${icon('key')}<span>เปลี่ยนรหัสผ่าน</span></button><button role="menuitem" data-material-profile="motion">${icon('spark')}<span>${materialPaused?'เปิด':'พัก'}การเคลื่อนไหว</span></button><button role="menuitem" class="material-profile-logout" data-material-profile="logout">${icon('logout')}<span>ออกจากระบบ</span></button></div>`}
 Object.assign(icons,{arrow:'<path d="M4 12h16m-6-6 6 6-6 6"/>',chat:'<path d="M4 4h16v13H9l-5 4Z M8 8h8M8 12h5"/>',spark:'<path d="m12 3 3 6 6 3-6 3-3 6-3-6-6-3 6-3Z"/>'});
 function materialApply(){
@@ -56,7 +92,8 @@ document.addEventListener('click',e=>{
  if(button.dataset.materialProfile){e.preventDefault();e.stopImmediatePropagation();const action=button.dataset.materialProfile;materialToggleProfile(false);if(action==='logout'){logoutSession();return}if(action==='motion'){materialPaused=!materialPaused;try{localStorage.setItem('finance-mascot-paused',String(materialPaused))}catch{}document.body.classList.toggle('material-motion-paused',materialPaused);button.querySelector('span').textContent=(materialPaused?'เปิด':'พัก')+'การเคลื่อนไหว';toast(materialPaused?'พักการเคลื่อนไหวแล้ว':'เปิดการเคลื่อนไหวแล้ว');return}if(action==='password'){nav('profile');document.querySelector('[data-action="password"]')?.click();return}nav('profile');if(action==='line')document.querySelector('.line-account-status')?.scrollIntoView({behavior:materialPaused?'instant':'smooth',block:'center'});return}
  if(button.hasAttribute('data-meddy-go')||button.hasAttribute('data-meddy-overdue')){e.preventDefault();e.stopImmediatePropagation();materialFollow(button.hasAttribute('data-meddy-overdue'));return}
  if(button.hasAttribute('data-meddy-dismiss')){materialDismissed.add(materialAlertKey);document.querySelector('.meddy-overdue[role=status]')?.remove();return}
- if(button.hasAttribute('data-meddy-wave')){const bubble=document.querySelector('.meddy-bubble');if(bubble)bubble.textContent=materialBillState().text;const svg=button.querySelector('svg');if(!materialPaused&&!matchMedia('(prefers-reduced-motion: reduce)').matches)svg?.animate?.([{transform:'rotate(-8deg)'},{transform:'rotate(8deg)'},{transform:'rotate(0)'}],{duration:450});}
+ if(button.dataset.meddyQuestion){e.preventDefault();e.stopImmediatePropagation();materialSay(materialBillState(),button.dataset.meddyQuestion);return}
+ if(button.hasAttribute('data-meddy-wave')){materialSay(materialBillState());const svg=button.querySelector('svg');if(!materialPaused&&!matchMedia('(prefers-reduced-motion: reduce)').matches)svg?.animate?.([{transform:'rotate(-8deg)'},{transform:'rotate(8deg)'},{transform:'rotate(0)'}],{duration:450});}
 },true);
 document.addEventListener('click',e=>{if(!e.target.closest('.topbar .user'))materialToggleProfile(false)});
 document.addEventListener('keydown',e=>{const menu=document.getElementById('material-profile-menu');if(!menu)return;if(e.key==='Escape'&&!menu.hidden){materialToggleProfile(false);document.querySelector('[data-material-profile-toggle]')?.focus();return}if(e.target.closest?.('.topbar .user')&&['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();materialToggleProfile(true);const buttons=[...menu.querySelectorAll('button')];let i=buttons.indexOf(document.activeElement);i=e.key==='Home'?0:e.key==='End'?buttons.length-1:i<0?(e.key==='ArrowDown'?0:buttons.length-1):(i+(e.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length;buttons[i]?.focus()}});

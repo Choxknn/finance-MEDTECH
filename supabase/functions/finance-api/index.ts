@@ -59,6 +59,7 @@ Deno.serve(async req=>{
   let input:any,file:File|null=null,receiptFile:File|null=null;
   if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null;receiptFile=fd.get('receipt') as File|null}else input=await req.json();
   switch(input.action){
+   case 'manage-user-history':{requireAdmin();await query(db.rpc('manage_user_history',{p_id:text(input.id,36),p_patch:input.patch||{},p_delete:input.delete===true,p_actor:profile.id}));if(input.delete===true)await cleanupDriveFiles(db);return json({ok:true});}
    case 'prepare-members':{requireAdmin();const count=await query(db.rpc('prepare_registration_members',{p_rows:input.rows,p_actor:profile.id}));return json({count});}
    case 'create-registration-batch':{
     requireAdmin();const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');

@@ -18,7 +18,7 @@ async function refreshInBackground(){
  try{
   const result=await api('bootstrap');
   if(!user||scope!==user.id+'|'+user.role||view!==screen||document.hidden||document.getElementById('dialog').open||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]'))return;
-  const changed=JSON.stringify(db)!==JSON.stringify(result.data)||JSON.stringify(user)!==JSON.stringify(result.profile);
+  const stable=value=>JSON.stringify(value,(key,v)=>key==='last_seen_at'?undefined:v);const changed=stable(db)!==stable(result.data)||stable(user)!==stable(result.profile);
   if(!changed)return;
   db=result.data;user=result.profile;for(const key of settingKeys)if(typeof db.settings?.[key]==='string')cfg[key]=db.settings[key];
   const scroll=window.scrollY,activeAnnouncement=document.querySelector('[data-announcement-tab][aria-selected=true]')?.dataset.announcementTab;

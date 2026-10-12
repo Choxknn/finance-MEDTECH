@@ -148,7 +148,13 @@ Deno.serve(async req=>{
     for(const c of eligibleCharges){const receipt=approvedByCharge.get(c.id),total=payerTotals.find((t:any)=>t.id===c.id);if(!receipt||!total||Math.round(receipt.amount*100)<Math.round(Number(total.total_amount)*100))continue;if(receipt.at>(latestByPerson.get(c.profile_id)||''))latestByPerson.set(c.profile_id,receipt.at);}
     const payerProfiles=latestByPerson.size?await query(db.from('profiles').select('id,student_id').in('id',[...latestByPerson.keys()]).eq('active',true).is('deleted_at',null)):[];
     payerProfiles.sort((a:any,b:any)=>(latestByPerson.get(b.id)||'').localeCompare(latestByPerson.get(a.id)||'')||a.id.localeCompare(b.id));
-    const recentPayers={total:payerProfiles.length,people:payerProfiles.slice(0,10).map((p:any)=>({suffix:String(p.student_id||'—').slice(-2)}))};
+    const assignedIds=[...new Set(eligibleCharges.map((c:any)=>c.profile_id))];
+    const assignedProfiles=assignedIds.length?await query(db.from('profiles').select('student_id').in('id',assignedIds).eq('active',true).is('deleted_at',null)):[];
+    const waitingAssignments=isAdmin?preparedBills:await query(db.from('prepared_bill_members').select('round_id,invite_id'));
+    const waitingIds=[...new Set(waitingAssignments.filter((b:any)=>openRoundIds.has(b.round_id)).map((b:any)=>b.invite_id))];
+    const waitingPeople=waitingIds.length?await query(db.from('member_invites').select('student_id').in('id',waitingIds).in('status',['draft','pending'])):[];
+    const assignedCount=new Set([...assignedProfiles,...waitingPeople].map((p:any)=>p.student_id)).size;
+    const recentPayers={assigned:assignedCount,total:payerProfiles.length,people:payerProfiles.slice(0,10).map((p:any)=>({suffix:String(p.student_id||'—').slice(-2)}))};
 
     const visiblePayments=(isAdmin?allPayments:allPayments.filter((p:any)=>p.profile_id===profile.id));
     const activeRounds=rounds.filter((r:any)=>!r.deleted_at),activeProfiles=profiles.filter((p:any)=>!p.deleted_at);

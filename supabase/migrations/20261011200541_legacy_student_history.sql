@@ -26,3 +26,8 @@ grant execute on function public.bind_legacy_student_history() to service_role;
 drop trigger if exists bind_legacy_student_history on public.profiles;
 create trigger bind_legacy_student_history after insert or update of student_id on public.profiles for each row execute function public.bind_legacy_student_history();
 commit;
+create or replace function public.claim_legacy_evidence(p_job uuid) returns setof public.legacy_payments language sql security invoker set search_path=public as $$
+ update legacy_payments set evidence_state='processing' where id=(select id from legacy_payments where batch_id=p_job and evidence_state='pending' order by id for update skip locked limit 1) returning *;
+$$;
+revoke all on function public.claim_legacy_evidence(uuid) from public,anon,authenticated;
+grant execute on function public.claim_legacy_evidence(uuid) to service_role;

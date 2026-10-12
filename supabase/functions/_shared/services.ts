@@ -24,10 +24,17 @@ export function receiverDefinitelyWrong(detail:any,expected:string){
 export function slipOkBranch(value:string){const v=value.trim();if(/^\d+$/.test(v))return v;return v.match(/^https:\/\/api\.slipok\.com\/api\/line\/apikey\/(\d+)\/?$/)?.[1]||null}
 export async function checkSlip(file:File,amount:number,expectedReceiver:string){
  const branch=slipOkBranch(secret('SLIPOK_BRANCH_ID'));if(!branch)return {ok:false,body:{code:'LOCAL_BRANCH_ID',message:'SLIPOK_BRANCH_ID ต้องเป็นรหัสสาขาตัวเลข'}};
- const body=new FormData();const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'} as Record<string,string>)[file.type];if(!ext)throw new Error('ชนิดไฟล์ไม่รองรับ');body.set('files',file,`slip.${ext}`);body.set('log','true');body.set('amount',String(amount));
- const r=await fetch(`https://api.slipok.com/api/line/apikey/${encodeURIComponent(branch)}`,{method:'POST',headers:{'x-authorization':secret('SLIPOK_API_KEY').trim()},body,signal:AbortSignal.timeout(30000)});
- const j=await r.json(),receiverMatched=matchesReceiver(j.data,expectedReceiver);
- return {ok:r.ok&&j.success===true&&j.data?.success===true&&Math.round(Number(j.data.amount)*100)===Math.round(amount*100)&&!!j.data.transRef&&receiverMatched,body:{...j,...(!receiverMatched&&j.success?{message:'ข้อมูลบัญชีผู้รับไม่ตรงหรือข้อมูลถูกปิดบังจนตรวจยืนยันไม่ได้'}:{}),diagnostics:{httpStatus:r.status,transport:'image-multipart',receiverMatched,receiverMismatch:String(j.code)==='1014'||(j.success===true&&j.data?.success===true&&receiverDefinitelyWrong(j.data,expectedReceiver)),branchNumeric:true}}};
+ const backupBranch=slipOkBranch(Deno.env.get('SLIPOK_BRANCH_ID_2')||''),backupKey=(Deno.env.get('SLIPOK_API_KEY_2')||'').trim();
+ const primary={branch,key:secret('SLIPOK_API_KEY').trim(),slot:1},backup=backupBranch&&backupKey&&backupBranch!==branch?{branch:backupBranch,key:backupKey,slot:2}:null;
+ const quota=async(account:typeof primary)=>{try{const r=await fetch(`https://api.slipok.com/api/line/apikey/${account.branch}/quota`,{headers:{'x-authorization':account.key},signal:AbortSignal.timeout(5000)});const j=await r.json();return r.ok&&j.success===true&&typeof j.data?.quota==='number'?j.data.quota:null}catch{return null}};
+ let account=primary;if(backup){const left=await quota(primary);if(left!==null&&left<=0)account=backup}
+ if(account.slot===2){const left=await quota(account);if(left!==null&&left<=0)return {ok:false,body:{code:'LOCAL_QUOTA_EMPTY',message:'โควตาตรวจสลิปทั้งสองสาขาหมด กรุณารอผู้ดูแลตรวจสอบ'}}}
+ const send=async(selected:typeof primary)=>{const body=new FormData();const ext=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'} as Record<string,string>)[file.type];if(!ext)throw new Error('ชนิดไฟล์ไม่รองรับ');body.set('files',file,`slip.${ext}`);body.set('log','true');body.set('amount',String(amount));const response=await fetch(`https://api.slipok.com/api/line/apikey/${selected.branch}`,{method:'POST',headers:{'x-authorization':selected.key},body,signal:AbortSignal.timeout(30000)});return {r:response,j:await response.json()}};
+ let {r,j}=await send(account);
+ // Retry only an explicit quota error, never a duplicate or invalid slip.
+ if(String(j.code)==='1004'&&account.slot===1&&backup){account=backup;const left=await quota(account);if(left!==null&&left<=0)return {ok:false,body:{code:'LOCAL_QUOTA_EMPTY',message:'โควตาตรวจสลิปทั้งสองสาขาหมด กรุณารอผู้ดูแลตรวจสอบ'}};({r,j}=await send(account))}
+ const receiverMatched=matchesReceiver(j.data,expectedReceiver);
+ return {ok:r.ok&&j.success===true&&j.data?.success===true&&Math.round(Number(j.data.amount)*100)===Math.round(amount*100)&&!!j.data.transRef&&receiverMatched,body:{...j,...(!receiverMatched&&j.success?{message:'ข้อมูลบัญชีผู้รับไม่ตรงหรือข้อมูลถูกปิดบังจนตรวจยืนยันไม่ได้'}:{}),diagnostics:{httpStatus:r.status,transport:'image-multipart',branchSlot:account.slot,receiverMatched,receiverMismatch:String(j.code)==='1014'||(j.success===true&&j.data?.success===true&&receiverDefinitelyWrong(j.data,expectedReceiver)),branchNumeric:true}}};
 }
 export async function deliverNotification(db:any,n:any){
  const account=await query(db.from('line_accounts').select('line_user_id').eq('profile_id',n.profile_id).maybeSingle());const p=await query(db.from('profiles').select('active,deleted_at').eq('id',n.profile_id).maybeSingle());

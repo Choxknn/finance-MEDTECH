@@ -242,3 +242,5 @@ body .page-head button[data-new-income]:hover,body .page-head button[data-catego
 body .page-head button[data-action="new-expense"]:hover,body .page-head button[data-category-add="expense"]:hover{background:#ad2a3c!important}
 
 .signup-review-details{display:grid;gap:8px;padding:18px;background:#faf4f7;border-radius:18px}.signup-review-details dt{font-size:12px;color:#846577}.signup-review-details dd{margin:0 0 12px;font-weight:600;overflow-wrap:anywhere}#registration-review>button{width:100%;margin-top:10px}.mp-fund-recent .mp-fund-list+.mp-fund-list{border-top:1px solid #eee4eb}
+
+.mp-fund-recent{margin-bottom:24px}.logout-confirm{text-align:center}.logout-confirm-icon{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 18px;border-radius:22px;background:#fcecf1;color:#b92348}.logout-confirm-icon svg{width:30px;height:30px}.logout-confirm p{margin-bottom:24px}.logout-confirm .dialog-actions{display:flex;gap:12px}

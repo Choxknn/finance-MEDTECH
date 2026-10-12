@@ -25,7 +25,7 @@ Deno.serve(async req=>{
   if(['batch-state','batch-accept'].includes(input.action)&&(typeof input.session!=='string'||!/^[0-9a-f]{64}$/.test(input.session)||typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id)))throw Error('ข้อมูลการสมัครไม่ถูกต้อง');
   if(input.action==='batch-state')return json(await query(db.rpc('registration_session_state',{p_session_hash:await hash(input.session),p_batch_hash:tokenHash,p_student:input.student_id,p_claim:false})));
   if(input.action==='invite-preview'){
-   const batch=await query(db.from('registration_batches').select('expires_at').eq('token_hash',tokenHash).gt('expires_at',new Date().toISOString()).maybeSingle());if(batch)return json({batch});
+   const batch=await query(db.from('registration_batches').select('id').eq('token_hash',tokenHash).maybeSingle());if(batch){const remaining=await query(db.from('member_invites').select('id').eq('batch_id',batch.id).in('status',['pending','processing']).limit(1));if(!remaining.length)return json({error:'สมาชิกในลิงก์นี้สมัครครบแล้ว หรือผู้ดูแลยกเลิกลิงก์แล้ว'},400);return json({batch:{reusable:true}})}
    const invite=await query(db.from('member_invites').select('student_id,name_prefix,first_name,last_name,year,expires_at').eq('token_hash',tokenHash).eq('status','pending').gt('expires_at',new Date().toISOString()).maybeSingle());
    if(!invite)return json({error:'ลิงก์หมดอายุหรือถูกใช้แล้ว กรุณาติดต่อผู้ดูแลระบบ'},400);
    return json({invite});

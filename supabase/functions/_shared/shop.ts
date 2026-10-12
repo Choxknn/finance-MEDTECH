@@ -1,0 +1,32 @@
+import {query,validateImage} from './services.ts';
+export async function shopAction(db:any,profile:any,input:any,file:File|null){
+ const admin=profile.role==='admin',action=input.action;
+ if(!action.startsWith('shop-'))return null;
+ const requireAdmin=()=>{if(!admin)throw Error('เฉพาะผู้ดูแลระบบ')};
+ if(action==='shop-list'){
+  let products=db.from('shop_products').select('*').is('deleted_at',null).order('created_at',{ascending:false});if(!admin)products=products.eq('active',true);
+  let orders=db.from('shop_orders').select('*').order('created_at',{ascending:false}).order('id');if(!admin)orders=orders.eq('profile_id',profile.id);
+  return {products:await query(products),orders:await query(orders.range(0,999))};
+ }
+ if(action==='shop-export'){requireAdmin();const page=Number(input.page)||0;if(!Number.isInteger(page)||page<0)throw Error('หน้าไม่ถูกต้อง');return {orders:await query(db.from('shop_orders').select('*').order('created_at',{ascending:false}).order('id').range(page*500,page*500+499))}}
+ if(action==='shop-order')return {order:await query(db.rpc('place_shop_order',{p_id:input.request_id,p_profile:profile.id,p_product:input.product_id,p_quantity:Number(input.quantity),p_note:String(input.note||'')}))};
+ requireAdmin();
+ if(action==='shop-upload'){
+  const product=await query(db.from('shop_products').select('id,images').eq('id',input.id).is('deleted_at',null).single());if(product.images.length>=8)throw Error('เพิ่มรูปได้สูงสุด 8 รูป');
+  const image=await validateImage(file),path=product.id+'/'+crypto.randomUUID()+'.'+({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[image.type]||'jpg');
+  await query(db.storage.from('shop-products').upload(path,image,{contentType:image.type,upsert:false}));
+  try{await query(db.from('shop_products').update({images:[...product.images,path]}).eq('id',product.id))}catch(e){await db.storage.from('shop-products').remove([path]);throw e}return {ok:true};
+ }
+ if(action==='shop-image-remove'){
+  const p=await query(db.from('shop_products').select('id,images').eq('id',input.id).single());if(!p.images.includes(input.path))throw Error('ไม่พบรูป');await query(db.from('shop_products').update({images:p.images.filter((x:string)=>x!==input.path)}).eq('id',p.id));await query(db.storage.from('shop-products').remove([input.path]));return {ok:true};
+ }
+ if(action==='shop-save'){
+  const title=String(input.title||'').trim(),price=Number(input.price),stock=Number(input.stock),description=String(input.description||'');
+  if(!title||title.length>120||!Number.isFinite(price)||price<0||price>9999999||!Number.isInteger(stock)||stock<0||stock>1000000||description.length>4000)throw Error('ตรวจสอบชื่อ ราคา จำนวนสินค้า และรายละเอียด');
+  const record={title,price:Math.round(price*100)/100,stock,description,active:input.active===true};
+  return {product:await query(input.id?db.from('shop_products').update(record).eq('id',input.id).is('deleted_at',null).select().single():db.from('shop_products').insert(record).select().single())};
+ }
+ if(action==='shop-delete'){const p=await query(db.from('shop_products').select('images').eq('id',input.id).single());await query(db.from('shop_products').update({deleted_at:new Date().toISOString(),active:false}).eq('id',input.id));if(p.images.length){await query(db.storage.from('shop-products').remove(p.images));await query(db.from('shop_products').update({images:[]}).eq('id',input.id))}return {ok:true}}
+ if(action==='shop-status'){await query(db.rpc('update_shop_order',{p_id:input.id,p_status:input.status}));return {ok:true}}
+ throw Error('ไม่พบคำสั่งร้านค้า');
+}

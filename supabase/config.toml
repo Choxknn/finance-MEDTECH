@@ -9,3 +9,7 @@ verify_jwt = false
 
 [functions.line-login]
 verify_jwt = false
+
+[functions.legacy-evidence-import]
+# Expiring import-job capability is validated inside the function.
+verify_jwt = false

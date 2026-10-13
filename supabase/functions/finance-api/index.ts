@@ -1,3 +1,4 @@
+import {attendanceAction} from '../_shared/attendance.ts';
 import {shopAction} from '../_shared/shop.ts';
 import {evidenceOverview,maintainEvidence,downloadEvidence,deleteEvidenceByAdmin} from '../_shared/evidence-storage.ts';
 import {driveHealth} from '../_shared/drive-health.ts';
@@ -59,6 +60,7 @@ Deno.serve(async req=>{
   }
   let input:any,file:File|null=null,receiptFile:File|null=null;
   if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null;receiptFile=fd.get('receipt') as File|null}else input=await req.json();
+  if(String(input.action||'').startsWith('attendance-'))return json(await attendanceAction(db,profile,input));
   if(String(input.action||'').startsWith('shop-'))return json(await shopAction(db,profile,input,file));
   switch(input.action){
    case 'manage-user-history':{requireAdmin();await query(db.rpc('manage_user_history',{p_id:text(input.id,36),p_patch:input.patch||{},p_delete:input.delete===true,p_actor:profile.id}));if(input.delete===true)await cleanupDriveFiles(db);return json({ok:true});}

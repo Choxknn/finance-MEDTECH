@@ -45,6 +45,6 @@ export async function shopAction(db:any,profile:any,input:any,file:File|null){
 function validateShopGroups(value:any){
  if(!Array.isArray(value)||value.length>12)throw Error('เพิ่มหมวดตัวเลือกได้สูงสุด 12 หมวด');const groups=new Set();
  return value.map((g:any)=>{const id=String(g.id||''),name=String(g.name||'').trim();if(!/^[a-zA-Z0-9-]{1,64}$/.test(id)||groups.has(id)||!name||name.length>80||!Array.isArray(g.options)||!g.options.length||g.options.length>50)throw Error('ตรวจสอบหมวดตัวเลือก และเพิ่มอย่างน้อย 1 ตัวเลือกต่อหมวด');groups.add(id);const choices=new Set();
- return {id,name,required:g.required!==false,options:g.options.map((o:any)=>{const id=String(o.id||''),name=String(o.name||'').trim();if(!/^[a-zA-Z0-9-]{1,64}$/.test(id)||choices.has(id)||!name||name.length>80)throw Error('ชื่อตัวเลือกไม่ถูกต้องหรือซ้ำ');choices.add(id);return {id,name}})}
+ return {id,name,required:g.required!==false,options:g.options.map((o:any)=>{const id=String(o.id||''),name=String(o.name||'').trim(),price_delta=Number(o.price_delta||0);if(!Number.isFinite(price_delta)||price_delta<0||price_delta>1000000||Math.abs(price_delta*100-Math.round(price_delta*100))>0.00001)throw Error('ราคาบวกของตัวเลือกต้องเป็น 0–1,000,000 บาท และไม่เกิน 2 ตำแหน่ง');if(!/^[a-zA-Z0-9-]{1,64}$/.test(id)||choices.has(id)||!name||name.length>80)throw Error('ชื่อตัวเลือกไม่ถูกต้องหรือซ้ำ');choices.add(id);return {id,name,price_delta}})}
  });
 }

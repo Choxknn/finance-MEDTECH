@@ -3,6 +3,7 @@ import {query,validateImage} from './services.ts';
 export async function shopAction(db:any,profile:any,input:any,file:File|null){
  const admin=profile.role==='admin',action=input.action;
  if(!action.startsWith('shop-'))return null;
+ if(['shop-list','shop-order','shop-get','shop-pay'].includes(action))await query(db.rpc('expire_shop_reservations'));
  if(['shop-pay','shop-payment-retry','shop-payment-review','shop-evidence'].includes(action))return shopPaymentAction(db,profile,input,file);
  const requireAdmin=()=>{if(!admin)throw Error('เฉพาะผู้ดูแลระบบ')};
  if(action==='shop-list'){

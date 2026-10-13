@@ -16,6 +16,14 @@ export async function attendanceAction(db:any,profile:any,input:any){
  if(input.action==='attendance-toggle'){
   if(typeof input.active!=='boolean')throw Error('สถานะไม่ถูกต้อง');await query(db.from('attendance_sessions').update({active:input.active}).eq('id',input.id).select('id').single());return {ok:true};
  }
+ if(input.action==='attendance-set'){
+  const student=String(input.student_id||'').trim();if(!/^\d{5,20}$/.test(student)||typeof input.checked!=='boolean')throw Error('ข้อมูลสถานะไม่ถูกต้อง');
+  if(input.checked)return await query(db.rpc('check_in_student',{p_session:input.session_id,p_student:student,p_actor:profile.id}));
+  if(!input.mark_id)throw Error('กรุณาเปิดรายชื่อใหม่');
+  const removed=await query(db.from('attendance_marks').delete().eq('id',input.mark_id).eq('session_id',input.session_id).eq('student_id',student).select('id'));
+  if(!removed.length)throw Error('สถานะเปลี่ยนไปแล้ว กรุณาเปิดรายชื่อใหม่');
+  return {ok:true};
+ }
  if(input.action==='attendance-check'){
   const student=String(input.student_id||'').trim();if(!/^\d{5,20}$/.test(student))throw Error('QR รหัสนักศึกษาไม่ถูกต้อง');
   return await query(db.rpc('check_in_student',{p_session:input.session_id,p_student:student,p_actor:profile.id}));

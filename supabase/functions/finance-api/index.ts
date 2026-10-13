@@ -1,3 +1,4 @@
+import {limitRequest} from '../_shared/bot-protection.ts';
 import {attendanceAction} from '../_shared/attendance.ts';
 import {shopAction} from '../_shared/shop.ts';
 import {evidenceOverview,maintainEvidence,downloadEvidence,deleteEvidenceByAdmin} from '../_shared/evidence-storage.ts';
@@ -60,6 +61,7 @@ Deno.serve(async req=>{
   }
   let input:any,file:File|null=null,receiptFile:File|null=null;
   if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null;receiptFile=fd.get('receipt') as File|null}else input=await req.json();
+  await limitRequest(db,'finance:'+profile.id,300,60);
   if(String(input.action||'').startsWith('attendance-'))return json(await attendanceAction(db,profile,input));
   if(String(input.action||'').startsWith('shop-'))return json(await shopAction(db,profile,input,file));
   switch(input.action){
@@ -363,7 +365,7 @@ Deno.serve(async req=>{
    case 'file':{const kind=text(input.kind,10);if(!['payment','expense'].includes(kind))throw new Error('ชนิดรายการไม่ถูกต้อง');if(kind==='expense')requireAdmin();const record=await query(db.from(kind==='payment'?'payments':'expenses').select('*').eq('id',input.id).single());if(['payment','legacy'].includes(kind||'')&&!isAdmin&&record.profile_id!==profile.id)throw new Error('ไม่มีสิทธิ์เข้าถึง');return json({url:`${secret('SUPABASE_URL')}/functions/v1/finance-api?action=download&kind=${kind}&id=${encodeURIComponent(record.id)}`});}
    default:return json({error:'Action not found'},404);
   }
- }catch(e){return json({error:e instanceof Error?e.message:'ทำรายการไม่สำเร็จ'},400)}
+ }catch(e){return json({error:e instanceof Error?e.message:'ทำรายการไม่สำเร็จ'},(e as any)?.status===429?429:400)}
 });
 
 

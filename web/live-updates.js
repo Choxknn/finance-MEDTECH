@@ -1,0 +1,20 @@
+'use strict';
+let financeLiveClient=null,financeLiveScope='',financeLiveToken='',financeLiveTimer=null,financeLiveBusy=false,financeLivePending=false;
+function financeLiveBlocked(){return document.hidden||document.querySelector('dialog[open]')||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]')||document.querySelector('#material-profile-menu:not([hidden])')}
+function queueFinanceLive(){financeLivePending=true;if(!financeLiveTimer)financeLiveTimer=setTimeout(flushFinanceLive,800)}
+async function flushFinanceLive(){financeLiveTimer=null;if(!user||cfg.mode!=='live')return;if(financeLiveBusy||backgroundRefreshRunning||financeLiveBlocked()){financeLiveTimer=setTimeout(flushFinanceLive,1500);return}financeLiveBusy=true;financeLivePending=false;const scope=user.id,screen=view;try{
+ const result=await api('bootstrap');let shop=null,summary=null,attendance=null;
+ if(screen.startsWith('shop')){shop=await api('shop-list');if(screen==='shop-summary'&&user.role==='admin')summary=await api('shop-summary',{paid:shopPaidOnly})}
+ if(screen==='attendance'&&user.role==='admin')attendance=await api('attendance-list',{session_id:attendanceSession||undefined});
+ if(user?.id!==scope||view!==screen||financeLiveBlocked()){financeLivePending=true;return}
+ const stable=x=>JSON.stringify(x,(k,v)=>k==='last_seen_at'?undefined:v);
+ const changed=stable(db)!==stable(result.data)||stable(user)!==stable(result.profile)||(shop&&stable(shopData)!==stable(shop))||(summary&&stable(shopSummary)!==stable(summary))||(attendance&&stable(attendanceData)!==stable(attendance));
+ if(!changed)return;db=result.data;user=result.profile;for(const key of settingKeys)if(typeof db.settings?.[key]==='string')cfg[key]=db.settings[key];
+ if(shop){shopData=shop;shopLoaded=true;shopSummary=summary;shopSelected=new Set([...shopSelected].filter(id=>shop.orders.some(o=>o.id===id)))}
+ if(attendance){attendanceData=attendance;attendanceSession=attendance.selected||'';attendanceLoaded=true}
+ const scroll=window.scrollY;render();window.scrollTo({top:scroll,behavior:'instant'});
+ }catch{financeLivePending=true}finally{financeLiveBusy=false;if(financeLivePending&&!financeLiveTimer)financeLiveTimer=setTimeout(flushFinanceLive,3000)}}
+function stopFinanceLive(){if(financeLiveClient){financeLiveClient.removeAllChannels();financeLiveClient.realtime.disconnect()}financeLiveClient=null;financeLiveScope='';financeLiveToken='';clearTimeout(financeLiveTimer);financeLiveTimer=null;financeLivePending=false}
+async function syncFinanceLive(){if(!user||cfg.mode!=='live'||document.hidden){stopFinanceLive();return}const scope=user.id+'|'+user.role;try{await ensureLiveSession();if(!user||scope!==user.id+'|'+user.role)return;if(financeLiveScope===scope&&financeLiveClient){if(financeLiveToken!==token){financeLiveToken=token;await financeLiveClient.realtime.setAuth(token)}return}stopFinanceLive();if(!window.supabase?.createClient)return;financeLiveScope=scope;financeLiveToken=token;const client=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},accessToken:async()=>token});financeLiveClient=client;await client.realtime.setAuth(token);if(financeLiveClient!==client)return;for(const topic of ['finance:shared',user.role==='admin'?'finance:admin':'finance:user:'+user.id])client.channel(topic,{config:{private:true}}).on('broadcast',{event:'changed'},queueFinanceLive).subscribe(status=>{if(status==='SUBSCRIBED')queueFinanceLive()});}catch{/* The existing one-minute refresh remains a fallback. */}}
+const liveRender=render;render=function(){liveRender();queueMicrotask(syncFinanceLive)};
+document.addEventListener('visibilitychange',syncFinanceLive);window.addEventListener('online',()=>{syncFinanceLive();queueFinanceLive()});window.addEventListener('pagehide',stopFinanceLive);document.getElementById('dialog').addEventListener('close',()=>{if(financeLivePending)queueFinanceLive()});document.addEventListener('focusout',()=>{if(financeLivePending)queueFinanceLive()});setInterval(syncFinanceLive,20000);syncFinanceLive();

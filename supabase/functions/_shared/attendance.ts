@@ -3,7 +3,7 @@ export async function attendanceAction(db:any,profile:any,input:any){
  if(profile.role!=='admin')throw Error('เฉพาะผู้ดูแลระบบ');
  if(input.action==='attendance-list'){
   const sessions=await query(db.from('attendance_sessions').select('*').order('held_on',{ascending:false}).order('created_at',{ascending:false}).limit(200));
-  const selected=input.session_id||sessions[0]?.id;
+  const selected=sessions.some((s:any)=>s.id===input.session_id)?input.session_id:sessions[0]?.id;
   if(selected&&!sessions.some((s:any)=>s.id===selected))throw Error('ไม่พบรอบเช็คชื่อ');
   const marks=selected?await query(db.from('attendance_marks').select('*').eq('session_id',selected).order('checked_at',{ascending:false})):[];
   const members=await query(db.from('profiles').select('id,student_id,name,year').eq('active',true).is('deleted_at',null).order('student_id'));

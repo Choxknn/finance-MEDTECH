@@ -1,3 +1,4 @@
+import {captchaConfig,protectAccountRequest} from '../_shared/bot-protection.ts';
 import {adminDb,query,hash,deliverNotification} from '../_shared/services.ts';
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'',allowed=(Deno.env.get('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim());
@@ -8,6 +9,8 @@ Deno.serve(async req=>{
  if(req.method!=='POST')return json({error:'Method not allowed'},405);
  try{
   const raw=await req.text();if(raw.length>4096)return json({error:'คำขอใหญ่เกินไป'},413);const input=JSON.parse(raw),db=adminDb();
+  if(input.action==='security-config')return json(captchaConfig());
+  await protectAccountRequest(db,req,input);
   if(input.action==='forgot'){
    if(typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id))return json({error:'กรุณาระบุรหัสนักศึกษาให้ถูกต้อง'},400);
    const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1)!.trim();
@@ -45,5 +48,5 @@ Deno.serve(async req=>{
    if(!completed){if(userId){const removed=await db.auth.admin.deleteUser(userId);if(removed.error)throw Error('สร้างบัญชีไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ')}await query(db.from('member_invites').update({status:'pending'}).eq('token_hash',tokenHash).eq('status','processing'))}
    throw error;
   }
- }catch(error){return json({error:error instanceof Error?error.message:'ดำเนินการไม่สำเร็จ'},400)}
+ }catch(error){return json({error:error instanceof Error?error.message:'ดำเนินการไม่สำเร็จ'},(error as any)?.status===429?429:400)}
 });

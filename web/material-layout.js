@@ -43,7 +43,7 @@ function mpDashboard(main){
  main.insertAdjacentHTML('beforeend',stats+`<div class="mp-main-grid"><div class="mp-main-column">${left}</div><div class="mp-side-column">${right}${admin?mpCard('เข้าสู่ระบบล่าสุด','users',`<div class="online-users"><strong>🟢 ออนไลน์ ${(db.online_users||[]).length} คน</strong><p class="help">กำลังใช้งานเว็บในช่วง 90 วินาทีล่าสุด</p>${(db.online_users||[]).map(p=>`<div class="summary-line"><span>${esc(p.name)}<small class="help">${esc(p.student_id)}</small></span><span class="badge approved">ออนไลน์</span></div>`).join('')}<h3>เข้าสู่ระบบล่าสุด</h3></div>`+(db.recent_logins||[]).map(p=>`<div class="summary-line"><span>${icon('users')} ${esc(p.name)}<small class="help">${esc(p.student_id)}</small></span><time class="help">${dateTime(p.last_login_at)}</time></div>`).join('')||'<div class="mp-empty">ยังไม่มีประวัติเข้าสู่ระบบ</div>'):''}</div></div>`);
  const slot=main.querySelector('.mp-announcement-slot');
  if(announcement){announcement.classList.add('mp-announcement','mp-card');announcement.insertAdjacentHTML('afterbegin','<div class="mp-card-head"><h2>'+icon('bell')+'ประกาศจากผู้ดูแล</h2><span class="mp-caption">ล่าสุด</span></div>');announcement.insertAdjacentHTML('beforeend','<span class="mp-flower" aria-hidden="true">✿</span>');slot.replaceWith(announcement)}
- else slot.outerHTML=mpCard('ประกาศจากผู้ดูแล','bell','<h3>วันนี้ยังไม่มีประกาศใหม่ ♡</h3><p>เมื่อมีข่าวสารจากผู้ดูแล<br>จะมาแสดงให้ดูตรงนี้นะ</p><span class="mp-flower" aria-hidden="true">✿</span>','','mp-announcement mp-announcement-empty');
+ else slot.remove();
 }
 function mpShell(layout){
  layout.classList.add('material-shell');layout.querySelector('.clay-notifications')?.classList.remove('secondary');const sidebar=layout.querySelector('.sidebar');

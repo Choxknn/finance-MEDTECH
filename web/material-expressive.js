@@ -56,6 +56,7 @@ function materialSay(s,question=''){
  materialConversation={key:materialChatKey(s),question};
  const bubble=document.querySelector('.meddy-bubble');if(!bubble)return;
  bubble.textContent=question?materialReply(s,question):s.mood==='paid'?'ไฮไฟฟ์! 🙌 วันนี้ไม่มีบิลค้างแล้ว ขอบคุณนะ':s.text;
+ if(typeof animateMeddyWords==='function')animateMeddyWords(bubble,true);
  bubble.classList.remove('chat-arrive');void bubble.offsetWidth;bubble.classList.add('chat-arrive');
  document.querySelectorAll('[data-meddy-question]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.meddyQuestion===question)));
 }

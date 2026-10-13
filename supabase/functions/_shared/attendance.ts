@@ -9,6 +9,7 @@ export async function attendanceAction(db:any,profile:any,input:any){
   const members=await query(db.from('profiles').select('id,student_id,name,year').eq('active',true).is('deleted_at',null).order('student_id'));
   return {sessions,selected,marks,members};
  }
+ if(input.action==='attendance-delete'){await query(db.from('attendance_sessions').delete().eq('id',input.id).select('id').single());return {ok:true}}
  if(input.action==='attendance-create'){
   const title=String(input.title||'').trim(),held=String(input.held_on||'');if(!title||title.length>120||!/^\d{4}-\d{2}-\d{2}$/.test(held))throw Error('ระบุชื่อรอบและวันที่');
   return {session:await query(db.from('attendance_sessions').insert({title,held_on:held,created_by:profile.id}).select().single())};

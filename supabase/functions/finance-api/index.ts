@@ -144,7 +144,9 @@ Deno.serve(async req=>{
     // Minimal public display summary: no full IDs, names, amounts or evidence.
     const payerCharges=await query(db.from('charges').select('id,profile_id,round_id').is('deleted_at',null));
     const openRoundIds=new Set(rounds.filter((r:any)=>!r.deleted_at&&!r.archived).map((r:any)=>r.id));
-    const eligibleCharges=payerCharges.filter((c:any)=>openRoundIds.has(c.round_id));
+    const validUuid=(value:unknown)=>typeof value==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+    // Deleted members may leave historical charges with a null profile_id.
+    const eligibleCharges=payerCharges.filter((c:any)=>openRoundIds.has(c.round_id)&&validUuid(c.profile_id));
     const payerTotals=eligibleCharges.length?await query(db.rpc('charge_totals',{p_ids:eligibleCharges.map((c:any)=>c.id)})):[];
     const approvedByCharge=new Map<string,{amount:number,at:string}>();
     for(const p of allPayments){if(p.status!=='approved'||p.deleted_at||!p.charge_id)continue;const prior=approvedByCharge.get(p.charge_id)||{amount:0,at:''};prior.amount+=Number(p.amount);const at=p.reviewed_at||p.created_at;if(at>prior.at)prior.at=at;approvedByCharge.set(p.charge_id,prior);}
@@ -155,7 +157,7 @@ Deno.serve(async req=>{
     const assignedIds=[...new Set(eligibleCharges.map((c:any)=>c.profile_id))];
     const assignedProfiles=assignedIds.length?await query(db.from('profiles').select('student_id').in('id',assignedIds).eq('active',true).is('deleted_at',null)):[];
     const waitingAssignments=isAdmin?preparedBills:await query(db.from('prepared_bill_members').select('round_id,invite_id'));
-    const waitingIds=[...new Set(waitingAssignments.filter((b:any)=>openRoundIds.has(b.round_id)).map((b:any)=>b.invite_id))];
+    const waitingIds=[...new Set(waitingAssignments.filter((b:any)=>openRoundIds.has(b.round_id)).map((b:any)=>b.invite_id).filter(validUuid))];
     const waitingPeople=waitingIds.length?await query(db.from('member_invites').select('student_id').in('id',waitingIds).in('status',['draft','pending'])):[];
     const assignedCount=new Set([...assignedProfiles,...waitingPeople].map((p:any)=>p.student_id)).size;
     const recentPayers={assigned:assignedCount,total:payerProfiles.length,people:payerProfiles.slice(0,10).map((p:any)=>({suffix:String(p.student_id||'—').slice(-2)}))};

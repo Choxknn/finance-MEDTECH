@@ -8,9 +8,10 @@ export async function shopAction(db:any,profile:any,input:any,file:File|null){
  if(action==='shop-list'){
   let products=db.from('shop_products').select('*').is('deleted_at',null).order('created_at',{ascending:false});if(!admin)products=products.eq('active',true);
   let orders=db.from('shop_orders').select('*').is('deleted_at',null).order('created_at',{ascending:false}).order('id');if(!admin)orders=orders.eq('profile_id',profile.id);
-  return {products:await query(products),orders:await query(orders.range(0,999))};
+  const rows=await query(orders.range(0,999));return {products:await query(products),orders:rows.filter((o:any)=>!o.checkout_draft),checkouts:rows.filter((o:any)=>o.checkout_draft)};
  }
- if(action==='shop-export'){requireAdmin();const page=Number(input.page)||0;if(!Number.isInteger(page)||page<0)throw Error('หน้าไม่ถูกต้อง');return {orders:await query(db.from('shop_orders').select('*').is('deleted_at',null).order('created_at',{ascending:false}).order('id').range(page*500,page*500+499))}}
+ if(action==='shop-export'){requireAdmin();const page=Number(input.page)||0;if(!Number.isInteger(page)||page<0)throw Error('หน้าไม่ถูกต้อง');return {orders:await query(db.from('shop_orders').select('*').is('deleted_at',null).eq('checkout_draft',false).order('created_at',{ascending:false}).order('id').range(page*500,page*500+499))}}
+ if(action==='shop-cancel-checkout'){await query(db.rpc('cancel_shop_checkout',{p_id:input.id,p_profile:profile.id}));return {ok:true}}
  if(action==='shop-order')return {order:await query(db.rpc('place_shop_order',{p_id:input.request_id,p_profile:profile.id,p_product:input.product_id,p_quantity:Number(input.quantity),p_note:String(input.note||''),p_choices:input.choices||{}}))};
  if(action==='shop-get'){
   let q=db.from('shop_orders').select('*').is('deleted_at',null);q=input.scan_token?q.eq('scan_token',input.scan_token):q.eq('id',input.id);if(!admin)q=q.eq('profile_id',profile.id);

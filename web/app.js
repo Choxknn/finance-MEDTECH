@@ -1,7 +1,7 @@
 'use strict';
 const cfg=window.FINANCE_CONFIG;
 const $=s=>document.querySelector(s);
-const esc=s=>String(s??'').replace(/^(นางสาว|นาย|นาง)\s*(?=\S)/u,'$1 ').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/^(นางสาว|นาย|นาง(?!สาว))\s*(?=\S)/u,'$1 ').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const date=s=>s?new Date(/^\d{4}-\d{2}-\d{2}$/.test(s)?s+'T00:00:00+07:00':s).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'}):'—';
 const dateTime=value=>{if(!value)return '—';if(/^\d{4}-\d{2}-\d{2}$/.test(value))return date(value);const d=new Date(value);return Number.isNaN(d.getTime())?'—':d.toLocaleString('th-TH',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Bangkok'})+' น.'};

@@ -194,8 +194,9 @@ Deno.serve(async req=>{
     const id=await query(db.rpc('save_bill_fund_income',{p_round:rid,p_id:input.id||null,p_patch:patch,p_snapshot:snapshot,p_actor:profile.id}));return json({ok:true,id});
    }
    case 'save-income':{
-    requireAdmin();const patch:any={responsible_name:text(input.responsible_name||profile.name,120),title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};
+    requireAdmin();const patch:any={request_key:input.request_key||null,responsible_name:text(input.responsible_name||profile.name,120),title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};
     if(input.id&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.id))throw new Error('รหัสรายการไม่ถูกต้อง');
+    if(!input.id&&input.request_key){const existing=await query(db.from('manual_incomes').select('id').eq('created_by',profile.id).eq('request_key',input.request_key).maybeSingle());if(existing)return json({ok:true,id:existing.id});}
     const uploaded:string[]=[];try{if(file){patch.drive_file_id=await uploadDrive(await validateImage(file),`income-${crypto.randomUUID()}`);uploaded.push(patch.drive_file_id)}if(receiptFile){patch.receipt_file_id=await uploadDrive(await validateReceipt(receiptFile),`income-receipt-${crypto.randomUUID()}`);uploaded.push(patch.receipt_file_id)}await query(db.rpc('save_manual_income',{p_id:input.id||null,p_patch:patch,p_actor:profile.id}))}catch(e){for(const id of uploaded)await deleteDrive(id);throw e}return json({ok:true});
    }
    case 'purge-trash':{
@@ -327,8 +328,8 @@ Deno.serve(async req=>{
     await (decision==='approved'?paymentSuccess:notify)(db,p.profile_id,`finance MEDTECH\n${decision==='approved'?'ยืนยันรับเงินแล้ว':'กรุณาแก้ไขหลักฐาน'}\nจำนวน ${Number(p.amount).toFixed(2)} บาท\n${input.note}`);return json({ok:true});
    }
    case 'new-expense':{
-    requireAdmin();const title=text(input.title,120),category=text(input.category,100),value=amount(input.amount),spentOn=day(input.spent_on),responsible=text(input.responsible_name||profile.name,120),id=crypto.randomUUID();const uploaded:string[]=[];
-    try{const driveId=file?await uploadDrive(await validateImage(file),`expense-${id}`):null;if(driveId)uploaded.push(driveId);const receiptId=receiptFile?await uploadDrive(await validateReceipt(receiptFile),`expense-receipt-${id}`):null;if(receiptId)uploaded.push(receiptId);await query(db.from('expenses').insert({id,title,category,amount:value,spent_on:spentOn,responsible_name:responsible,note:String(input.note||'').slice(0,500),drive_file_id:driveId,receipt_file_id:receiptId,created_by:profile.id}))}catch(e){for(const f of uploaded)await deleteDrive(f);throw e}
+    requireAdmin();if(input.request_key){const existing=await query(db.from('expenses').select('id').eq('created_by',profile.id).eq('request_key',input.request_key).maybeSingle());if(existing)return json({ok:true,id:existing.id});}const title=text(input.title,120),category=text(input.category,100),value=amount(input.amount),spentOn=day(input.spent_on),responsible=text(input.responsible_name||profile.name,120),id=crypto.randomUUID();const uploaded:string[]=[];
+    try{const driveId=file?await uploadDrive(await validateImage(file),`expense-${id}`):null;if(driveId)uploaded.push(driveId);const receiptId=receiptFile?await uploadDrive(await validateReceipt(receiptFile),`expense-receipt-${id}`):null;if(receiptId)uploaded.push(receiptId);await query(db.from('expenses').upsert({request_key:input.request_key||null,id,title,category,amount:value,spent_on:spentOn,responsible_name:responsible,note:String(input.note||'').slice(0,500),drive_file_id:driveId,receipt_file_id:receiptId,created_by:profile.id},{onConflict:'created_by,request_key',ignoreDuplicates:true}))}catch(e){for(const f of uploaded)await deleteDrive(f);throw e}
     await query(db.from('audit').insert({actor:profile.name,action:'บันทึกรายจ่าย '+title}));return json({ok:true});
    }
    case 'remind-preview':

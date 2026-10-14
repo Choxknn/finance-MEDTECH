@@ -6,7 +6,7 @@ async function lock(db:any){const id=crypto.randomUUID();if(!await checked(db.rp
 async function unlock(db:any,id:string){await checked(db.rpc('evidence_storage_lock',{p_id:id,p_release:true}))}
 export async function removeStoredEvidence(db:any,id:string,reason='ลบรายการหรือเปลี่ยนหลักฐาน'){
  if(!isStoredEvidence(id))throw Error('ไม่ใช่ไฟล์ใน Supabase');const path=id.slice(3);
- const row=await checked(db.from('evidence_files').select('*').eq('path',path).maybeSingle());if(!row)throw Error('ไม่พบทะเบียนไฟล์');if(row.state==='deleted')return;
+ const row=await checked(db.from('evidence_files').select('*').eq('path',path).maybeSingle());if(!row)throw Error('ไม่พบทะเบียนไฟล์');if(row.state==='deleted')return;if(row.protected)return;
  // Persist intent before the external deletion, so a failed request can be retried.
  await checked(db.from('evidence_files').update({state:'deleting',delete_reason:reason}).eq('path',path));
  await checked(db.storage.from(EVIDENCE_BUCKET).remove([path]));
@@ -14,9 +14,9 @@ export async function removeStoredEvidence(db:any,id:string,reason='ลบรา
  await checked(db.from('audit').insert({actor:'ระบบจัดการหลักฐาน',action:`ลบไฟล์ ${row.name}: ${reason}`}));
 }
 async function maintainUnlocked(db:any,incoming=0){
- const retry=await checked(db.from('evidence_files').select('*').eq('state','deleting').order('created_at').limit(100));
+ const retry=await checked(db.from('evidence_files').select('*').eq('state','deleting').eq('protected',false).order('created_at').limit(100));
  for(const f of retry)await removeStoredEvidence(db,'sb:'+f.path,f.delete_reason);
- const abandoned=await checked(db.from('evidence_files').select('*').eq('state','pending').lt('created_at',new Date(Date.now()-3600000).toISOString()).limit(100));
+ const abandoned=await checked(db.from('evidence_files').select('*').eq('state','pending').eq('protected',false).lt('created_at',new Date(Date.now()-3600000).toISOString()).limit(100));
  for(const f of abandoned)await removeStoredEvidence(db,'sb:'+f.path,'อัปโหลดไม่เสร็จ');
  const jobs=await checked(db.from('trash_cleanup_queue').select('id,target').eq('kind','drive').like('target','sb:%').order('created_at').limit(100));
  for(const job of jobs){await removeStoredEvidence(db,job.target);await checked(db.from('trash_cleanup_queue').delete().eq('id',job.id))}
@@ -28,11 +28,11 @@ async function maintainUnlocked(db:any,incoming=0){
  return {...usage,removed};
 }
 export async function maintainEvidence(db:any){const id=await lock(db);try{return await maintainUnlocked(db)}finally{await unlock(db,id)}}
-export async function deleteEvidenceByAdmin(db:any,path:string,actor:string){const id=await lock(db);try{await removeStoredEvidence(db,'sb:'+path,'แอดมินลบรูป: '+actor)}finally{await unlock(db,id)}}
+export async function deleteEvidenceByAdmin(db:any,path:string,actor:string){const id=await lock(db);try{const row=await checked(db.from('evidence_files').select('protected').eq('path',path).single());if(row.protected)throw Error('ห้ามลบหลักฐานการเงินและ QR ชำระเงิน');await removeStoredEvidence(db,'sb:'+path,'แอดมินลบรูป: '+actor)}finally{await unlock(db,id)}}
 export async function uploadEvidence(db:any,file:File,name:string){
  const id=await lock(db);try{
  const usage=await maintainUnlocked(db,file.size);if(Number(usage.used_bytes)+file.size>Number(usage.budget_bytes))throw Error('พื้นที่หลักฐานเต็ม กรุณาให้แอดมินเพิ่มงบพื้นที่หรือลบไฟล์ที่ไม่ใช้');
- const path=crypto.randomUUID();await checked(db.from('evidence_files').insert({path,name,size:file.size,mime_type:file.type}));
+ const path=crypto.randomUUID();await checked(db.from('evidence_files').insert({path,name,size:file.size,mime_type:file.type,protected:/^(income|expense|qr|payment-qr)(-|\.)/.test(name)}));
  try{await checked(db.storage.from(EVIDENCE_BUCKET).upload(path,file,{contentType:file.type,upsert:false}));await checked(db.from('evidence_files').update({state:'active'}).eq('path',path));return 'sb:'+path}
  catch(e){try{await removeStoredEvidence(db,'sb:'+path,'อัปโหลดไม่สำเร็จ')}catch{}throw e}
  }finally{await unlock(db,id)}

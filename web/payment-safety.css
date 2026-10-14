@@ -1,0 +1,13 @@
+.status-notice,#payment-qr-hint:not(:empty),.shop-checkout .note,.fund-reconcile{padding:14px 16px!important;border:1px solid #e9c7cf!important;border-radius:16px!important;background:#fff4f6!important;color:#81263d!important;line-height:1.65;margin:14px 0;overflow-wrap:anywhere}
+.status-notice[data-tone=error]{background:#fff0f0!important;border-color:#efb4b4!important;color:#a52b35!important}
+.status-notice[data-tone=success]{background:#ecfaf2!important;border-color:#addbc1!important;color:#226545!important}
+.status-notice[data-tone=warning]{background:#fff8e7!important;border-color:#e9d49a!important;color:#7a5a16!important}
+.status-notice[data-tone=info]{background:#f1f5ff!important;border-color:#c6d4ef!important;color:#35517e!important}
+.slip-upload-target{display:block;cursor:pointer!important;border:2px dashed #dca5b2!important;background:#fff7f9!important;border-radius:18px!important;padding:22px!important;transition:background .2s,border-color .2s}
+.slip-upload-target:hover,.slip-upload-target:focus-visible{border-color:#bf2446!important;background:#ffedf2!important;outline:2px solid #bf2446;outline-offset:3px}
+.slip-upload-target input[type=file]{max-width:100%;cursor:pointer}.slip-upload-target label{cursor:pointer}
+#slip-scroll-cue{position:sticky;top:0;z-index:8;display:block;width:100%;margin:10px 0;padding:12px 16px;border-radius:14px;background:#b72143;color:white;box-shadow:0 5px 16px #9b16392a;text-align:center;font-size:14px;animation:slip-nudge 2s ease-in-out infinite}
+#slip-scroll-cue[hidden]{display:none!important}@keyframes slip-nudge{50%{transform:translateY(3px)}}@media(prefers-reduced-motion:reduce){#slip-scroll-cue{animation:none}}
+.fund-reconcile[data-mismatch=true]{border-color:#e2ba6a!important;background:#fff8e9!important;color:#7c5718!important}.fund-reconcile strong{display:block}.reconcile-list{display:grid;gap:8px}.reconcile-row{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #eadfe2}
+
+.payment-amount-notice:not(:empty){padding:14px 16px;border:1px solid #e9c7cf;border-radius:16px;background:#fff4f6;color:#81263d}

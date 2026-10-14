@@ -6,7 +6,7 @@ async function lock(db:any){const id=crypto.randomUUID();if(!await checked(db.rp
 async function unlock(db:any,id:string){await checked(db.rpc('evidence_storage_lock',{p_id:id,p_release:true}))}
 export async function removeStoredEvidence(db:any,id:string,reason='ลบรายการหรือเปลี่ยนหลักฐาน'){
  if(!isStoredEvidence(id))throw Error('ไม่ใช่ไฟล์ใน Supabase');const path=id.slice(3);
- const row=await checked(db.from('evidence_files').select('*').eq('path',path).maybeSingle());if(!row)throw Error('ไม่พบทะเบียนไฟล์');if(row.state==='deleted')return;if(row.protected)return;
+ const row=await checked(db.from('evidence_files').select('*').eq('path',path).maybeSingle());if(!row)throw Error('ไม่พบทะเบียนไฟล์');if(row.state==='deleted')return;if(row.protected&&!row.purge_with_record)return;
  // Persist intent before the external deletion, so a failed request can be retried.
  await checked(db.from('evidence_files').update({state:'deleting',delete_reason:reason}).eq('path',path));
  await checked(db.storage.from(EVIDENCE_BUCKET).remove([path]));

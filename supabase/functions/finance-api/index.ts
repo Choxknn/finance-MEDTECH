@@ -225,6 +225,14 @@ Deno.serve(async req=>{
     requireAdmin();const n=Number(input.amount_cents);if(!Number.isInteger(n)||n<0||n>100000000)throw new Error('ยอด QR ไม่ถูกต้อง');
     await query(db.rpc('manage_payment_qr',{p_cents:n,p_image:null,p_delete:true,p_actor:profile.id}));return json({ok:true});
    }
+   case 'save-festival':{
+    requireAdmin();const s=input.festival||{};
+    if(!['none','christmas','songkran','halloween','valentine','loykrathong','exams'].includes(s.theme))throw Error('ธีมไม่ถูกต้อง');
+    const start=s.start?day(s.start):'',end=s.end?day(s.end):'';
+    if(start&&end&&end<start)throw Error('วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น');
+    for(const key of ['costumes','decorations','motion'])if(typeof s[key]!=='boolean')throw Error('ตัวเลือกธีมไม่ถูกต้อง');
+    await query(db.rpc('save_settings',{p_values:{festival:{theme:s.theme,start,end,costumes:s.costumes,decorations:s.decorations,motion:s.motion}},p_actor:profile.id}));return json({ok:true});
+   }
    case 'save-settings':{
     requireAdmin();const s=input.settings||{},value:any={siteName:text(s.siteName,80),bankName:text(s.bankName,120),accountName:text(s.accountName,120),accountNumber:text(s.accountNumber,40),lineOaUrl:String(s.lineOaUrl||''),paymentQrUrl:String(s.paymentQrUrl||'')};
     if(value.lineOaUrl&&!/^https:\/\/(lin\.ee|line\.me)\//.test(value.lineOaUrl))throw new Error('ลิงก์ LINE ต้องมาจาก lin.ee หรือ line.me');

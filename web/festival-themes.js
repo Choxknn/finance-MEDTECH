@@ -1,0 +1,43 @@
+'use strict';
+const festivalThemes={
+ none:{name:'ธีมปกติ',symbol:'✦',greeting:''},
+ christmas:{name:'ปีใหม่ / คริสต์มาส',symbol:'❄',greeting:'ส่งความสุขให้ทุกวันของเธอนะ 🎁'},
+ songkran:{name:'สงกรานต์',symbol:'✿',greeting:'สุขสันต์วันสงกรานต์ เดินทางปลอดภัยนะ 🌼'},
+ halloween:{name:'ฮาโลวีน',symbol:'✧',greeting:'ก๊อก ๆ เพื่อนตัวน้อยมาอยู่เป็นเพื่อนแล้ว 🎃'},
+ valentine:{name:'วาเลนไทน์',symbol:'♡',greeting:'ส่งหัวใจและกำลังใจให้เธอหนึ่งดวง 💗'},
+ loykrathong:{name:'ลอยกระทง',symbol:'✺',greeting:'ขอให้วันนี้มีแต่เรื่องดี ๆ นะ 🪷'},
+ exams:{name:'ช่วงสอบ',symbol:'☆',greeting:'อ่านหนังสือแล้วอย่าลืมพักด้วย เราเป็นกำลังใจให้นะ 📚'}
+};
+function festivalDay(now=new Date()){const p=new Intl.DateTimeFormat('en',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);return ['year','month','day'].map(k=>p.find(x=>x.type===k).value).join('-')}
+function festivalActive(s,now=new Date()){if(!s||!festivalThemes[s.theme]||s.theme==='none')return 'none';const d=festivalDay(now);return (s.start&&d<s.start)||(s.end&&d>s.end)?'none':s.theme}
+function festivalCostume(theme){
+ const flower=(x,y)=>`<g transform="translate(${x} ${y})" fill="#fff2ae"><ellipse rx="4" ry="9"/><ellipse rx="4" ry="9" transform="rotate(60)"/><ellipse rx="4" ry="9" transform="rotate(120)"/><circle r="3" fill="#e3a84b"/></g>`;
+ const outfits={
+ christmas:'<path d="M42 35Q60-4 104 12L126 32 101 25 110 39Z" fill="#ca3150" stroke="#a12743" stroke-width="2"/><path d="M42 35Q77 23 111 37" stroke="#fff9ee" stroke-width="12" stroke-linecap="round"/><circle cx="126" cy="32" r="8" fill="#fff9ee"/><path d="M39 116Q80 134 121 116L118 128Q80 144 42 129Z" fill="#378777"/><path d="m99 129 6 22 12-4-7-20" fill="#378777"/><path d="m105 139 10-3" stroke="#f8e9b6" stroke-width="3"/>',
+ songkran:'<path d="M32 113Q80 133 128 113L120 141Q80 157 39 141Z" fill="#69b8b2" stroke="#3c918c" stroke-width="2"/>'+flower(50,132)+flower(82,140)+flower(111,129)+flower(111,31)+'<path d="m126 111 15-9 9 5-13 9Z" fill="#f4c66b"/>',
+ halloween:'<path d="M38 38 71 3 92 19 104 36Z" fill="#6e538b"/><path d="m47 30 52-2 5 10-66 0Z" fill="#edac62"/><path d="M31 39Q79 22 122 42" fill="none" stroke="#4f3a6b" stroke-width="9" stroke-linecap="round"/><path d="M33 115 22 149 59 141 80 151 101 141 137 149 126 115Q80 137 33 115" fill="#6e538b"/><path d="m65 124 15 6 16-6-6 13-10-5-10 5Z" fill="#f2b86c"/>',
+ valentine:'<path d="M38 119Q80 141 122 119L116 139Q80 156 44 139Z" fill="#f3adc6"/><path d="M81 130C66 111 54 133 81 147C109 133 96 111 81 130" fill="#c73d69"/><path d="M98 28 112 17 116 31 132 21 134 40 115 34 104 44Z" fill="#e06c9a" stroke="#fff2f6" stroke-width="2"/><circle cx="115" cy="32" r="5" fill="#b83d69"/>',
+ loykrathong:'<path d="m37 113 24 1 56 27-18 7-57-23Z" fill="#e8c475" stroke="#b68d3e" stroke-width="2"/><path d="M42 138q38 17 76 0" fill="none" stroke="#d7b268" stroke-width="8"/><path d="M52 34 56 15 70 24 80 3 90 24 104 15 108 34Z" fill="#e8c475" stroke="#b68d3e" stroke-width="2"/><circle cx="80" cy="25" r="5" fill="#d9608a"/>',
+ exams:'<g fill="none" stroke="#655073" stroke-width="3"><rect x="50" y="65" width="28" height="22" rx="8"/><rect x="84" y="65" width="28" height="22" rx="8"/><path d="M78 73h6"/></g><path d="M48 120 80 127 112 120v28l-32 7-32-7Z" fill="#83b3a6" stroke="#fff" stroke-width="3"/><path d="M80 128v25" stroke="#fff" stroke-width="2"/><path d="m58 133 13 3m18 0 13-3m-44 7 13 3m18 0 13-3" stroke="#e9faf2" stroke-width="2"/>'
+ };
+ return outfits[theme]?`<g class="festival-costume" aria-hidden="true" pointer-events="none">${outfits[theme]}</g>`:'';
+}
+(()=>{
+ function settings(){return db?.settings?.festival||{theme:'none',costumes:true,decorations:true,motion:true}}
+ function decorate(root=document,s=settings(),force){const active=force||festivalActive(s),t=festivalThemes[active];
+  root.querySelectorAll('.festival-costume,.festival-corner,.festival-greeting').forEach(el=>{if(!el.closest('[data-festival-preview]'))el.remove()});
+  root.querySelectorAll('.festival-decorated').forEach(el=>el.classList.remove('festival-decorated'));
+  if(active==='none')return;
+  if(s.costumes!==false)root.querySelectorAll('.meddy-svg,.summary-buddy').forEach(svg=>{const markup=festivalCostume(active);if(svg.classList.contains('summary-buddy'))svg.insertAdjacentHTML('beforeend',`<g class="festival-costume" transform="translate(0 -1) scale(.65)">${markup}</g>`);else svg.insertAdjacentHTML('beforeend',markup)});
+  if(s.decorations!==false)root.querySelectorAll('.mp-card,.mp-stat,.meddy-stage').forEach(card=>{card.classList.add('festival-decorated');card.insertAdjacentHTML('beforeend',`<span class="festival-corner ${s.motion!==false?'festival-motion':''}" aria-hidden="true">${t.symbol}<i>✦</i></span>`)});
+  const name=root.querySelector('.meddy-name');if(name)name.insertAdjacentHTML('afterend',`<p class="festival-greeting">${t.greeting}</p>`);
+ }
+ function preview(theme,s){return `<div class="festival-preview" data-festival-preview>${s.decorations!==false?`<span class="festival-preview-symbol ${s.motion!==false?'festival-motion':''}" aria-hidden="true">${festivalThemes[theme].symbol}</span>`:''}${MATERIAL_MASCOT_SVG.replaceAll('meddy-cell-color','festival-preview-color').replace('class="meddy-svg"','class="festival-preview-svg"').replace('</svg>',(s.costumes!==false?festivalCostume(theme):'')+'</svg>')}<div><strong>${festivalThemes[theme].name}</strong><p>${festivalThemes[theme].greeting||'น้องเม็ดเลือดในชุดปกติ พร้อมดูแลบิลของคุณ'}</p><small>สีพื้นหลังและสีสถานะการเงินคงเดิม</small></div></div>`}
+ function form(){const s=settings(),theme=festivalThemes[s.theme]?s.theme:'none';return `<section class="mp-card festival-settings"><div class="panel-body"><h2>${icon('spark')} ธีมเทศกาล</h2><p class="sub">แต่งตัวมาสคอตและมุมการ์ด โดยใช้พื้นหลังเดิม</p><form id="festival-form"><div class="festival-options">${Object.entries(festivalThemes).map(([key,t])=>`<label class="festival-option"><input type="radio" name="theme" value="${key}" ${key===theme?'checked':''}><span aria-hidden="true">${t.symbol}</span><b>${t.name}</b></label>`).join('')}</div>${preview(theme,s)}<div class="festival-dates"><label>เริ่มวันที่ (เวลาไทย)<input type="date" name="start" value="${esc(s.start||'')}"></label><label>สิ้นสุดวันที่ (เวลาไทย)<input type="date" name="end" value="${esc(s.end||'')}"></label></div><p class="help">เว้นว่างเพื่อเริ่มทันทีหรือใช้ต่อเนื่อง เมื่อพ้นวันสิ้นสุดจะกลับเป็นธีมปกติ</p><div class="festival-toggles">${[['costumes','เครื่องแต่งกายมาสคอต'],['decorations','ของตกแต่งมุมการ์ด'],['motion','แอนิเมชันของตกแต่ง']].map(([key,label])=>`<label><input type="checkbox" name="${key}" ${s[key]!==false?'checked':''}>${label}</label>`).join('')}</div><p class="help">ขณะนี้: ${festivalThemes[festivalActive(s)].name}</p><div class="actions"><button type="submit">${icon('check')}บันทึกธีม</button></div><div class="form-error"></div></form></div></section>`}
+ const previous=render;render=function(){previous();decorate();if(user?.role==='admin'&&view==='settings'){const main=document.querySelector('main');if(main&&!main.querySelector('#festival-form'))main.insertAdjacentHTML('afterbegin',form())}};
+ document.addEventListener('change',e=>{const f=e.target.closest('#festival-form');if(!f)return;const d=new FormData(f),s={costumes:d.has('costumes'),decorations:d.has('decorations'),motion:d.has('motion')};f.querySelector('[data-festival-preview]').outerHTML=preview(d.get('theme'),s)});
+ // Capture before the application's generic submit handler.
+ window.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='festival-form')return;e.preventDefault();e.stopImmediatePropagation();const d=new FormData(f),s={theme:d.get('theme'),start:d.get('start'),end:d.get('end'),costumes:d.has('costumes'),decorations:d.has('decorations'),motion:d.has('motion')},button=f.querySelector('button[type=submit]');if(button.disabled)return;button.disabled=true;try{if(s.start&&s.end&&s.end<s.start)throw Error('วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น');if(cfg.mode==='live')await api('save-festival',{festival:s});else db.settings={...db.settings,festival:s};await refresh();render();toast('บันทึกธีมเทศกาลแล้ว')}catch(err){f.querySelector('.form-error').textContent=err.message}finally{button.disabled=false}},true);
+ let key='';setInterval(()=>{if(!user||document.hidden)return;const s=settings(),next=JSON.stringify(s)+festivalActive(s);if(next!==key){key=next;decorate()}},30000);
+ if(user)render();
+})();

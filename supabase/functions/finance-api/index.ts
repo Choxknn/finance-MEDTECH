@@ -47,7 +47,14 @@ Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response(null,{headers:cors});
  if(!['POST','GET'].includes(req.method))return json({error:'Method not allowed'},405);
  try{
-  const db=adminDb(),bearer=req.headers.get('authorization')?.replace(/^Bearer /,'');if(!bearer)return json({error:'กรุณาเข้าสู่ระบบ'},401);
+  const db=adminDb();
+  // Only public decorative preferences are available before authentication.
+  if(req.method==='GET'&&new URL(req.url).searchParams.get('action')==='festival-theme'){
+   const row=await query(db.from('site_settings').select('data->festival').eq('id',true).single());const s=row?.festival||{};
+   const theme=['christmas','songkran','halloween','valentine','loykrathong','exams'].includes(s.theme)?s.theme:'none';
+   return new Response(JSON.stringify({festival:{theme,start:/^\d{4}-\d{2}-\d{2}$/.test(s.start)?s.start:'',end:/^\d{4}-\d{2}-\d{2}$/.test(s.end)?s.end:'',costumes:s.costumes!==false,decorations:s.decorations!==false,motion:s.motion!==false}}),{headers:{...cors,'Content-Type':'application/json','Cache-Control':'public, max-age=60'}});
+  }
+  const bearer=req.headers.get('authorization')?.replace(/^Bearer /,'');if(!bearer)return json({error:'กรุณาเข้าสู่ระบบ'},401);
   const auth=await db.auth.getUser(bearer);if(auth.error||!auth.data.user)return json({error:'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่'},401);
   const profile=await query(db.from('profiles').select('*').eq('id',auth.data.user.id).eq('active',true).is('deleted_at',null).single());
   const isAdmin=profile.role==='admin';const requireAdmin=()=>{if(!isAdmin)throw new Error('ไม่มีสิทธิ์ดำเนินการ')};

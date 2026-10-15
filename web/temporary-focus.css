@@ -4,3 +4,5 @@ html body .focus-finished:is(button,a,input,select,textarea,[tabindex]),html bod
 html body .focus-finished:is(input,select,textarea),html body dialog .focus-finished:is(input,select,textarea){border-color:#eee8ec!important}
 html body dialog :is([data-action=close],.announcement-popup-close,.picture-close).focus-finished{border-color:#a85a6e!important}
 html body [data-bill-card].temporary-focus{box-shadow:0 0 0 3px #3287df,0 6px 24px #3287df20!important;border-color:#3287df!important;scroll-margin:24px}
+html body :is(#app,#dialog,#announcement-popup,.recovery-card) .temporary-focus:is(input,select,textarea){border-color:#3287df!important;box-shadow:inset 0 0 0 2px #3287df!important;outline:none!important}
+html body :is(#app,#dialog,#announcement-popup,.recovery-card) .focus-finished:is(input,select,textarea){border-color:#eee8ec!important;box-shadow:none!important;outline:none!important}

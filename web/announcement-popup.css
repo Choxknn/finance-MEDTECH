@@ -9,3 +9,8 @@
 #announcement-image-preview img{display:block;max-width:100%;max-height:320px;margin:14px auto;border-radius:14px;object-fit:contain}.announcement-image-button{display:block!important;padding:0!important;margin:10px 0!important;background:transparent!important;border:0!important;box-shadow:none!important;width:100%;overflow:hidden;border-radius:16px}.announcement-card-image,.announcement-banner-image{display:block;width:100%;max-height:300px;object-fit:contain;background:#fff}.announcement-banner-image{max-height:180px}
 
 .dashboard-announcements .announcement-banner>div{width:100%;min-width:0}.dashboard-announcements .announcement-banner-image{width:100%;height:auto;max-height:none;object-fit:contain}.dashboard-announcements .announcement-image-button{width:100%;max-width:100%}
+
+/* The old dismiss-button rule also matched image buttons (width:22px). */
+.material-shell .mp-announcement .announcement-banner button.announcement-image-button{width:100%!important;min-width:0!important;max-width:none!important;display:block!important;align-self:stretch!important;flex:1 1 auto!important;height:auto!important}
+.material-shell .mp-announcement .announcement-banner .announcement-banner-image{width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain!important}
+.bill-description{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px!important;line-height:1.7!important;margin:6px 0!important;color:#7b6870!important}

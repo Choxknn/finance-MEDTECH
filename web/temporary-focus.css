@@ -1,0 +1,6 @@
+html body :is(button,a,input,select,textarea,[tabindex]):is(:focus,:focus-visible){outline:none!important}
+html body .temporary-focus:is(button,a,input,select,textarea,[tabindex]),html body dialog .temporary-focus:is(button,a,input,select,textarea,[tabindex]){outline:none!important;box-shadow:inset 0 0 0 2px #3287df!important;border-color:#3287df!important}
+html body .focus-finished:is(button,a,input,select,textarea,[tabindex]),html body dialog .focus-finished:is(button,a,input,select,textarea,[tabindex]){outline:none!important;box-shadow:none!important}
+html body .focus-finished:is(input,select,textarea),html body dialog .focus-finished:is(input,select,textarea){border-color:#eee8ec!important}
+html body dialog :is([data-action=close],.announcement-popup-close,.picture-close).focus-finished{border-color:#a85a6e!important}
+html body [data-bill-card].temporary-focus{box-shadow:0 0 0 3px #3287df,0 6px 24px #3287df20!important;border-color:#3287df!important;scroll-margin:24px}

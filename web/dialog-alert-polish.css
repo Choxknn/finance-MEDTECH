@@ -5,6 +5,15 @@ dialog :is(button,a,[tabindex]):focus-visible{box-shadow:inset 0 0 0 2px #9c344d
 dialog [data-action=close],dialog .announcement-popup-close,dialog .picture-close,dialog button[aria-label="ปิด"]{border:1.5px solid #a85a6e!important}
 dialog :is([data-action=close],.announcement-popup-close,.picture-close,button[aria-label="ปิด"]):is(:focus,:hover){border-color:#7b2039!important;box-shadow:inset 0 0 0 1px #7b2039!important}
 .overdue-page-banner strong,.bill-attention .badge.rejected{animation:bill-alert-pulse 2s ease-in-out infinite}
-.bill-attention{border-color:#d68b9f!important}.bill-attention .mp-bill-top{flex-wrap:wrap}
+.bill-attention:not(.bill-overdue){border-color:#d68b9f!important}.bill-attention .mp-bill-top{flex-wrap:wrap}
 @keyframes bill-alert-pulse{0%,100%{opacity:1}50%{opacity:.55}}
 @media(prefers-reduced-motion:reduce){.overdue-page-banner strong,.bill-attention .badge.rejected{animation:none}}
+
+.bill-overdue{animation:bill-border-alert 2s ease-in-out infinite}
+.bill-overdue .mp-bill-amount strong{color:#c5223e!important;animation:bill-alert-pulse 2s ease-in-out infinite}
+@keyframes bill-border-alert{0%,100%{border-color:#c5223e}50%{border-color:#f1bcc7}}
+html body .bill-overdue{animation:bill-border-alert 2s ease-in-out infinite}
+
+.review-work-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.review-work-actions select{width:auto;max-width:100%;min-height:38px}
+@media(prefers-reduced-motion:reduce){html body .bill-overdue,.bill-overdue .mp-bill-amount strong{animation:none;border-color:#c5223e!important}}

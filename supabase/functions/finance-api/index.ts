@@ -119,7 +119,7 @@ Deno.serve(async req=>{
     const rounds=await query(db.from('rounds').select('*').order('created_at'));
     const charges=await query(isAdmin?db.from('charges').select('*'):db.from('charges').select('*').eq('profile_id',profile.id));
     const totals=await query(db.rpc('charge_totals',{p_ids:charges.map((c:any)=>c.id)}));for(const c of charges)Object.assign(c,totals.find((t:any)=>t.id===c.id)||{});
-    const allPayments=await query(db.from('payments').select('id,charge_id,profile_id,amount,status,drive_file_id,trans_ref,source,note,reviewed_at,created_at,deleted_at,charge_snapshot,member_snapshot').order('created_at'));
+    const allPayments=await query(db.from('payments').select('id,charge_id,profile_id,amount,status,drive_file_id,trans_ref,source,note,reviewed_at,created_at,deleted_at,review_stage,review_cleared_at,charge_snapshot,member_snapshot').order('created_at'));
     const allIncomes=await query(db.from('manual_incomes').select('*').order('received_on',{ascending:false}));
     const allExpenses=await query(db.from('expenses').select('*').order('spent_on',{ascending:false}));
     const accounts=await query(isAdmin?db.from('line_accounts').select('profile_id,line_user_id'):db.from('line_accounts').select('profile_id').eq('profile_id',profile.id));
@@ -322,6 +322,15 @@ Deno.serve(async req=>{
    case 'set-bill-status':{
     requireAdmin();
     const result=await query(db.rpc('admin_set_bill_status',{p_charge:input.charge_id,p_status:text(input.status,20),p_reason:text(input.reason,500),p_actor:profile.id,p_expected_paid:Number(input.expected_paid),p_expected_balance:Number(input.expected_balance),p_request:input.request_id}));return json({ok:true,result});
+   }
+   case 'review-stage':{
+    requireAdmin();const stage=text(input.stage,20);if(!['waiting','checking'].includes(stage))throw Error('ขั้นตอนตรวจไม่ถูกต้อง');
+    const rows=await query(db.from('payments').update({review_stage:stage}).eq('id',input.payment_id).is('deleted_at',null).is('review_cleared_at',null).in('status',['pending','review']).select('id'));
+    if(!rows.length)throw Error('รายการนี้ตรวจเสร็จแล้วหรือไม่อยู่ในคิว');return json({ok:true});
+   }
+   case 'clear-review':{
+    requireAdmin();const rows=await query(db.from('payments').update({review_cleared_at:new Date().toISOString()}).eq('id',input.payment_id).is('deleted_at',null).in('status',['approved','rejected']).select('id'));
+    if(!rows.length)throw Error('เคลียร์ได้เฉพาะรายการที่ตรวจเสร็จแล้ว');return json({ok:true});
    }
    case 'review':{
     requireAdmin();const decision=text(input.decision,20);if(!['approved','rejected'].includes(decision))throw new Error('สถานะไม่ถูกต้อง');const p=await query(db.from('payments').select('*').eq('id',input.payment_id).single());

@@ -93,7 +93,8 @@ Deno.serve(async req=>{
     const confirmed=input.action==='cleanup-history';if(confirmed&&(input.confirmation!=='ลบข้อมูล'||typeof input.anchor!=='string'||!Number.isFinite(Date.parse(input.anchor))))throw new Error('กรุณาตรวจสอบจำนวนรายการและยืนยันก่อนลบ');
     const result=await query(db.rpc('clear_old_messages',{p_kind:input.kind,p_months:months,p_actor:profile.id,p_confirmed:confirmed,p_anchor:confirmed?input.anchor:null}));return json(result);
    }
-   case 'publish-announcement':{requireAdmin();const id=await query(db.rpc('publish_web_announcement',{p_title:text(input.title,120),p_body:text(input.body,2000),p_members:[],p_actor:profile.id}));return json({id});}
+   case 'publish-announcement':{requireAdmin();const title=text(input.title,120),body=String(input.body||'').trim();if(body.length>2000||(!body&&!file))throw Error('ระบุข้อความหรือแนบรูปประกาศ');let stored:string|null=null,published=false;try{if(file)stored=await uploadDrive(await validateImage(file),'announcement-'+crypto.randomUUID());const row=await query(db.from('web_announcements').insert({title,body,show_on_entry:input.show_on_entry===true,drive_file_id:stored,created_by:profile.id}).select('id').single());published=true;await query(db.from('audit').insert({actor:profile.name,action:'สร้างประกาศในเว็บ '+title}));return json({id:row.id});}catch(e){if(stored&&!published)await deleteDrive(stored);throw e}}
+   case 'announcement-entry-setting':{requireAdmin();if(typeof input.show_on_entry!=='boolean')throw Error('ข้อมูลไม่ถูกต้อง');await query(db.from('web_announcements').update({show_on_entry:input.show_on_entry}).eq('id',text(input.id,36)));return json({ok:true});}
    case 'dismiss-announcement':{await query(db.from('web_announcement_recipients').upsert({announcement_id:text(input.id,36),profile_id:profile.id,dismissed_at:new Date().toISOString()},{onConflict:'announcement_id,profile_id'}));return json({ok:true});}
    case 'delete-announcement':{requireAdmin();await query(db.from('web_announcements').delete().eq('id',text(input.id,36)));return json({ok:true});}
    case 'read-notification':{await query(db.from('notifications').update({seen_at:new Date().toISOString()}).eq('id',text(input.id,36)).eq('profile_id',profile.id));return json({ok:true});}
@@ -126,7 +127,7 @@ Deno.serve(async req=>{
     const notifications=await query(db.from('notifications').select('id,profile_id,title,body,status,created_at,message_kind,campaign_id,seen_at').eq('profile_id',profile.id).order('created_at',{ascending:false}).limit(100));
     const recipients=await query(db.from('web_announcement_recipients').select('announcement_id,dismissed_at').eq('profile_id',profile.id));
     const allAnnouncements=await query(db.from('web_announcements').select('*').order('created_at',{ascending:false}).limit(100));
-    const announcements=allAnnouncements.map((a:any)=>({...a,dismissed_at:recipients.find((r:any)=>r.announcement_id===a.id)?.dismissed_at||null,recipient:true}));
+    const announcements=await Promise.all(allAnnouncements.map(async(a:any)=>{let image_url=null;if(a.drive_file_id?.startsWith('sb:')){const signed=await db.storage.from('finance-evidence').createSignedUrl(a.drive_file_id.slice(3),3600);image_url=signed.data?.signedUrl||null}return {...a,image_url,dismissed_at:recipients.find((r:any)=>r.announcement_id===a.id)?.dismissed_at||null,recipient:true}}));
     const campaigns=isAdmin?await query(db.rpc('campaign_summary',{p_actor:profile.id,p_id:null})):[];
     const audit=isAdmin?await query(db.from('audit').select('*').order('created_at',{ascending:false}).limit(200)):[];
     const paymentQrs=await query(db.from('payment_qrs').select('id,amount_cents,image_url').order('amount_cents'));

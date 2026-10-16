@@ -1,14 +1,14 @@
-/* Mitr typography, with real 400/500/600/700 weights hosted beside the app. */
+/* Mitr: regular text and medium-weight headings; fonts are hosted beside the app. */
 :root{--finance-font:'Mitr','Noto Sans Thai',Tahoma,system-ui,sans-serif}
 html,html body,html body :is(button,input,select,textarea,option,summary),html body #boot-screen .boot-wordmark{font-family:var(--finance-font)!important}
 html body{font-weight:400;line-height:1.75}
-html body :is(h1,h2,h3,h4,h5,h6,.brand,.mp-mobile-wordmark,.mp-card-head h2,.mp-bill-title h3,.clay-round-name,.fund-category-heading strong,.individual-bill summary strong,.activity-card h3,.message-heading h3){font-weight:700!important;letter-spacing:0;line-height:1.55}
-html body :is(strong,b,th){font-weight:700}
-html body :is(button,.badge,.nav-label,.reading-list dt,label){font-weight:600}
+html body :is(h1,h2,h3,h4,h5,h6,.brand,.mp-mobile-wordmark,.mp-card-head h2,.mp-bill-title h3,.clay-round-name,.fund-category-heading strong,.individual-bill summary strong,.activity-card h3,.message-heading h3){font-weight:500!important;letter-spacing:0;line-height:1.55}
+html body :is(strong,b,th){font-weight:500}
+html body :is(button,.badge,.nav-label,.reading-list dt,label){font-weight:400}
 html body :is(p,li,dd,.sub,.help,.note,.error,.message-description,.activity-description){line-height:1.85}
 html body :is(button,input,select,textarea){line-height:1.65}
 html body :is(input,select,textarea){font-weight:400}
-html body :is(.mp-stat strong,.mp-bill-amount strong,.category-total-strip strong,.fund-category-values b,.amount){font-weight:700;letter-spacing:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+html body :is(.mp-stat strong,.mp-bill-amount strong,.category-total-strip strong,.fund-category-values b,.amount){font-weight:500;letter-spacing:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 html body :is(.mp-stat-label,.mp-activity-copy b,.mp-history-row strong,.mp-fund-copy b){font-size:13px;line-height:1.75}
 html body :is(.mp-activity-copy small,.mp-caption,.mp-paid-caption,.mp-stat small,.mp-bill-title p,.mp-bill-amount small,.fund-category-footer,.mp-ring-label small,.mp-stat-label small){font-size:11px;line-height:1.75}
 html body :is(.mp-card-head h2,.panel-head h2){font-size:16px}
@@ -39,19 +39,19 @@ html body .modal-head{gap:16px;align-items:flex-start;margin-bottom:22px}
 html body .modal-head h2{font-size:21px;overflow-wrap:anywhere;min-width:0}
 html body .modal-head>[data-action=close]{margin-left:auto;width:38px;height:38px;padding:0;display:grid;place-items:center;border-radius:12px}
 html body :is(.reading-list,.signup-review-details) dd{line-height:1.85}
-html body .meddy-bubble{font-weight:500;line-height:1.95!important}
-html body .meddy-name{letter-spacing:.3px;font-weight:600}
+html body .meddy-bubble{font-weight:400;line-height:1.95!important}
+html body .meddy-name{letter-spacing:.3px;font-weight:400}
 html body .quick-replies{gap:8px;flex-wrap:wrap}
 html body .quick-replies button{font-size:12px;min-height:36px;padding:8px 12px}
-html body .sidebar .nav button{font-size:13px;line-height:1.7;padding-block:12px;font-weight:500}
-html body .sidebar .nav button.active{font-weight:700}
+html body .sidebar .nav button{font-size:13px;line-height:1.7;padding-block:12px;font-weight:400}
+html body .sidebar .nav button.active{font-weight:500}
 html body .nav-section h2{font-size:11px;letter-spacing:.3px}
 html body .mp-profile-text{line-height:1.7}
-html body #boot-screen .boot-wordmark{font-size:clamp(26px,6.5vw,66px);font-weight:700;letter-spacing:-.025em;line-height:1.5}
-html body :is(.login-form h1,.login-form h2,.recovery-card h1){font-weight:700;line-height:1.6}
+html body #boot-screen .boot-wordmark{font-size:clamp(26px,6.5vw,66px);font-weight:500;letter-spacing:-.025em;line-height:1.5}
+html body :is(.login-form h1,.login-form h2,.recovery-card h1){font-weight:500;line-height:1.6}
 html body .login-form label{margin-top:16px}
 html body .recovery-card>p{line-height:1.9}
-html body .signup-steps li{font-weight:600;line-height:1.7}
+html body .signup-steps li{font-weight:400;line-height:1.7}
 /* The entry sequence is handled once per navigation; disable the older page-wide animation. */
 html body .page-enter,html body .page-enter>.stats,html body .page-enter>.grid-two{animation:none}
 @media(hover:hover) and (prefers-reduced-motion:no-preference){
@@ -92,3 +92,8 @@ html body .page-enter,html body .page-enter>.stats,html body .page-enter>.grid-t
  html body .mp-profile-text{max-width:100px}
 }
 @media(prefers-reduced-motion:reduce){html body :is(.mp-card,.mp-bill,.fund-category-card){transition:none}}
+
+/* Keep controls and emphasized values light even where older component styles set bold. */
+html body :is(button,.badge,.nav-label,.reading-list dt,label){font-weight:400!important}
+html body :is(strong,b,th,.amount){font-weight:500!important}
+html body .sidebar .nav button.active{font-weight:500!important}

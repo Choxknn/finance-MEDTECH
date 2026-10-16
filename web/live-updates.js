@@ -1,6 +1,6 @@
 'use strict';
 let financeLiveClient=null,financeLiveScope='',financeLiveToken='',financeLiveTimer=null,financeLiveBusy=false,financeLivePending=false;
-function financeLiveBlocked(){return document.hidden||document.querySelector('dialog[open]')||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]')||document.querySelector('#material-profile-menu:not([hidden])')}
+function financeLiveBlocked(){return document.hidden||document.querySelector('dialog[open],.finance-picker-popup')||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]')||document.querySelector('#material-profile-menu:not([hidden])')}
 function queueFinanceLive(){financeLivePending=true;if(!financeLiveTimer)financeLiveTimer=setTimeout(flushFinanceLive,800)}
 async function flushFinanceLive(){financeLiveTimer=null;if(!user||cfg.mode!=='live')return;if(financeLiveBusy||backgroundRefreshRunning||financeLiveBlocked()){financeLiveTimer=setTimeout(flushFinanceLive,1500);return}financeLiveBusy=true;financeLivePending=false;const scope=user.id,screen=view;try{
  const result=await api('bootstrap');let shop=null,summary=null,attendance=null;

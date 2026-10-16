@@ -13,11 +13,11 @@ document.addEventListener('click',async e=>{const b=e.target.closest('button');i
 document.addEventListener('submit',async e=>{const f=e.target;if(f.id!=='delete-web-announcement')return;e.preventDefault();e.stopImmediatePropagation();const b=f.querySelector('[type=submit]');b.disabled=true;try{if(user.role!=='admin')throw Error('ไม่มีสิทธิ์');if(cfg.mode==='live')await api('delete-announcement',{id:f.dataset.id});db.announcements=db.announcements.filter(n=>n.id!==f.dataset.id);document.getElementById('dialog').close();render();toast('ลบประกาศแล้ว')}catch(err){f.querySelector('.form-error').textContent=err.message}finally{b.disabled=false}},true);
 let backgroundRefreshRunning=false;
 async function refreshInBackground(){
- if(backgroundRefreshRunning||cfg.mode!=='live'||!user||document.hidden||document.getElementById('dialog').open||busyJobs.size)return;
+ if(backgroundRefreshRunning||cfg.mode!=='live'||!user||document.hidden||document.querySelector('dialog[open],.finance-picker-popup')||busyJobs.size)return;
  backgroundRefreshRunning=true;const scope=user.id+'|'+user.role,screen=view;
  try{
   const result=await api('bootstrap');
-  if(!user||scope!==user.id+'|'+user.role||view!==screen||document.hidden||document.getElementById('dialog').open||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]'))return;
+  if(!user||scope!==user.id+'|'+user.role||view!==screen||document.hidden||document.querySelector('dialog[open],.finance-picker-popup')||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]'))return;
   const stable=value=>JSON.stringify(value,(key,v)=>key==='last_seen_at'?undefined:v);const changed=stable(db)!==stable(result.data)||stable(user)!==stable(result.profile);
   if(!changed)return;
   db=result.data;user=result.profile;for(const key of settingKeys)if(typeof db.settings?.[key]==='string')cfg[key]=db.settings[key];

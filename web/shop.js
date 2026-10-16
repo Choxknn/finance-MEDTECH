@@ -32,7 +32,7 @@ const shopRender=render;render=function(){
  if(user&&shopOwner!==user.id){shopOwner=user.id;shopLoaded=false;shopLoadError='';shopData={products:[],orders:[]};shopSelected.clear();const destination=shopRoute(location.hash)?location.hash:sessionStorage.getItem('finance-shop-destination');if(destination){shopSwitchRoute(destination);sessionStorage.removeItem('finance-shop-destination')}}
  if(!user){shopOwner=null;shopLoaded=false;shopData={products:[],orders:[]}}
  shopRender();if(!user)return;
- if(user.role==='admin'){const nav=document.querySelector('.sidebar .nav'),group=nav?.querySelector('[data-view=fund]')?.parentElement||nav;if(group&&!nav.querySelector('[data-view=shop]'))group.insertAdjacentHTML('beforeend',`<button data-view="shop" class="${view==='shop'?'active':''}">${icon('wallet')}<span class="nav-label">สินค้า</span></button><button data-view="shop-orders" class="${view==='shop-orders'?'active':''}">${icon('document')}<span class="nav-label">คำสั่งซื้อ</span></button>`)}
+ if(user.role==='admin'){const nav=document.querySelector('.sidebar .nav'),group=nav?.querySelector('[data-view=fund]')?.parentElement||nav;if(group&&!nav.querySelector('[data-view=shop]'))group.insertAdjacentHTML('beforeend',`<button data-view="shop" class="${view.startsWith('shop')?'active':''}">${icon('wallet')}<span class="nav-label">สินค้า</span></button>`)}
  if(view==='dashboard'&&user.role!=='admin'&&db.shop_orders?.length)shopMountDashboardSwitcher();
  if(view.startsWith('shop')&&!shopLoaded&&!shopLoading&&!shopLoadError)queueMicrotask(shopLoad);
  if(shopLoaded&&shopPendingScan){const scan=shopPendingScan;shopPendingScan='';queueMicrotask(()=>shopOpenOrder(null,scan).catch(e=>toast(e.message)))}shopUpdateSelection();

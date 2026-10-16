@@ -1,0 +1,94 @@
+/* Mali typography, with real 400/500/600/700 weights hosted beside the app. */
+:root{--finance-font:'Mali','Noto Sans Thai',Tahoma,system-ui,sans-serif}
+html,html body,html body :is(button,input,select,textarea,option,summary),html body #boot-screen .boot-wordmark{font-family:var(--finance-font)!important}
+html body{font-weight:400;line-height:1.75}
+html body :is(h1,h2,h3,h4,h5,h6,.brand,.mp-mobile-wordmark,.mp-card-head h2,.mp-bill-title h3,.clay-round-name,.fund-category-heading strong,.individual-bill summary strong,.activity-card h3,.message-heading h3){font-weight:700!important;letter-spacing:0;line-height:1.55}
+html body :is(strong,b,th){font-weight:700}
+html body :is(button,.badge,.nav-label,.reading-list dt,label){font-weight:600}
+html body :is(p,li,dd,.sub,.help,.note,.error,.message-description,.activity-description){line-height:1.85}
+html body :is(button,input,select,textarea){line-height:1.65}
+html body :is(input,select,textarea){font-weight:400}
+html body :is(.mp-stat strong,.mp-bill-amount strong,.category-total-strip strong,.fund-category-values b,.amount){font-weight:700;letter-spacing:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+html body :is(.mp-stat-label,.mp-activity-copy b,.mp-history-row strong,.mp-fund-copy b){font-size:13px;line-height:1.75}
+html body :is(.mp-activity-copy small,.mp-caption,.mp-paid-caption,.mp-stat small,.mp-bill-title p,.mp-bill-amount small,.fund-category-footer,.mp-ring-label small,.mp-stat-label small){font-size:11px;line-height:1.75}
+html body :is(.mp-card-head h2,.panel-head h2){font-size:16px}
+html body .mp-bill-title h3{font-size:15px}
+html body :is(.mp-card-head,.panel-head,.page-head){gap:12px;align-items:center;flex-wrap:wrap}
+html body :is(.mp-card-head h2,.panel-head h2,.page-head>div){min-width:0;overflow-wrap:anywhere}
+html body .page-head{margin-bottom:24px}
+html body .page-head h1{font-size:clamp(24px,2.3vw,30px);margin-bottom:6px}
+html body :is(.page-actions,.dialog-actions,.actions,.review-work-actions){gap:8px;align-items:center;flex-wrap:wrap}
+html body :is(.toolbar,.page-actions,.dialog-actions,.actions) button{white-space:normal;word-break:normal}
+html body :is(button svg,.badge svg,.page-head svg){flex-shrink:0}
+html body :is(.mp-primary,.mp-secondary,.mp-proof,.page-actions>button,.dialog-actions>button,.actions>button){font-size:13px;min-height:42px;line-height:1.6;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+html body :is(.icon-button,.topbar .clay-notifications,.modal-head>[data-action=close]){flex-shrink:0;min-height:38px}
+html body .mp-main-grid{gap:24px}
+html body :is(.mp-main-column,.mp-side-column){gap:22px}
+html body .mp-card{padding:22px;border-radius:24px;box-shadow:0 5px 20px #5d304b06}
+html body :is(.mp-card-head,.panel-head){margin-bottom:18px}
+html body :is(.mp-bill,.fund-category-card,.individual-bill,.activity-card,.message-card){border-radius:20px}
+html body .mp-bill{padding:20px}
+html body .mp-bill-top{gap:12px}
+html body .mp-bill-bottom{gap:14px;flex-wrap:wrap;margin-top:20px}
+html body .mp-bill-amount strong{font-size:clamp(25px,2.7vw,31px);line-height:1.5}
+html body .mp-activity-row{gap:12px;padding-block:16px}
+html body .mp-activity-value{gap:8px;flex-wrap:wrap;align-items:center}
+html body .review-work-actions{margin:0 0 18px;padding-top:8px}
+html body .mp-card:has(.review-work-actions)>section+section{border-top:1px solid #f0e7ec;padding-top:18px}
+html body .modal-head{gap:16px;align-items:flex-start;margin-bottom:22px}
+html body .modal-head h2{font-size:21px;overflow-wrap:anywhere;min-width:0}
+html body .modal-head>[data-action=close]{margin-left:auto;width:38px;height:38px;padding:0;display:grid;place-items:center;border-radius:12px}
+html body :is(.reading-list,.signup-review-details) dd{line-height:1.85}
+html body .meddy-bubble{font-weight:500;line-height:1.95!important}
+html body .meddy-name{letter-spacing:.3px;font-weight:600}
+html body .quick-replies{gap:8px;flex-wrap:wrap}
+html body .quick-replies button{font-size:12px;min-height:36px;padding:8px 12px}
+html body .sidebar .nav button{font-size:13px;line-height:1.7;padding-block:12px;font-weight:500}
+html body .sidebar .nav button.active{font-weight:700}
+html body .nav-section h2{font-size:11px;letter-spacing:.3px}
+html body .mp-profile-text{line-height:1.7}
+html body #boot-screen .boot-wordmark{font-size:clamp(26px,6.5vw,66px);font-weight:700;letter-spacing:-.025em;line-height:1.5}
+html body :is(.login-form h1,.login-form h2,.recovery-card h1){font-weight:700;line-height:1.6}
+html body .login-form label{margin-top:16px}
+html body .recovery-card>p{line-height:1.9}
+html body .signup-steps li{font-weight:600;line-height:1.7}
+/* The entry sequence is handled once per navigation; disable the older page-wide animation. */
+html body .page-enter,html body .page-enter>.stats,html body .page-enter>.grid-two{animation:none}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ html body :is(.mp-card,.mp-bill,.fund-category-card){transition:box-shadow .2s ease}
+ html body .mp-card:hover{box-shadow:0 8px 26px #5d304b0b}
+ html body :is(.fund-category-card,.mp-primary,.mp-secondary):hover{translate:0 -1px}
+}
+@media(max-width:720px){
+ html body .mp-stats{gap:12px}
+ html body .mp-card{padding:18px;border-radius:21px}
+ html body .mp-bill{padding:17px;border-radius:18px}
+ html body .mp-bill-wrap{padding-inline:16px}
+ html body .mp-main-grid,html body .mp-main-column,html body .mp-side-column{gap:18px}
+ html body :is(.page-actions,.dialog-actions,.actions){gap:8px}
+ html body .page-head{align-items:flex-start;margin-bottom:20px}
+ html body .page-head .sub{font-size:12px}
+ html body .mp-card-head h2{font-size:15px}
+ html body .mp-bill-title h3{font-size:14px}
+ html body .mp-card-head .mp-link{font-size:12px}
+ html body .mp-stat.has-summary-buddy{padding-right:74px}
+ html body .mp-stat strong{font-size:clamp(22px,5vw,28px)}
+ html body .summary-buddy{width:62px;height:62px}
+ html body .mp-stat-main.has-summary-buddy{padding-right:100px}
+ html body .mp-stat-main.has-summary-buddy strong{font-size:32px}
+ html body .mp-stat-main.has-summary-buddy .summary-buddy{width:86px;height:86px}
+ html body .meddy-bubble{font-size:14px!important;padding:14px 16px!important}
+ html body .meddy-name{font-size:10px!important}
+ html body .meddy-link{font-size:12px!important}
+ html body .mp-profile-text{max-width:135px}
+ html body .modal-head h2{font-size:19px}
+}
+@media(max-width:380px){
+ html body .mp-stats{grid-template-columns:minmax(0,1fr)}
+ html body .mp-stat{min-height:112px}
+ html body .mp-stat.has-summary-buddy{padding-right:96px}
+ html body .mp-stat .summary-buddy{width:76px;height:76px}
+ html body .meddy-bubble{font-size:13px!important}
+ html body .mp-profile-text{max-width:100px}
+}
+@media(prefers-reduced-motion:reduce){html body :is(.mp-card,.mp-bill,.fund-category-card){transition:none}}

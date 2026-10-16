@@ -97,3 +97,47 @@ html body .page-enter,html body .page-enter>.stats,html body .page-enter>.grid-t
 html body :is(button,.badge,.nav-label,.reading-list dt,label){font-weight:400!important}
 html body :is(strong,b,th,.amount){font-weight:500!important}
 html body .sidebar .nav button.active{font-weight:500!important}
+
+/* Compact mobile typography without shrinking editable fields or tap targets. */
+@media(max-width:600px){
+ html body .page-head h1{font-size:22px;line-height:1.45;letter-spacing:0}
+ html body .modal-head h2{font-size:18px;line-height:1.5}
+ html body :is(.mp-card-head h2,.panel-head h2){font-size:14px;line-height:1.55;overflow-wrap:normal;word-break:normal}
+ html body :is(.mp-card-head,.panel-head){gap:8px;margin-bottom:14px}
+ html body .mp-card-head h2{flex:1 1 150px;margin:0}
+ html body .mp-card-head>.mp-link{flex:0 0 auto;font-size:11px;white-space:nowrap;min-height:40px;display:inline-flex;align-items:center}
+ html body :is(.mp-bill-title h3,.clay-round-name,.individual-bill summary strong,.fund-category-heading strong,.shop-product h2){font-size:13px;line-height:1.65;word-break:normal;overflow-wrap:break-word}
+ html body :is(.mp-primary,.mp-secondary,.mp-proof,.page-actions button,.dialog-actions button,.actions button,.shop-tabs button,.shop-order-actions button,.shop-bulk-bar button){font-size:12px;line-height:1.5;padding:10px 12px;gap:6px;min-height:44px;max-width:100%;word-break:normal}
+ html body :is(.page-actions,.dialog-actions,.actions,.button-group,.mp-bill-bottom){gap:6px}
+ html body :is(.mp-primary,.mp-secondary,.mp-proof,.shop-tabs button) svg{width:17px;height:17px}
+ html body .mp-bill-bottom{margin-top:14px}
+ html body .mp-bill-amount strong{font-size:clamp(21px,5.5vw,26px);line-height:1.45}
+ html body .mp-stats{gap:10px}
+ html body .mp-stat{padding:16px;min-width:0}
+ html body .mp-stat.has-summary-buddy{padding-right:16px}
+ html body .mp-stat-label{font-size:12px;gap:6px;line-height:1.6}
+ html body .mp-stat.has-summary-buddy .mp-stat-label{padding-right:32px}
+ html body .mp-stat-label svg{width:16px;height:16px}
+ html body .mp-stat strong{font-size:clamp(18px,4.7vw,24px);margin-block:8px;line-height:1.4;letter-spacing:-.02em}
+ html body .mp-stat-main.has-summary-buddy strong{font-size:clamp(25px,7vw,30px)}
+ html body .mp-stat small{font-size:11px;line-height:1.65}
+ html body .mp-stat .summary-buddy,html body .mp-stat-main.has-summary-buddy .summary-buddy{width:36px;height:36px;right:8px;top:10px;bottom:auto}
+ html body :is(.category-total-strip strong,.fund-category-values b,.shop-price strong){font-size:20px;line-height:1.5}
+ html body .category-total-strip>div{gap:6px}
+ html body .category-total-strip svg{width:18px;height:18px}
+ html body .mp-record-title{font-size:13px;line-height:1.7;word-break:normal;overflow-wrap:break-word}
+ html body .shop-tabs{gap:5px}
+ html body .shop-tabs button{padding-inline:8px;flex:1 1 0;min-width:0;font-size:11px}
+ html body .quick-replies{gap:6px}
+ html body .quick-replies button{font-size:11px;padding:9px 10px;min-height:40px}
+ html body .meddy-bubble{font-size:13px!important;line-height:1.8!important;padding:12px 13px!important}
+ html body .mp-profile-text{font-size:12px;max-width:115px}
+ html body .signup-steps li{font-size:11px;line-height:1.5}
+}
+@media(max-width:380px){
+ html body .page-head h1{font-size:20px}
+ html body .mp-card{padding:15px}
+ html body .mp-bill{padding:14px}
+ html body .mp-card-head h2{flex-basis:135px;font-size:13px}
+ html body .mp-stat strong{font-size:24px}
+}

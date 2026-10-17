@@ -145,3 +145,7 @@ html body .sidebar .nav button.active{font-weight:400!important}
 
 /* Reset legacy component bold weights, including inline styles, without faux bold. */
 html body *,html body *::before,html body *::after{font-family:var(--finance-font)!important;font-weight:400!important;font-synthesis:none}
+/* Use the real bold face only for titles, keeping body text and controls regular. */
+@font-face{font-family:'LINE Seed Sans TH';src:url('./fonts/line-seed/bold.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap}
+html body :is(h1,h2,h3,h4,h5,h6,.clay-round-name,.fund-category-heading>strong,.individual-bill summary strong,.mp-record-title,.message-heading,.shop-product-name){font-weight:700!important}
+html body :is(h1,h2,h3,h4,h5,h6)>:is(span,a,strong,b){font-weight:inherit!important}

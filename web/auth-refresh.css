@@ -124,3 +124,6 @@ html body.signup-page #register-support{margin-top:4px;font-size:12px;line-heigh
  html body.signup-page .signup-steps{margin-block:10px}
  html body.signup-page .recovery-card>h1{font-size:21px}
 }
+
+html body .login-hero-copy .brand,html body.signup-page .recovery-card>.eyebrow{text-transform:none;letter-spacing:0}
+@media(max-width:760px){html body .login-hero-copy .brand{font-size:21px;line-height:1.3}}

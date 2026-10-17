@@ -7,7 +7,7 @@ function materialBillState(at=new Date()){
  const all=(db.charges||[]).filter(c=>!c.deleted_at&&(user.role==='admin'||c.profile_id===user.id));
  const active=all.filter(c=>{const r=round(c.round_id);return !r.archived&&!r.deleted_at});
  const unpaid=active.filter(c=>balance(c)>0&&!hasPending(c)).sort((a,b)=>String(round(a.round_id).due_date||'9999').localeCompare(String(round(b.round_id).due_date||'9999'))||String(a.id).localeCompare(String(b.id)));
- const overdue=unpaid.filter(c=>round(c.round_id).due_date&&round(c.round_id).due_date<today);
+ const overdue=unpaid.filter(c=>round(c.round_id).due_date&&Date.now()>billDeadline(round(c.round_id)));
  const pending=(db.payments||[]).filter(p=>!p.deleted_at&&['pending','review'].includes(p.status)&&(user.role==='admin'||p.profile_id===user.id));
  const base={overdue,overdueAmount:overdue.reduce((n,c)=>n+balance(c),0),today};
  if(user.role==='admin'){

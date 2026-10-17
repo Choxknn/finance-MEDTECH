@@ -11,8 +11,9 @@ export async function attendanceAction(db:any,profile:any,input:any){
  }
  if(input.action==='attendance-delete'){await query(db.from('attendance_sessions').delete().eq('id',input.id).select('id').single());return {ok:true}}
  if(input.action==='attendance-create'){
+  const held_time=input.held_time?String(input.held_time):null;if(held_time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(held_time))throw Error('เวลาไม่ถูกต้อง');
   const title=String(input.title||'').trim(),held=String(input.held_on||'');if(!title||title.length>120||!/^\d{4}-\d{2}-\d{2}$/.test(held))throw Error('ระบุชื่อรอบและวันที่');
-  return {session:await query(db.from('attendance_sessions').insert({title,held_on:held,created_by:profile.id}).select().single())};
+  return {session:await query(db.from('attendance_sessions').insert({title,held_on:held,held_time,created_by:profile.id}).select().single())};
  }
  if(input.action==='attendance-toggle'){
   if(typeof input.active!=='boolean')throw Error('สถานะไม่ถูกต้อง');await query(db.from('attendance_sessions').update({active:input.active}).eq('id',input.id).select('id').single());return {ok:true};

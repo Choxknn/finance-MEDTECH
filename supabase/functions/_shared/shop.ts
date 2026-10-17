@@ -33,7 +33,10 @@ export async function shopAction(db:any,profile:any,input:any,file:File|null){
   if(!title||title.length>120||!Number.isFinite(price)||price<0||price>9999999||!Number.isInteger(stock)||stock<0||stock>1000000||description.length>4000)throw Error('ตรวจสอบชื่อ ราคา จำนวนสินค้า และรายละเอียด');
   const priorGroups=input.option_groups===undefined&&input.id?(await query(db.from('shop_products').select('option_groups').eq('id',input.id).single())).option_groups:[];
   const option_groups=validateShopGroups(input.option_groups??priorGroups);
-  const record={option_groups,title,price:Math.round(price*100)/100,stock,description,active:input.active===true};
+  const saleTime=(v:any)=>{if(!v)return null;const date=new Date(v);if(!Number.isFinite(+date)||!/(Z|[+-]\d{2}:\d{2})$/.test(String(v)))throw Error('วันเวลาขายไม่ถูกต้อง');return date.toISOString()};
+  const sale_starts_at=saleTime(input.sale_starts_at),sale_ends_at=saleTime(input.sale_ends_at);
+  if(sale_starts_at&&sale_ends_at&&sale_ends_at<=sale_starts_at)throw Error('เวลาปิดขายต้องหลังเวลาเปิดขาย');
+  const record={sale_starts_at,sale_ends_at,option_groups,title,price:Math.round(price*100)/100,stock,description,active:input.active===true};
   return {product:await query(input.id?db.from('shop_products').update(record).eq('id',input.id).is('deleted_at',null).select().single():db.from('shop_products').insert(record).select().single())};
  }
  if(action==='shop-delete'){const p=await query(db.from('shop_products').select('images').eq('id',input.id).single());await query(db.from('shop_products').update({deleted_at:new Date().toISOString(),active:false}).eq('id',input.id));if(p.images.length){await query(db.storage.from('shop-products').remove(p.images));await query(db.from('shop_products').update({images:[]}).eq('id',input.id))}return {ok:true}}

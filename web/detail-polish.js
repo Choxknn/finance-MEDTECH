@@ -34,7 +34,7 @@ function polishInformation(root=document) {
     const info=details.querySelector('.bill-info');if(!info||info.dataset.infoStyled)return;
     const c=db.charges.find(c=>c.id===details.dataset.clayBill);if(!c)return;
     const r=round(c.round_id);info.dataset.infoStyled='true';info.classList.add('detail-grid');
-    info.innerHTML=detailCard('ยอดบิล','฿'+money(c.amount))+detailCard('ครบกำหนด',esc(date(r.due_date)))+detailCard('สถานะ',r.archived?'<span class="badge unpaid">ปิดรับชำระ</span>':badge(status(c)),'check')+detailCard('ค่าปรับ','฿'+money(c.fee_amount||0));
+    info.innerHTML=detailCard('ยอดบิล','฿'+money(c.amount))+detailCard('ครบกำหนด',esc(recordTime(r,'due_date')))+detailCard('สถานะ',r.archived?'<span class="badge unpaid">ปิดรับชำระ</span>':badge(status(c)),'check')+detailCard('ค่าปรับ','฿'+money(c.fee_amount||0));
     if(r.description)info.insertAdjacentHTML('beforeend',detailCard('รายละเอียด',esc(r.description)));
   });
   root.querySelectorAll('th').forEach(th=>{

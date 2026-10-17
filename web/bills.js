@@ -13,3 +13,13 @@ function updateDisplayedFees(){if(!db)return;const today=new Intl.DateTimeFormat
 const feeRender=render;render=function(){updateDisplayedFees();feeRender()};
 
 const feePayModal=payModal;payModal=function(id){updateDisplayedFees();return feePayModal(id)};
+
+// React at the actual deadline while idle; never replace an open form or dialog.
+let deadlineViewKey='';
+function refreshBillDeadlines(){
+ if(!user||!db||document.hidden||document.querySelector('dialog[open]')||document.activeElement?.matches('input,textarea,select')||!['dashboard','bills','individual-bills','rounds'].includes(view))return;
+ const key=(db.rounds||[]).filter(r=>!r.deleted_at&&!r.archived&&r.due_date).map(r=>r.id+':'+billDeadline(r)+':'+(Date.now()>billDeadline(r))).join('|');
+ if(deadlineViewKey&&key!==deadlineViewKey)render();deadlineViewKey=key;
+}
+setInterval(refreshBillDeadlines,1000);
+document.addEventListener('visibilitychange',refreshBillDeadlines);

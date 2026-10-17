@@ -1,15 +1,15 @@
-/* Mitr: regular text and medium-weight headings; fonts are hosted beside the app. */
-@font-face{font-family:'LINE Seed Sans TH';src:url('./fonts/line-seed/regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap;unicode-range:U+0000-024F,U+1E00-1EFF,U+2000-206F,U+20A0-20CF}
-:root{--finance-font:'LINE Seed Sans TH','Mitr','Noto Sans Thai',Tahoma,system-ui,sans-serif}
+/* Self-hosted LINE Seed Sans TH for Thai, English and numerals. */
+@font-face{font-family:'LINE Seed Sans TH';src:url('./fonts/line-seed/regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap}
+:root{--finance-font:'LINE Seed Sans TH','Noto Sans Thai',Tahoma,system-ui,sans-serif}
 html,html body,html body :is(button,input,select,textarea,option,summary),html body #boot-screen .boot-wordmark{font-family:var(--finance-font)!important}
 html body{font-weight:400;line-height:1.75}
-html body :is(h1,h2,h3,h4,h5,h6,.brand,.mp-mobile-wordmark,.mp-card-head h2,.mp-bill-title h3,.clay-round-name,.fund-category-heading strong,.individual-bill summary strong,.activity-card h3,.message-heading h3){font-weight:500!important;letter-spacing:0;line-height:1.55}
-html body :is(strong,b,th){font-weight:500}
+html body :is(h1,h2,h3,h4,h5,h6,.brand,.mp-mobile-wordmark,.mp-card-head h2,.mp-bill-title h3,.clay-round-name,.fund-category-heading strong,.individual-bill summary strong,.activity-card h3,.message-heading h3){font-weight:400!important;letter-spacing:0;line-height:1.55}
+html body :is(strong,b,th){font-weight:400}
 html body :is(button,.badge,.nav-label,.reading-list dt,label){font-weight:400}
 html body :is(p,li,dd,.sub,.help,.note,.error,.message-description,.activity-description){line-height:1.85}
 html body :is(button,input,select,textarea){line-height:1.65}
 html body :is(input,select,textarea){font-weight:400}
-html body :is(.mp-stat strong,.mp-bill-amount strong,.category-total-strip strong,.fund-category-values b,.amount){font-weight:500;letter-spacing:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+html body :is(.mp-stat strong,.mp-bill-amount strong,.category-total-strip strong,.fund-category-values b,.amount){font-weight:400;letter-spacing:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 html body :is(.mp-stat-label,.mp-activity-copy b,.mp-history-row strong,.mp-fund-copy b){font-size:13px;line-height:1.75}
 html body :is(.mp-activity-copy small,.mp-caption,.mp-paid-caption,.mp-stat small,.mp-bill-title p,.mp-bill-amount small,.fund-category-footer,.mp-ring-label small,.mp-stat-label small){font-size:11px;line-height:1.75}
 html body :is(.mp-card-head h2,.panel-head h2){font-size:16px}
@@ -45,11 +45,11 @@ html body .meddy-name{letter-spacing:.3px;font-weight:400}
 html body .quick-replies{gap:8px;flex-wrap:wrap}
 html body .quick-replies button{font-size:12px;min-height:36px;padding:8px 12px}
 html body .sidebar .nav button{font-size:13px;line-height:1.7;padding-block:12px;font-weight:400}
-html body .sidebar .nav button.active{font-weight:500}
+html body .sidebar .nav button.active{font-weight:400}
 html body .nav-section h2{font-size:11px;letter-spacing:.3px}
 html body .mp-profile-text{line-height:1.7}
-html body #boot-screen .boot-wordmark{font-size:clamp(26px,6.5vw,66px);font-weight:500;letter-spacing:-.025em;line-height:1.5}
-html body :is(.login-form h1,.login-form h2,.recovery-card h1){font-weight:500;line-height:1.6}
+html body #boot-screen .boot-wordmark{font-size:clamp(26px,6.5vw,66px);font-weight:400;letter-spacing:-.025em;line-height:1.5}
+html body :is(.login-form h1,.login-form h2,.recovery-card h1){font-weight:400;line-height:1.6}
 html body .login-form label{margin-top:16px}
 html body .recovery-card>p{line-height:1.9}
 html body .signup-steps li{font-weight:400;line-height:1.7}
@@ -96,8 +96,8 @@ html body .page-enter,html body .page-enter>.stats,html body .page-enter>.grid-t
 
 /* Keep controls and emphasized values light even where older component styles set bold. */
 html body :is(button,.badge,.nav-label,.reading-list dt,label){font-weight:400!important}
-html body :is(strong,b,th,.amount){font-weight:500!important}
-html body .sidebar .nav button.active{font-weight:500!important}
+html body :is(strong,b,th,.amount){font-weight:400!important}
+html body .sidebar .nav button.active{font-weight:400!important}
 
 /* Compact mobile typography without shrinking editable fields or tap targets. */
 @media(max-width:600px){
@@ -142,3 +142,6 @@ html body .sidebar .nav button.active{font-weight:500!important}
  html body .mp-card-head h2{flex-basis:135px;font-size:13px}
  html body .mp-stat strong{font-size:24px}
 }
+
+/* Reset legacy component bold weights, including inline styles, without faux bold. */
+html body *,html body *::before,html body *::after{font-family:var(--finance-font)!important;font-weight:400!important;font-synthesis:none}

@@ -149,3 +149,6 @@ html body *,html body *::before,html body *::after{font-family:var(--finance-fon
 @font-face{font-family:'LINE Seed Sans TH';src:url('./fonts/line-seed/bold.woff2') format('woff2');font-style:normal;font-weight:700;font-display:swap}
 html body :is(h1,h2,h3,h4,h5,h6,.clay-round-name,.fund-category-heading>strong,.individual-bill summary strong,.mp-record-title,.message-heading,.shop-product-name){font-weight:700!important}
 html body :is(h1,h2,h3,h4,h5,h6)>:is(span,a,strong,b){font-weight:inherit!important}
+
+/* Brand wordmarks retain emphasis independently of general text. */
+html body :is(.brand,.brand span,.mp-mobile-wordmark,.mp-mobile-wordmark span,.topbar-title,.boot-wordmark,.boot-wordmark span){font-weight:700!important}

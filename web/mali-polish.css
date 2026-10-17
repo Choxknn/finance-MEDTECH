@@ -1,5 +1,6 @@
 /* Mitr: regular text and medium-weight headings; fonts are hosted beside the app. */
-:root{--finance-font:'Mitr','Noto Sans Thai',Tahoma,system-ui,sans-serif}
+@font-face{font-family:'LINE Seed Sans TH';src:url('./fonts/line-seed/regular.woff2') format('woff2');font-style:normal;font-weight:400;font-display:swap;unicode-range:U+0000-024F,U+1E00-1EFF,U+2000-206F,U+20A0-20CF}
+:root{--finance-font:'LINE Seed Sans TH','Mitr','Noto Sans Thai',Tahoma,system-ui,sans-serif}
 html,html body,html body :is(button,input,select,textarea,option,summary),html body #boot-screen .boot-wordmark{font-family:var(--finance-font)!important}
 html body{font-weight:400;line-height:1.75}
 html body :is(h1,h2,h3,h4,h5,h6,.brand,.mp-mobile-wordmark,.mp-card-head h2,.mp-bill-title h3,.clay-round-name,.fund-category-heading strong,.individual-bill summary strong,.activity-card h3,.message-heading h3){font-weight:500!important;letter-spacing:0;line-height:1.55}

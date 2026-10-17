@@ -83,3 +83,7 @@ html body .login-refresh .remember-login input[type=checkbox]:checked{border-col
  html body .login-refresh .login-form .sub{margin-bottom:6px}
 }
 @media(forced-colors:active){html body .login-refresh .remember-login input[type=checkbox]{appearance:auto;-webkit-appearance:auto}}
+/* Soft white halo separates the transparent logo from the red hero. */
+html body .login-refresh .login-hero-logo{box-sizing:content-box;padding:16px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.94) 0%,rgba(255,255,255,.78) 30%,rgba(255,255,255,.38) 49%,rgba(255,255,255,.10) 62%,rgba(255,255,255,0) 73%);filter:drop-shadow(0 8px 18px #68132620)}
+@media(max-width:760px){html body .login-refresh .login-hero-logo{padding:12px;right:6px;bottom:4px}}
+@media(max-width:760px) and (max-height:620px){html body .login-refresh .login-hero-logo{padding:9px;right:9px;bottom:1px}}

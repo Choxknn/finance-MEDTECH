@@ -152,3 +152,5 @@ html body :is(h1,h2,h3,h4,h5,h6)>:is(span,a,strong,b){font-weight:inherit!import
 
 /* Brand wordmarks retain emphasis independently of general text. */
 html body :is(.brand,.brand span,.mp-mobile-wordmark,.mp-mobile-wordmark span,.topbar-title,.boot-wordmark,.boot-wordmark span){font-weight:700!important}
+
+html body .reference-brand div,html body .reference-brand small,html body .login-hero-copy .brand,html body .login-hero-copy .brand span{font-weight:700!important}

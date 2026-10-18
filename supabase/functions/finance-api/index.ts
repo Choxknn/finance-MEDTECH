@@ -307,7 +307,7 @@ Deno.serve(async req=>{
      // Old transfers must not automatically pay a newly created round.
      const validDate=isRecentSlip(detail,charge.rounds.created_at);
      await query(db.from('payments').update({verification:result.body}).eq('id',pid));
-     const correction=slipRejectionReason(result.body);if(correction){await query(db.rpc('decide_payment',{p_id:pid,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:null}));await discardRejectedSlip(db,'payments',pid);return json({message:correction,status:'rejected',payment_id:pid});}
+     const correction=slipRejectionReason(result.body);if(correction){await query(db.rpc('decide_payment',{p_id:pid,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:null}));await discardRejectedSlip(db,'payments',pid);return json({message:correction,status:'rejected'});}
      if(result.ok&&validDate){await query(db.rpc('decide_payment',{p_id:pid,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK',p_ref:String(detail.transRef),p_actor:null}));verified=true;note='ยืนยันการชำระเงินแล้ว'}
      else note=!validDate&&(result.ok||detail?.transTimestamp)?'สลิปเกิน 48 ชั่วโมง ก่อนสร้างบิล หรือวันเวลาบนสลิปไม่ถูกต้อง':'ผลตรวจต้องตรวจเพิ่มเติม: '+String(result.body.message||detail?.message||'ยอดหรือบัญชีไม่ตรง');
     }catch{note='ตรวจสอบอัตโนมัติไม่สำเร็จ หรือพบเลขอ้างอิงซ้ำ รอแอดมินตรวจ';}
@@ -352,7 +352,7 @@ Deno.serve(async req=>{
     requireAdmin();const decision=text(input.decision,20);if(!['approved','rejected'].includes(decision))throw new Error('สถานะไม่ถูกต้อง');const p=await query(db.from('payments').select('*').eq('id',input.payment_id).single());
     await query(db.rpc('decide_payment',{p_id:p.id,p_decision:decision,p_note:text(input.note,500),p_ref:p.trans_ref||p.verification?.data?.transRef||`ADMIN-${p.id}`,p_actor:profile.id}));
     if(decision==='rejected')await discardRejectedSlip(db,'payments',p.id);
-    await (decision==='approved'?paymentSuccess:notify)(db,p.profile_id,`finance MEDTECH\n${decision==='approved'?'ยืนยันรับเงินแล้ว':'กรุณาแก้ไขหลักฐาน'}\nจำนวน ${Number(p.amount).toFixed(2)} บาท\n${input.note}`);return json({ok:true});
+    if(decision==='approved')await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันรับเงินแล้ว\nจำนวน ${Number(p.amount).toFixed(2)} บาท`);return json({ok:true,message:decision==='rejected'?'ปฏิเสธสลิปและลบรายการแล้ว':'ยืนยันการชำระแล้ว'});
    }
    case 'new-expense':{
     requireAdmin();if(input.request_key){const existing=await query(db.from('expenses').select('id').eq('created_by',profile.id).eq('request_key',input.request_key).maybeSingle());if(existing)return json({ok:true,id:existing.id});}const title=text(input.title,120),category=text(input.category,100),value=amount(input.amount),spentOn=day(input.spent_on),responsible=text(input.responsible_name||profile.name,120),id=crypto.randomUUID();const uploaded:string[]=[];

@@ -10,17 +10,19 @@ export async function driveToken(){const r=await fetch('https://oauth2.googleapi
 export async function uploadDrive(file:File,name:string){return uploadEvidence(adminDb(),file,name)}
 export async function readEvidence(id:string){if(isStoredEvidence(id))return downloadEvidence(adminDb(),id);const access=await driveToken();return fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media&supportsAllDrives=true`,{headers:{Authorization:`Bearer ${access}`},signal:AbortSignal.timeout(20000)})}
 export async function deleteDrive(id:string,strict=false){try{if(isStoredEvidence(id)){await removeStoredEvidence(adminDb(),id);return;}const access=await driveToken();const r=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?supportsAllDrives=true`,{method:'DELETE',headers:{Authorization:`Bearer ${access}`},signal:AbortSignal.timeout(15000)});if(!r.ok&&r.status!==404)throw Error('ลบหลักฐานไม่สำเร็จ')}catch(e){if(strict)throw e}}
-// Queue durable cleanup before removing a rejected slip's reference. Financial receipts and payment QR files are untouched.
+// Keep only a durable file cleanup job, never a rejected payment in user history.
 export async function discardRejectedSlip(db:any,table:'payments'|'shop_payments',id:string){
- try{
- const p=await query(db.from(table).select('drive_file_id,status').eq('id',id).single());
- if(p.status!=='rejected'||!p.drive_file_id)return;
+ const fields=table==='shop_payments'?'drive_file_id,status,order_id':'drive_file_id,status';
+ const p=await query(db.from(table).select(fields).eq('id',id).maybeSingle());
+ if(!p||p.status!=='rejected')return;
  const target=p.drive_file_id;
- await query(db.from('trash_cleanup_queue').upsert({kind:'drive',target},{onConflict:'kind,target',ignoreDuplicates:true}));
- await query(db.from(table).update({drive_file_id:null}).eq('id',id).eq('status','rejected').eq('drive_file_id',target));
- await deleteDrive(target,true);
- await query(db.from('trash_cleanup_queue').delete().eq('kind','drive').eq('target',target));
- }catch{console.warn('Rejected slip cleanup deferred to maintenance');}
+ if(target)await query(db.from('trash_cleanup_queue').upsert({kind:'drive',target},{onConflict:'kind,target',ignoreDuplicates:true}));
+ await query(db.from(table).delete().eq('id',id).eq('status','rejected'));
+ if(table==='payments')await query(db.from('audit').delete().eq('action','rejected: '+id));
+ if(table==='shop_payments'&&p.order_id)await query(db.from('shop_orders').update({payment_status:'unpaid'}).eq('id',p.order_id).eq('payment_status','rejected'));
+ if(!target)return;
+ try{await deleteDrive(target,true);await query(db.from('trash_cleanup_queue').delete().eq('kind','drive').eq('target',target))}
+ catch{console.warn('Rejected slip file cleanup deferred to maintenance');}
 }
 export function isRecentSlip(detail:any,createdAt:string,now=Date.now()){const transferred=Date.parse(detail?.transTimestamp||'');return Number.isFinite(transferred)&&transferred>=Date.parse(createdAt)&&transferred<=now+60000&&now-transferred<=48*60*60*1000}
 export function matchesReceiver(detail:any,expected:string){

@@ -43,7 +43,7 @@ export async function shopPaymentAction(db:any,profile:any,input:any,file:File|n
    if(!['approved','rejected'].includes(input.status)||!String(input.note||'').trim())throw Error('ระบุผลตรวจและหมายเหตุ');
    await query(db.rpc('decide_shop_payment',{p_id:payment.id,p_status:input.status,p_ref:input.status==='approved'?(payment.verification?.data?.transRef||'ADMIN-SHOP-'+payment.id):null,p_note:'ผู้ดูแลตรวจ: '+String(input.note).slice(0,500),p_verification:null}));
    if(input.status==='rejected')await discardRejectedSlip(db,'shop_payments',payment.id);
-   await query(db.from('audit').insert({actor:profile.name,action:'ตรวจชำระร้านค้า '+payment.id+' '+input.status}));return {status:input.status,message:'บันทึกผลตรวจแล้ว'};
+   if(input.status==='approved')await query(db.from('audit').insert({actor:profile.name,action:'ตรวจชำระร้านค้า '+payment.id+' '+input.status}));return {status:input.status,message:'บันทึกผลตรวจแล้ว'};
   }
   const response=await readEvidence(payment.drive_file_id),blob=await response.blob();return verifyShopSlip(db,payment,order,await validateImage(new File([blob],'slip',{type:blob.type})));
  }

@@ -27,9 +27,29 @@ paintBusy=function(){
  if(job)el.innerHTML=`<span class="operation-spinner" aria-hidden="true"></span><div><strong>${esc(job)}</strong><small>กรุณารอสักครู่</small></div>`;
  showStatusSurface(el,!!job);
 };
-// Close immediately before the caller presents its result or next dialog.
+// Keep the current surface through the promise continuation and any follow-up refresh.
 startBusy=function(label){
  const id=++busySerial;busyJobs.set(id,label);clearTimeout(busyTimer);paintBusy();
- return()=>{busyJobs.delete(id);clearTimeout(busyTimer);paintBusy()};
+ return()=>{busyJobs.delete(id);clearTimeout(busyTimer);if(busyJobs.size)paintBusy();else busyTimer=setTimeout(paintBusy,0)};
 };
 operationLabels['shop-pay']='กำลังอัปโหลดและตรวจสอบสลิป';
+
+// Background refreshes stay silent; foreground refreshes inherit the existing loader.
+function continueStatusRefresh(run){
+ return async function(...args){
+  const current=document.getElementById('operation-status');
+  const done=current?.open?startBusy(current.querySelector('strong')?.textContent||'กำลังอัปเดตข้อมูล'):null;
+  try{return await run.apply(this,args)}finally{done?.()}
+ };
+}
+refresh=continueStatusRefresh(refresh);
+if(typeof shopLoad==='function')shopLoad=continueStatusRefresh(shopLoad);
+function finishStatusHandoff(){
+ clearTimeout(busyTimer);
+ const loading=document.getElementById('operation-status');
+ if(loading)showStatusSurface(loading,false);
+}
+const statusResultToast=toast;
+toast=function(...args){const result=statusResultToast(...args);finishStatusHandoff();return result};
+const statusPaymentPopup=paymentStatusPopup;
+paymentStatusPopup=function(...args){const result=statusPaymentPopup(...args);finishStatusHandoff();return result};

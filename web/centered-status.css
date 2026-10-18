@@ -1,0 +1,16 @@
+#operation-status[open],#result-status[open],#payment-status-dialog[open]{position:fixed!important;inset:0!important;margin:auto!important;transform:none!important;translate:none!important;width:min(360px,calc(100vw - 40px))!important;max-width:calc(100vw - 40px)!important;height:fit-content!important;max-height:calc(100dvh - 48px)!important;box-sizing:border-box!important;overflow:auto!important;border:1px solid rgba(255,255,255,.9)!important;border-radius:26px!important;background:rgba(255,255,255,.98)!important;box-shadow:0 20px 70px rgba(40,20,30,.22)!important;color:#3d3438;pointer-events:auto!important;animation:centered-status-in .2s ease!important;outline:none!important}
+#operation-status[open],#result-status[open]{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center;gap:18px;padding:30px 24px!important;text-align:center}
+#operation-status[hidden],#result-status[hidden]{display:none!important}
+#operation-status::backdrop,#result-status::backdrop,#payment-status-dialog::backdrop{background:rgba(32,24,32,.28)!important;backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;pointer-events:auto!important}
+#operation-status .operation-spinner{width:38px;height:38px;border-width:3px;flex-shrink:0}
+#operation-status strong,#result-status strong{display:block;font-size:17px;line-height:1.6;font-weight:700}
+#operation-status small{display:block;margin-top:7px;font-size:14px;color:#80717a}
+#result-status>div{flex:0 1 auto;width:100%}
+#result-status p{font-size:14px;line-height:1.8;margin-top:8px}
+#result-status .result-mark{width:58px;height:58px;flex:0 0 58px}
+#result-status .result-mark svg{width:30px;height:30px}
+#result-status button{align-self:center!important;padding:7px 15px!important;min-width:40px;min-height:40px}
+html:has(#operation-status[open]),html:has(#result-status[open]),body:has(#operation-status[open]),body:has(#result-status[open]){overflow:hidden!important;overscroll-behavior:none}
+body:has(#operation-status[open]) .auto-slip-progress{visibility:hidden}
+@keyframes centered-status-in{from{opacity:0;scale:.96}to{opacity:1;scale:1}}
+@media(prefers-reduced-motion:reduce){#operation-status[open],#result-status[open],#payment-status-dialog[open]{animation:none!important}}

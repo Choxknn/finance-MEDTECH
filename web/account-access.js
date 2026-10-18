@@ -1,5 +1,5 @@
 'use strict';
-const supportLine=()=>/^https:\/\/(lin\.ee|line\.me)\//.test(cfg.lineOaUrl||'')?cfg.lineOaUrl:'https://lin.ee/7VYJbx0';
+const supportLine=()=>/^https:\/\/(lin\.ee|line\.me)\//.test(cfg.lineOaUrl||'')?cfg.lineOaUrl:'https://lin.ee/rpHtjnI';
 function forgotPasswordModal(){modal('ลืมรหัสผ่าน',`<p>ระบุรหัสนักศึกษาเพื่อรับลิงก์ตั้งรหัสผ่านใหม่ทาง LINE ที่เชื่อมไว้</p><form id="forgot-line-form">${inputField('student_id','รหัสนักศึกษา','','text','required pattern="[0-9]{5,20}" maxlength="20" inputmode="numeric" autocomplete="username"')}<div class="actions"><button type="submit">${icon('bell')} ส่งลิงก์ไป LINE</button></div><div class="form-error" role="status"></div></form><p class="help">ยังไม่เชื่อม LINE หรือไม่ได้รับข้อความ?</p><a class="account-support" href="${esc(supportLine())}" target="_blank" rel="noopener">ติดต่อผู้ดูแลระบบทาง LINE ↗</a>`)}
 async function publicAccountRequest(data){const response=await fetch(cfg.supabaseUrl+'/functions/v1/account-access',{method:'POST',headers:{apikey:cfg.supabaseAnonKey,'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(!response.ok)throw Error(result.error||'ดำเนินการไม่สำเร็จ');return result}
 document.addEventListener('click',e=>{if(e.target.closest('[data-action=forgot]')){e.preventDefault();e.stopImmediatePropagation();forgotPasswordModal()}},true);

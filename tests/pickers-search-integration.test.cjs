@@ -59,3 +59,11 @@ test('background search does not publish results from a previous admin session',
  const pending=run('loadAdminSearchExtras()');w.user={id:'admin-2',role:'admin'};run('adminSearchScope()');resolvers[0]({products:[{id:'private-old-product'}],orders:[]});resolvers[1]({sessions:[{id:'private-old-session'}]});
  await pending;assert.equal(run('adminSearchCache.sessions.length'),0);assert.equal(run('adminSearchCache.owner'),'admin-2');assert.equal(run('adminSearchCache.products.length'),0);w.close();
 });
+test('individual bill detail previews only that bill and does not send without confirmation',async()=>{
+ const a=app();try{await tick();a.run("demoLogin('admin');db.profiles.find(p=>p.id==='u1').line_linked=true;openIndividualBills('u1')");
+ a.d.querySelector('[data-individual-id="c1"]>summary').click();const b=a.d.querySelector('#dialog [data-individual-remind="c1"]');assert(b);assert(!b.disabled);b.click();await tick();
+ const form=a.d.querySelector('#due-reminder-send');assert(form);assert.equal(form.dataset.profileId,'u1');assert.equal(form.querySelectorAll('[name=charge_ids]:checked').length,1);assert.equal(form.querySelector('[name=charge_ids]').value,'c1');assert.match(form.textContent,/ยืนยันส่ง LINE/);
+ a.run("db.profiles.find(p=>p.id==='u1').line_linked=false");assert.match(a.run("individualReminderReason(db.charges.find(c=>c.id==='c1'))"),/เชื่อม LINE/);
+ assert.deepEqual(a.errors,[]);
+ }finally{await a.close()}
+});

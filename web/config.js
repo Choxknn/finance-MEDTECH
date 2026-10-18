@@ -8,5 +8,5 @@ window.FINANCE_CONFIG = {
   accountName: 'ภานุมาศ นกไทย',
   accountNumber: '006660001474178',
   paymentQrUrl: './payment-qr.png',
-  lineOaUrl: 'https://lin.ee/7VYJbx0',
+  lineOaUrl: 'https://lin.ee/rpHtjnI',
 };

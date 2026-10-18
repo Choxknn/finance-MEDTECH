@@ -9,9 +9,32 @@ function individualRows(){
   return p&&(!individualFilters.member||c.profile_id===individualFilters.member)&&(!individualFilters.round||c.round_id===individualFilters.round)&&(individualFilters.status==='all'||status(c)===individualFilters.status)&&(!q||[p.name,p.student_id,r.title].join(' ').toLocaleLowerCase('th').includes(q));
  }).sort((a,b)=>String(round(a.round_id).due_date).localeCompare(String(round(b.round_id).due_date)));
 }
+function individualReminderReason(c){
+ const p=db.profiles.find(p=>p.id===c.profile_id),r=round(c.round_id);
+ if(!p||p.active===false||p.deleted_at)return 'สมาชิกปิดใช้งานแล้ว';
+ if(!p.line_linked)return 'สมาชิกยังไม่ได้เชื่อม LINE';
+ if(c.deleted_at||r.deleted_at||r.archived)return 'บิลนี้ปิดรับชำระแล้ว';
+ if(balance(c)<=0)return 'ชำระครบแล้ว';
+ if(hasPending(c))return 'มีสลิปรอตรวจสอบแล้ว';
+ return '';
+}
+function individualReminderButton(c){const reason=individualReminderReason(c);return `<button type="button" class="secondary small individual-line-reminder" data-individual-remind="${esc(c.id)}" title="${esc(reason||'ส่งแจ้งเตือนบิลนี้ทาง LINE')}" ${reason?'disabled':''}>${icon('chat')} แจ้งเตือนทาง LINE</button>${reason?`<small class="individual-reminder-note">${esc(reason)}</small>`:''}`;}
+async function individualReminderPreview(id,button){
+ if(user?.role!=='admin')return;const c=db.charges.find(c=>c.id===id);if(!c)return;
+ const reason=individualReminderReason(c);if(reason){toast(reason);return}
+ const owner=user.id,p=db.profiles.find(p=>p.id===c.profile_id),dialog=document.getElementById('dialog'),anchor=dialog.firstElementChild;
+ if(button)button.disabled=true;
+ try{
+ const result=cfg.mode==='live'?await api('remind-preview',{profile_id:p.id}):{items:[{charge_id:c.id,title:'แจ้งเตือนกำหนดชำระ',body:round(c.round_id).title+'\nยอดค้าง '+money(balance(c))+' บาท\nครบกำหนด '+recordTime(round(c.round_id),'due_date')}]};
+ if(user?.id!==owner||user?.role!=='admin'||!dialog.open||dialog.firstElementChild!==anchor)return;
+ const item=result.items.find(i=>i.charge_id===id);
+ if(!item){toast('บิลนี้ไม่มีรายการค้างที่ต้องแจ้งเตือนแล้ว');return}
+ modal('ตรวจสอบก่อนส่งแจ้งเตือน',`<p>${esc(p.name)} · ${esc(p.student_id)}</p><form id="due-reminder-send" data-profile-id="${esc(p.id)}"><input type="checkbox" name="charge_ids" value="${esc(id)}" checked hidden>${flexPreviewHtml(item.title,item.body,'reminder')}<p class="help">ส่งเฉพาะบิลนี้ให้สมาชิกคนนี้ ระบบตรวจยอดและสถานะอีกครั้งก่อนส่ง</p><div class="actions"><button type="button" class="secondary" data-action="close">ยกเลิก</button><button type="submit">${icon('chat')} ยืนยันส่ง LINE</button></div><div class="form-error" role="alert"></div></form>`);
+ }catch(err){if(user?.id===owner)toast(err.message)}finally{if(button?.isConnected)button.disabled=!!individualReminderReason(c)}
+}
 function individualCard(c){
  const p=db.profiles.find(p=>p.id===c.profile_id),r=round(c.round_id),locked=individualLocked(c);
- return `<details class="individual-bill" data-individual-id="${esc(c.id)}" ${individualOpen.has(c.id)?'open':''}><summary><span class="detail-symbol">${icon('document')}</span><span><strong>${esc(r.title)}</strong><small>${esc(p.name)} · ${esc(p.student_id)}</small></span><svg class="clay-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary><div class="individual-bill-body"><div class="detail-grid">${detailCard('ยอดบิล','฿'+money(c.amount))}${detailCard('ค่าปรับ','฿'+money(c.fee_amount||0))}${detailCard('ชำระแล้ว','฿'+money(paid(c)),'check')}${detailCard('ค้างชำระ','฿'+money(balance(c)))}${detailCard('ครบกำหนด',esc(recordTime(r,'due_date')))}${detailCard('สถานะ',badge(status(c)),'check')}</div>${r.archived?'<p class="help">บิลนี้ปิดรับชำระแล้ว</p>':''}${locked?`<p class="individual-lock">${icon('lock')} มีการชำระหรือรอตรวจแล้ว จึงแก้ยอดบิลไม่ได้</p>`:''}<div class="individual-actions"><button type="button" class="secondary small" data-individual-history="${esc(c.id)}">${icon('history')} ประวัติ / หลักฐาน</button><div class="button-group"><button type="button" class="secondary icon-button" data-individual-edit="${esc(c.id)}" aria-label="แก้ยอดบิล ${esc(p.name)}" title="${locked?'มีการชำระหรือรอตรวจแล้ว':'แก้ยอดเฉพาะคนนี้'}" ${locked?'disabled':''}>${icon('edit')}</button><button type="button" class="danger icon-button" data-delete-entity="charge" data-delete-id="${esc(c.id)}" aria-label="ลบบิลเฉพาะ ${esc(p.name)}" title="ลบบิลเฉพาะคนนี้">${icon('trash')}</button></div></div></div></details>`;
+ return `<details class="individual-bill" data-individual-id="${esc(c.id)}" ${individualOpen.has(c.id)?'open':''}><summary><span class="detail-symbol">${icon('document')}</span><span><strong>${esc(r.title)}</strong><small>${esc(p.name)} · ${esc(p.student_id)}</small></span><svg class="clay-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary><div class="individual-bill-body"><div class="detail-grid">${detailCard('ยอดบิล','฿'+money(c.amount))}${detailCard('ค่าปรับ','฿'+money(c.fee_amount||0))}${detailCard('ชำระแล้ว','฿'+money(paid(c)),'check')}${detailCard('ค้างชำระ','฿'+money(balance(c)))}${detailCard('ครบกำหนด',esc(recordTime(r,'due_date')))}${detailCard('สถานะ',badge(status(c)),'check')}</div>${r.archived?'<p class="help">บิลนี้ปิดรับชำระแล้ว</p>':''}${locked?`<p class="individual-lock">${icon('lock')} มีการชำระหรือรอตรวจแล้ว จึงแก้ยอดบิลไม่ได้</p>`:''}<div class="individual-actions">${individualReminderButton(c)}<button type="button" class="secondary small" data-individual-history="${esc(c.id)}">${icon('history')} ประวัติ / หลักฐาน</button><div class="button-group"><button type="button" class="secondary icon-button" data-individual-edit="${esc(c.id)}" aria-label="แก้ยอดบิล ${esc(p.name)}" title="${locked?'มีการชำระหรือรอตรวจแล้ว':'แก้ยอดเฉพาะคนนี้'}" ${locked?'disabled':''}>${icon('edit')}</button><button type="button" class="danger icon-button" data-delete-entity="charge" data-delete-id="${esc(c.id)}" aria-label="ลบบิลเฉพาะ ${esc(p.name)}" title="ลบบิลเฉพาะคนนี้">${icon('trash')}</button></div></div></div></details>`;
 }
 function individualResults(){
  const rows=individualRows(),count=rows.length,shown=rows.slice(0,individualFilters.limit);
@@ -75,6 +98,7 @@ document.addEventListener('click',e=>{
  if(b.hasAttribute('data-individual-add'))assignIndividualModal();
  if(b.dataset.individualEdit)editRecord('charge',b.dataset.individualEdit);
  if(b.dataset.individualHistory)individualHistory(b.dataset.individualHistory);
+ if(b.dataset.individualRemind)individualReminderPreview(b.dataset.individualRemind,b);
  if(b.hasAttribute('data-individual-more')){individualFilters.limit+=30;updateIndividualResults()}
 });
 document.addEventListener('input',e=>{

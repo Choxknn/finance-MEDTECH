@@ -1,0 +1,6 @@
+.inline-image-loading,.proof-figure.image-loading figcaption{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;color:#80717a;background:rgba(155,130,145,.06);border-radius:18px;width:100%;box-sizing:border-box;padding:24px}
+.inline-image-loading[hidden]{display:none!important}
+.proof-figure.image-loading img{display:none!important}
+#picture-viewer.image-loading img{display:none!important}
+#picture-viewer .inline-image-loading{width:min(100%,480px);min-height:45vh;color:#fff;background:rgba(255,255,255,.05)}
+.inline-image-loading .operation-spinner,.proof-figure.image-loading .operation-spinner{width:30px;height:30px;flex-shrink:0}

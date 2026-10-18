@@ -307,7 +307,7 @@ Deno.serve(async req=>{
      // Old transfers must not automatically pay a newly created round.
      const validDate=isRecentSlip(detail,charge.rounds.created_at);
      await query(db.from('payments').update({verification:result.body}).eq('id',pid));
-     const correction=slipRejectionReason(result.body);if(correction){await query(db.rpc('decide_payment',{p_id:pid,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:null}));await notify(db,profile.id,'finance MEDTECH\nกรุณาแก้ไขหลักฐาน\n'+correction).catch(()=>{});return json({message:correction,status:'rejected',payment_id:pid});}
+     const correction=slipRejectionReason(result.body);if(correction){await query(db.rpc('decide_payment',{p_id:pid,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:null}));return json({message:correction,status:'rejected',payment_id:pid});}
      if(result.ok&&validDate){await query(db.rpc('decide_payment',{p_id:pid,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK',p_ref:String(detail.transRef),p_actor:null}));verified=true;note='ยืนยันการชำระเงินแล้ว'}
      else note=!validDate&&(result.ok||detail?.transTimestamp)?'สลิปเกิน 48 ชั่วโมง ก่อนสร้างบิล หรือวันเวลาบนสลิปไม่ถูกต้อง':'ผลตรวจต้องตรวจเพิ่มเติม: '+String(result.body.message||detail?.message||'ยอดหรือบัญชีไม่ตรง');
     }catch{note='ตรวจสอบอัตโนมัติไม่สำเร็จ หรือพบเลขอ้างอิงซ้ำ รอแอดมินตรวจ';}
@@ -325,7 +325,7 @@ Deno.serve(async req=>{
     const settings=await query(db.from('site_settings').select('data').eq('id',true).single());const result=await checkSlip(image,Number(p.amount),String(settings.data.accountNumber||'')),detail=result.body.data;
     await query(db.from('payments').update({verification:result.body}).eq('id',p.id));
     const validDate=isRecentSlip(detail,p.charges.rounds.created_at);
-    const correction=slipRejectionReason(result.body);if(correction){await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:profile.id}));await notify(db,p.profile_id,'finance MEDTECH\nกรุณาแก้ไขหลักฐาน\n'+correction).catch(()=>{});return json({message:correction,status:'rejected'});}
+    const correction=slipRejectionReason(result.body);if(correction){await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:profile.id}));return json({message:correction,status:'rejected'});}
     if(result.ok&&validDate){
      await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK (ตรวจซ้ำ)',p_ref:String(detail.transRef),p_actor:null}));
      await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`);

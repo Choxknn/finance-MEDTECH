@@ -1,9 +1,10 @@
 'use strict';
 let paymentStatusTimer;
-function paymentStatusPopup(state,message){
+function paymentStatusPopup(state,message,options={}){
+ const contact=options.contact_admin===true,contactUrl=typeof supportLine==='function'?supportLine():'https://lin.ee/rpHtjnI';
  let box=document.getElementById('payment-status-dialog');if(!box){box=document.createElement('dialog');box.id='payment-status-dialog';document.body.append(box);box.addEventListener('close',()=>{clearTimeout(paymentStatusTimer);document.documentElement.style.overflow=box.dataset.previousOverflow||''})}
- clearTimeout(paymentStatusTimer);const approved=state==='approved',rejected=state==='rejected'||state==='error',title=approved?'ชำระเงินสำเร็จ':rejected?'กรุณาตรวจสอบอีกครั้ง':'รับสลิปแล้ว · รอตรวจสอบ';
- box.innerHTML=`<div class="payment-status-content ${approved?'success':rejected?'attention':'pending'}"><span class="payment-status-symbol">${icon(approved?'check':rejected?'document':'clock')}</span><h2>${title}</h2><p>${esc(message||'')}</p><button type="button" data-payment-status-close>ปิด</button><small>หน้าต่างจะปิดอัตโนมัติใน 5 วินาที</small></div>`;
- box.querySelector('button').onclick=()=>box.close();if(!box.open){box.dataset.previousOverflow=document.documentElement.style.overflow;document.documentElement.style.overflow='hidden';box.showModal()}paymentStatusTimer=setTimeout(()=>box.close(),5000);
+ clearTimeout(paymentStatusTimer);const approved=state==='approved',rejected=state==='rejected'||state==='error',title=contact?'ยอดโอนเกิน กรุณาติดต่อแอดมิน':approved?'ชำระเงินสำเร็จ':rejected?'กรุณาตรวจสอบอีกครั้ง':'รับสลิปแล้ว · รอตรวจสอบ';
+ box.innerHTML=`<div class="payment-status-content ${approved?'success':rejected?'attention':'pending'}"><span class="payment-status-symbol">${icon(approved?'check':rejected?'document':'clock')}</span><h2>${title}</h2><p>${esc(message||'')}</p>${contact?`<a class="payment-contact-admin" href="${esc(contactUrl)}" target="_blank" rel="noopener">${icon('chat')} ติดต่อแอดมินทาง LINE</a>`:''}<button type="button" data-payment-status-close>ปิด</button>${contact?'':'<small>หน้าต่างจะปิดอัตโนมัติใน 5 วินาที</small>'}</div>`;
+ box.querySelector('button').onclick=()=>box.close();if(!box.open){box.dataset.previousOverflow=document.documentElement.style.overflow;document.documentElement.style.overflow='hidden';box.showModal()}if(!contact)paymentStatusTimer=setTimeout(()=>box.close(),5000);
 }
 showPaymentSuccess=function(){if(!user||document.getElementById('dialog').open||document.getElementById('payment-status-dialog')?.open)return;const n=db.notifications.find(n=>n.profile_id===user.id&&n.message_kind==='payment_success'&&!n.seen_at&&!seenPaymentAlerts.has(n.id));if(!n)return;seenPaymentAlerts.add(n.id);n.seen_at=new Date().toISOString();paymentStatusPopup('approved',n.body.replace(/^finance MEDTECH\s*\n?/i,''));if(cfg.mode==='live')api('read-notification',{id:n.id}).catch(()=>{})};

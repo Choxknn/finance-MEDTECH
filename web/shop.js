@@ -98,7 +98,7 @@ document.addEventListener('submit',async e=>{const f=e.target;if(!['shop-product
  if(f.id==='shop-pay-form'){if(!paymentWindowOpen())throw Error('ปิดรับชำระชั่วคราว 23:50–01:00 น.');validateFile(f.elements.file.files[0]);paymentResult=await api('shop-pay',{id:f.dataset.id},f.elements.file.files[0])}
  if(newOrder){if(Number(newOrder.total)>0)await shopPay(newOrder.id,newOrder);else await shopOpenOrder(newOrder.id);void shopLoad();return}
  $('#dialog').close();await shopLoad();if(!view.startsWith('shop'))render();
- if(paymentResult)paymentStatusPopup(paymentResult.status,paymentResult.message);else toast('บันทึกเรียบร้อย');
+ if(paymentResult)paymentStatusPopup(paymentResult.status,paymentResult.message,paymentResult);else toast('บันทึกเรียบร้อย');
  }catch(err){shopError(f,err)}finally{delete f.dataset.saving;b.disabled=false;b.textContent=label}},true);
 if(user)render();
 

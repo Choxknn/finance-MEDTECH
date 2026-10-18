@@ -19,3 +19,5 @@ html body .meddy-hero .meddy-bubble .meddy-speech-action[hidden]{display:none!im
 @media(prefers-reduced-motion:reduce){.meddy-action-ready{animation:none}}
 
 @media(max-width:600px){html body .meddy-hero .quick-replies{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;max-width:100%;gap:6px;padding:3px 1px 7px;scrollbar-width:none;-webkit-overflow-scrolling:touch}html body .meddy-hero .quick-replies::-webkit-scrollbar{display:none}html body .meddy-hero .quick-replies button{flex:0 0 auto!important;white-space:nowrap!important;font-size:11px!important;padding:8px 10px!important;min-height:36px}}
+
+#payment-status-dialog .payment-contact-admin{display:flex;align-items:center;justify-content:center;gap:8px;background:#06a84f;color:#fff;text-decoration:none;border-radius:14px;padding:13px 16px;margin:16px 0 10px;font-size:14px}#payment-status-dialog .payment-contact-admin svg{width:20px;height:20px}

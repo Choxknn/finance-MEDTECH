@@ -36,6 +36,11 @@ export function receiverDefinitelyWrong(detail:any,expected:string){
  return values.some((v:string)=>v.length===target.length&&/^[0-9x*]+$/i.test(v)&&[...v].some((ch,i)=>/^[0-9]$/.test(ch)&&ch!==target[i]));
 }
 // Reject only explicit evidence failures; outages and unreadable masked identity stay reviewable.
+export function slipOverpaid(body:any,expected:number){
+ const amount=body?.data?.amount;
+ return body?.data?.success===true&&body?.diagnostics?.receiverMatched===true&&!!body?.data?.transRef&&amount!==null&&amount!==undefined&&Number.isFinite(Number(amount))&&Math.round(Number(amount)*100)>Math.round(expected*100);
+}
+export const overpaidMessage='ยอดโอนเกินจำนวนที่ต้องชำระ กรุณาติดต่อแอดมินเพื่อตรวจสอบยอดส่วนเกิน ไม่ต้องโอนซ้ำ';
 export function slipRejectionReason(body:any){
  if(body?.diagnostics?.receiverMismatch||String(body?.code)==='1014')return 'บัญชีผู้รับไม่ตรง กรุณาตรวจสอบบัญชีปลายทางและอัปโหลดสลิปที่ถูกต้องใหม่';
  const code=String(body?.code);

@@ -1,4 +1,4 @@
-import {query,validateImage,checkSlip,isRecentSlip,slipRejectionReason,discardRejectedSlip,uploadDrive,readEvidence,secret} from './services.ts';
+import {query,validateImage,checkSlip,isRecentSlip,slipRejectionReason,slipOverpaid,overpaidMessage,discardRejectedSlip,uploadDrive,readEvidence,secret} from './services.ts';
 export async function verifyShopSlip(db:any,payment:any,order:any,image:File){
  let result:any;try{const settings=await query(db.from('site_settings').select('data').eq('id',true).single());result=await checkSlip(image,Number(payment.amount),String(settings.data.accountNumber||''))}
  catch{await query(db.rpc('decide_shop_payment',{p_id:payment.id,p_status:'review',p_ref:null,p_note:'เชื่อมต่อระบบตรวจสลิปไม่สำเร็จ รอผู้ดูแลตรวจสอบ',p_verification:null}));return {status:'review',message:'รับหลักฐานแล้ว รอผู้ดูแลตรวจสอบ'}}
@@ -7,8 +7,9 @@ export async function verifyShopSlip(db:any,payment:any,order:any,image:File){
  const timestamp=detail?.transTimestamp||(/^\d{8}$/.test(rawDate)&&/^\d{2}:\d{2}:\d{2}$/.test(rawTime)?`${rawDate.slice(0,4)}-${rawDate.slice(4,6)}-${rawDate.slice(6,8)}T${rawTime}+07:00`:'');
  const validDate=isRecentSlip({...detail,transTimestamp:timestamp},order.created_at);
  let status='review',note=String(result.body.message||'ระบบยังยืนยันไม่ได้ รอผู้ดูแลตรวจสอบ');
- const rejection=slipRejectionReason(result.body);
+ const rejection=slipRejectionReason(result.body),overpaid=validDate&&slipOverpaid(result.body,Number(payment.amount));
  if(rejection){status='rejected';note=rejection}
+ else if(overpaid){status='review';note=overpaidMessage}
  else if(result.ok&&validDate){status='approved';note='ตรวจสอบผ่าน SlipOK'}
  else if((result.ok||timestamp)&&!validDate){status='rejected';note='สลิปต้องเป็นการโอนหลังสั่งซื้อ และไม่เกิน 48 ชั่วโมง'}
  else if((Number.isFinite(Number(detail?.amount))&&Math.round(Number(detail.amount)*100)!==Math.round(Number(payment.amount)*100))||String(result.body.code)==='1013'){status='rejected';note='ยอดโอนไม่ตรงกับคำสั่งซื้อ กรุณาตรวจสอบยอดและอัปโหลดใหม่'}
@@ -17,7 +18,7 @@ export async function verifyShopSlip(db:any,payment:any,order:any,image:File){
  try{await query(db.rpc('decide_shop_payment',{p_id:payment.id,p_status:status,p_ref:status==='approved'?String(detail.transRef):null,p_note:note,p_verification:result.body}))}
  catch(e){if(status!=='approved'||!/ซ้ำ/.test(String(e)))throw e;status='rejected';note='สลิปนี้เคยใช้ชำระบิลหรือคำสั่งซื้อแล้ว';await query(db.rpc('decide_shop_payment',{p_id:payment.id,p_status:status,p_ref:null,p_note:note,p_verification:result.body}))}
  if(status==='rejected')await discardRejectedSlip(db,'shop_payments',payment.id);
- return {status,message:status==='approved'?'ชำระคำสั่งซื้อสำเร็จ':note};
+ return {status,message:status==='approved'?'ชำระคำสั่งซื้อสำเร็จ':note,contact_admin:status==='review'&&overpaid};
 }
 export async function shopPaymentAction(db:any,profile:any,input:any,file:File|null){
  const admin=profile.role==='admin';

@@ -13,3 +13,7 @@ html body .meddy-speech-action svg{flex:none;width:14px;height:14px}
 
 html body .individual-line-reminder{display:inline-flex;align-items:center;gap:7px;background:#eaf8ee;color:#087b36;border:1px solid #bce7c9;font-size:12px;white-space:normal}
 .individual-line-reminder svg{width:17px;height:17px;flex:none}.individual-reminder-note{font-size:11px;color:#847b85}
+
+html body .meddy-hero .meddy-bubble .meddy-speech-action[hidden]{display:none!important}
+.meddy-action-ready{animation:meddy-action-in .22s ease both}@keyframes meddy-action-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.meddy-action-ready{animation:none}}

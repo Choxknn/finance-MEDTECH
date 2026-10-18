@@ -19,7 +19,17 @@ export function matchesReceiver(detail:any,expected:string){
 export function receiverDefinitelyWrong(detail:any,expected:string){
  const target=expected.replace(/[^0-9]/g,'');if(!target||matchesReceiver(detail,expected))return false;
  const values=[detail?.receiver?.proxy?.value,detail?.receiver?.account?.value,detail?.toMerchantId].filter((v:any)=>typeof v==='string').map((v:string)=>v.replace(/[\s-]/g,''));
- return values.some((v:string)=>v.length===target.length&&/^[0-9]+$/.test(v)&&v!==target);
+ return values.some((v:string)=>v.length===target.length&&/^[0-9x*]+$/i.test(v)&&[...v].some((ch,i)=>/^[0-9]$/.test(ch)&&ch!==target[i]));
+}
+// Reject only explicit evidence failures; outages and unreadable masked identity stay reviewable.
+export function slipRejectionReason(body:any){
+ if(body?.diagnostics?.receiverMismatch||String(body?.code)==='1014')return 'บัญชีผู้รับไม่ตรง กรุณาตรวจสอบบัญชีปลายทางและอัปโหลดสลิปที่ถูกต้องใหม่';
+ const code=String(body?.code);
+ if(['1005','1006'].includes(code))return 'รูปภาพนี้ไม่ใช่สลิปที่ตรวจสอบได้ กรุณาอัปโหลดสลิปหลังโอนสำเร็จใหม่';
+ if(code==='1007')return 'ไม่พบ QR ตรวจสอบบนสลิป กรุณาอัปโหลดสลิปหลังโอนสำเร็จให้เห็นครบทั้งภาพ';
+ if(code==='1008')return 'รูปนี้ไม่ใช่สลิปการโอนเงิน กรุณาใช้สลิปหลังโอนสำเร็จ ไม่ใช่ QR สำหรับรับเงิน';
+ if(code==='1011')return 'ไม่พบรายการโอนหรือ QR ตรวจสอบหมดอายุ กรุณาอัปโหลดสลิปที่ถูกต้องใหม่';
+ return '';
 }
 export function slipOkBranch(value:string){const v=value.trim();if(/^\d+$/.test(v))return v;return v.match(/^https:\/\/api\.slipok\.com\/api\/line\/apikey\/(\d+)\/?$/)?.[1]||null}
 export async function checkSlip(file:File,amount:number,expectedReceiver:string){
@@ -34,7 +44,7 @@ export async function checkSlip(file:File,amount:number,expectedReceiver:string)
  // Retry only an explicit quota error, never a duplicate or invalid slip.
  if(String(j.code)==='1004'&&account.slot===1&&backup){account=backup;const left=await quota(account);if(left!==null&&left<=0)return {ok:false,body:{code:'LOCAL_QUOTA_EMPTY',message:'โควตาตรวจสลิปทั้งสองสาขาหมด กรุณารอผู้ดูแลตรวจสอบ'}};({r,j}=await send(account))}
  const receiverMatched=matchesReceiver(j.data,expectedReceiver);
- return {ok:r.ok&&j.success===true&&j.data?.success===true&&Math.round(Number(j.data.amount)*100)===Math.round(amount*100)&&!!j.data.transRef&&receiverMatched,body:{...j,...(!receiverMatched&&j.success?{message:'ข้อมูลบัญชีผู้รับไม่ตรงหรือข้อมูลถูกปิดบังจนตรวจยืนยันไม่ได้'}:{}),diagnostics:{httpStatus:r.status,transport:'image-multipart',branchSlot:account.slot,receiverMatched,receiverMismatch:String(j.code)==='1014'||(j.success===true&&j.data?.success===true&&receiverDefinitelyWrong(j.data,expectedReceiver)),branchNumeric:true}}};
+ return {ok:r.ok&&j.success===true&&j.data?.success===true&&Math.round(Number(j.data.amount)*100)===Math.round(amount*100)&&!!j.data.transRef&&receiverMatched,body:{...j,...(!receiverMatched&&j.success?{message:'ข้อมูลบัญชีผู้รับไม่ตรงหรือข้อมูลถูกปิดบังจนตรวจยืนยันไม่ได้'}:{}),diagnostics:{httpStatus:r.status,transport:'image-multipart',branchSlot:account.slot,receiverMatched,receiverMismatch:String(j.code)==='1014'||(j.data?.success===true&&receiverDefinitelyWrong(j.data,expectedReceiver)),branchNumeric:true}}};
 }
 export async function deliverNotification(db:any,n:any){
  const account=await query(db.from('line_accounts').select('line_user_id').eq('profile_id',n.profile_id).maybeSingle());const p=await query(db.from('profiles').select('active,deleted_at').eq('id',n.profile_id).maybeSingle());

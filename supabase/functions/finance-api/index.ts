@@ -5,7 +5,7 @@ import {evidenceOverview,maintainEvidence,downloadEvidence,deleteEvidenceByAdmin
 import {driveHealth} from '../_shared/drive-health.ts';
 import {financeSite} from '../_shared/line-flex.ts';
 import {changeStudentLogin} from '../_shared/student-login.ts';
-import {adminDb,query,secret,hash,uploadDrive,deleteDrive,readEvidence,checkSlip,isRecentSlip,notify,paymentSuccess,deliverNotification,validateImage,validateReceipt} from '../_shared/services.ts';
+import {adminDb,query,secret,hash,uploadDrive,deleteDrive,readEvidence,checkSlip,isRecentSlip,slipRejectionReason,notify,paymentSuccess,deliverNotification,validateImage,validateReceipt} from '../_shared/services.ts';
 // Return only monthly totals; never expose another member's payment evidence.
 function fundMonthly(payments:any[],incomes:any[],expenses:any[],at=new Date()){
  const now=new Date(at.getTime()+7*3600000),months=Array.from({length:6},(_,i)=>({month:new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-5+i,1)).toISOString().slice(0,7),income:0,expense:0}));
@@ -307,7 +307,7 @@ Deno.serve(async req=>{
      // Old transfers must not automatically pay a newly created round.
      const validDate=isRecentSlip(detail,charge.rounds.created_at);
      await query(db.from('payments').update({verification:result.body}).eq('id',pid));
-     if(result.body.diagnostics?.receiverMismatch){const correction='บัญชีผู้รับไม่ตรง กรุณาตรวจสอบบัญชีปลายทางและอัปโหลดสลิปที่ถูกต้องใหม่';await query(db.rpc('decide_payment',{p_id:pid,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:null}));await notify(db,profile.id,'finance MEDTECH\nกรุณาแก้ไขหลักฐาน\n'+correction).catch(()=>{});return json({message:correction,status:'rejected',payment_id:pid});}
+     const correction=slipRejectionReason(result.body);if(correction){await query(db.rpc('decide_payment',{p_id:pid,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:null}));await notify(db,profile.id,'finance MEDTECH\nกรุณาแก้ไขหลักฐาน\n'+correction).catch(()=>{});return json({message:correction,status:'rejected',payment_id:pid});}
      if(result.ok&&validDate){await query(db.rpc('decide_payment',{p_id:pid,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK',p_ref:String(detail.transRef),p_actor:null}));verified=true;note='ยืนยันการชำระเงินแล้ว'}
      else note=!validDate&&(result.ok||detail?.transTimestamp)?'สลิปเกิน 48 ชั่วโมง ก่อนสร้างบิล หรือวันเวลาบนสลิปไม่ถูกต้อง':'ผลตรวจต้องตรวจเพิ่มเติม: '+String(result.body.message||detail?.message||'ยอดหรือบัญชีไม่ตรง');
     }catch{note='ตรวจสอบอัตโนมัติไม่สำเร็จ หรือพบเลขอ้างอิงซ้ำ รอแอดมินตรวจ';}
@@ -325,7 +325,7 @@ Deno.serve(async req=>{
     const settings=await query(db.from('site_settings').select('data').eq('id',true).single());const result=await checkSlip(image,Number(p.amount),String(settings.data.accountNumber||'')),detail=result.body.data;
     await query(db.from('payments').update({verification:result.body}).eq('id',p.id));
     const validDate=isRecentSlip(detail,p.charges.rounds.created_at);
-    if(result.body.diagnostics?.receiverMismatch){const correction='บัญชีผู้รับไม่ตรง กรุณาตรวจสอบบัญชีปลายทางและอัปโหลดสลิปที่ถูกต้องใหม่';await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:profile.id}));await notify(db,p.profile_id,'finance MEDTECH\nกรุณาแก้ไขหลักฐาน\n'+correction).catch(()=>{});return json({message:correction,status:'rejected'});}
+    const correction=slipRejectionReason(result.body);if(correction){await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'rejected',p_note:correction,p_ref:null,p_actor:profile.id}));await notify(db,p.profile_id,'finance MEDTECH\nกรุณาแก้ไขหลักฐาน\n'+correction).catch(()=>{});return json({message:correction,status:'rejected'});}
     if(result.ok&&validDate){
      await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK (ตรวจซ้ำ)',p_ref:String(detail.transRef),p_actor:null}));
      await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`);

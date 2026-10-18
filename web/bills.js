@@ -16,7 +16,7 @@ function billPenaltyDays(r,at=Date.now()){
  const today=['year','month','day'].map(k=>parts.find(p=>p.type===k).value).join('-');
  return Math.max(0,Math.round((Date.parse(today)-Date.parse(r.due_date))/86400000));
 }
-function updateDisplayedFees(){if(!db)return;for(const c of db.charges){const r=round(c.round_id);if(!r.penalty_enabled){c.fee_amount=0;continue}if(c.fee_settled!=null&&paid(c)>=Number(c.amount)+Number(c.fee_settled)){c.fee_amount=Number(c.fee_settled);continue}const pending=db.payments.find(p=>p.charge_id===c.id&&!p.deleted_at&&['pending','review'].includes(p.status));if(pending&&paid(c)+Number(pending.amount)>=Number(c.amount)+Number(pending.fee_snapshot||0)){c.fee_amount=Number(pending.fee_snapshot||0);continue}const days=billPenaltyDays(r);c.fee_amount=Math.min(Math.round(days*Number(r.penalty_per_day)*100)/100,r.penalty_max??Infinity)}}
+function updateDisplayedFees(){if(!db)return;for(const c of db.charges){const r=round(c.round_id);if(!r.penalty_enabled){c.fee_amount=0;continue}if(c.fee_settled!=null&&paid(c)>=Number(c.amount)+Number(c.fee_settled)){c.fee_amount=Number(c.fee_settled);continue}const pending=db.payments.find(p=>p.charge_id===c.id&&!p.deleted_at&&['pending','review'].includes(p.status));if(pending&&pending.fee_snapshot==null)continue;if(pending&&paid(c)+Number(pending.amount)>=Number(c.amount)+Number(pending.fee_snapshot||0)){c.fee_amount=Number(pending.fee_snapshot||0);continue}const days=billPenaltyDays(r);c.fee_amount=Math.min(Math.round(days*Number(r.penalty_per_day)*100)/100,r.penalty_max??Infinity)}}
 
 const feeRender=render;render=function(){updateDisplayedFees();feeRender()};
 

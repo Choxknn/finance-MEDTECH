@@ -1,4 +1,4 @@
-import {query,validateImage,checkSlip,isRecentSlip,slipRejectionReason,uploadDrive,readEvidence,secret} from './services.ts';
+import {query,validateImage,checkSlip,isRecentSlip,slipRejectionReason,discardRejectedSlip,uploadDrive,readEvidence,secret} from './services.ts';
 export async function verifyShopSlip(db:any,payment:any,order:any,image:File){
  let result:any;try{const settings=await query(db.from('site_settings').select('data').eq('id',true).single());result=await checkSlip(image,Number(payment.amount),String(settings.data.accountNumber||''))}
  catch{await query(db.rpc('decide_shop_payment',{p_id:payment.id,p_status:'review',p_ref:null,p_note:'เชื่อมต่อระบบตรวจสลิปไม่สำเร็จ รอผู้ดูแลตรวจสอบ',p_verification:null}));return {status:'review',message:'รับหลักฐานแล้ว รอผู้ดูแลตรวจสอบ'}}
@@ -16,6 +16,7 @@ export async function verifyShopSlip(db:any,payment:any,order:any,image:File){
  else if(String(result.body.code)==='1012'){status='rejected';note='สลิปนี้เคยใช้แล้ว กรุณาใช้สลิปที่ถูกต้อง'}
  try{await query(db.rpc('decide_shop_payment',{p_id:payment.id,p_status:status,p_ref:status==='approved'?String(detail.transRef):null,p_note:note,p_verification:result.body}))}
  catch(e){if(status!=='approved'||!/ซ้ำ/.test(String(e)))throw e;status='rejected';note='สลิปนี้เคยใช้ชำระบิลหรือคำสั่งซื้อแล้ว';await query(db.rpc('decide_shop_payment',{p_id:payment.id,p_status:status,p_ref:null,p_note:note,p_verification:result.body}))}
+ if(status==='rejected')await discardRejectedSlip(db,'shop_payments',payment.id);
  return {status,message:status==='approved'?'ชำระคำสั่งซื้อสำเร็จ':note};
 }
 export async function shopPaymentAction(db:any,profile:any,input:any,file:File|null){
@@ -41,6 +42,7 @@ export async function shopPaymentAction(db:any,profile:any,input:any,file:File|n
   if(input.action==='shop-payment-review'){
    if(!['approved','rejected'].includes(input.status)||!String(input.note||'').trim())throw Error('ระบุผลตรวจและหมายเหตุ');
    await query(db.rpc('decide_shop_payment',{p_id:payment.id,p_status:input.status,p_ref:input.status==='approved'?(payment.verification?.data?.transRef||'ADMIN-SHOP-'+payment.id):null,p_note:'ผู้ดูแลตรวจ: '+String(input.note).slice(0,500),p_verification:null}));
+   if(input.status==='rejected')await discardRejectedSlip(db,'shop_payments',payment.id);
    await query(db.from('audit').insert({actor:profile.name,action:'ตรวจชำระร้านค้า '+payment.id+' '+input.status}));return {status:input.status,message:'บันทึกผลตรวจแล้ว'};
   }
   const response=await readEvidence(payment.drive_file_id),blob=await response.blob();return verifyShopSlip(db,payment,order,await validateImage(new File([blob],'slip',{type:blob.type})));

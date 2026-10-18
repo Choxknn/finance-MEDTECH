@@ -12,7 +12,7 @@ test('non-slip and wrong receiver have definitive rejection; service failures do
 test('shop persists rejection for non-slip and mismatched recipient and keeps outages in review',async()=>{
  for(const code of [1005,1006,1007,1008,1011,1014,1009,1010]){
  const writes=[];const db={from:()=>({select:()=>({eq:()=>({single:async()=>({data:{data:{accountNumber:'123'}}})})})}),rpc:async(name,args)=>{writes.push({name,args});return {data:{}}}};
- const shop=moduleFrom('supabase/functions/_shared/shop-payment.ts',{query:async q=>(await q).data,checkSlip:async()=>({ok:false,body:{code}}),isRecentSlip:()=>false,slipRejectionReason:services.slipRejectionReason});
+ const shop=moduleFrom('supabase/functions/_shared/shop-payment.ts',{query:async q=>(await q).data,checkSlip:async()=>({ok:false,body:{code}}),isRecentSlip:()=>false,slipRejectionReason:services.slipRejectionReason,discardRejectedSlip:async()=>{}});
  const result=await shop.verifyShopSlip(db,{id:'payment',amount:100},{created_at:'2026-10-01'},{});const expected=[1009,1010].includes(code)?'review':'rejected';assert.equal(result.status,expected);assert.equal(writes[0].args.p_status,expected);assert.equal(writes[0].args.p_ref,null);
  }
 });

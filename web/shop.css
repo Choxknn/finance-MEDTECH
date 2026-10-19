@@ -31,3 +31,10 @@ html body .shop-pending-images img,html body .shop-thumbs img{width:100%;height:
 .shop-sale-overlay strong{font-size:clamp(20px,3vw,28px);font-weight:700;line-height:1.6;color:white}
 .shop-sale-overlay span{font-size:14px;color:#fff}
 .shop-sale-overlay small{font-size:12px;color:#e6e6e6;line-height:1.7}
+
+.shop-product .shop-sale-switch{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;background:#f4f4f6;color:#5e5660;border:1px solid #e5e0e5;border-radius:14px;font-size:12px;box-shadow:none}
+.shop-sale-switch .shop-switch-track{display:block;width:38px;height:23px;border-radius:20px;background:#bdb7bf;padding:3px;flex:none;transition:background .2s}
+.shop-sale-switch .shop-switch-track i{display:block;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0002;transition:transform .2s}
+.shop-sale-switch[aria-checked=true] .shop-switch-track{background:#259860}
+.shop-sale-switch[aria-checked=true] .shop-switch-track i{transform:translateX(15px)}
+.shop-product .shop-sale-switch[aria-checked=true]{background:#effaf3;color:#217948;border-color:#d1eadb}

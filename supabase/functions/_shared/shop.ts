@@ -28,6 +28,12 @@ export async function shopAction(db:any,profile:any,input:any,file:File|null){
  if(action==='shop-image-remove'){
   const p=await query(db.from('shop_products').select('id,images').eq('id',input.id).single());if(!p.images.includes(input.path))throw Error('ไม่พบรูป');await query(db.from('shop_products').update({images:p.images.filter((x:string)=>x!==input.path)}).eq('id',p.id));await query(db.storage.from('shop-products').remove([input.path]));return {ok:true};
  }
+ if(action==='shop-set-active'){
+  if(typeof input.active!=='boolean'||typeof input.expected_active!=='boolean')throw Error('สถานะการขายไม่ถูกต้อง');
+  const product=await query(db.from('shop_products').update({active:input.active}).eq('id',input.id).eq('active',input.expected_active).is('deleted_at',null).select().maybeSingle());
+  if(!product)throw Error('สถานะสินค้าถูกเปลี่ยนแล้ว กรุณาโหลดข้อมูลใหม่');
+  return {product};
+ }
  if(action==='shop-save'){
   const title=String(input.title||'').trim(),price=Number(input.price),stock=Number(input.stock),description=String(input.description||'');
   if(!title||title.length>120||!Number.isFinite(price)||price<0||price>9999999||!Number.isInteger(stock)||stock<0||stock>1000000||description.length>4000)throw Error('ตรวจสอบชื่อ ราคา จำนวนสินค้า และรายละเอียด');

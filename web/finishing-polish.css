@@ -24,3 +24,9 @@ html body .meddy-hero .meddy-bubble .meddy-speech-action[hidden]{display:none!im
 
 /* Let questions use the space beneath both the mascot and its speech. */
 html body .meddy-hero .meddy-layout>.quick-replies{grid-column:1/-1;width:100%;min-width:0;margin-top:0;justify-content:safe center}
+
+/* The hero uses flex, so reserve a complete second row for its questions. */
+html body .meddy-hero .meddy-layout{flex-wrap:wrap}
+html body .meddy-hero .meddy-layout>.meddy-stage{flex:0 0 auto}
+html body .meddy-hero .meddy-layout>.meddy-talk{flex:1 1 0%;min-width:0}
+html body .meddy-hero .meddy-layout>.quick-replies{flex:0 0 100%;order:3;box-sizing:border-box}

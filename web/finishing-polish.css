@@ -30,3 +30,7 @@ html body .meddy-hero .meddy-layout{flex-wrap:wrap}
 html body .meddy-hero .meddy-layout>.meddy-stage{flex:0 0 auto}
 html body .meddy-hero .meddy-layout>.meddy-talk{flex:1 1 0%;min-width:0}
 html body .meddy-hero .meddy-layout>.quick-replies{flex:0 0 100%;order:3;box-sizing:border-box}
+
+/* Align the character with its speech without moving the question row. */
+html body .meddy-hero .meddy-layout>.meddy-stage{position:relative;left:-6px;top:10px}
+@media(max-width:600px){html body .meddy-hero .meddy-layout>.meddy-stage{left:-4px;top:8px}}

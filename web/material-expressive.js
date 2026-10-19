@@ -93,7 +93,7 @@ document.addEventListener('click',e=>{
  if(button.dataset.materialProfile){e.preventDefault();e.stopImmediatePropagation();const action=button.dataset.materialProfile;materialToggleProfile(false);if(action==='logout'){logoutSession();return}if(action==='password'){nav('profile');document.querySelector('[data-action="password"]')?.click();return}nav('profile');if(action==='line')document.querySelector('.line-account-status')?.scrollIntoView({behavior:materialPaused?'instant':'smooth',block:'center'});return}
  if(button.hasAttribute('data-meddy-go')||button.hasAttribute('data-meddy-overdue')){e.preventDefault();e.stopImmediatePropagation();materialFollow(button.hasAttribute('data-meddy-overdue'));return}
  if(button.hasAttribute('data-meddy-dismiss')){materialDismissed.add(materialAlertKey);document.querySelector('.meddy-overdue[role=status]')?.remove();return}
- if(button.dataset.meddyQuestion){e.preventDefault();e.stopImmediatePropagation();materialSay(materialBillState(),button.dataset.meddyQuestion);return}
+ if(button.dataset.meddyQuestion){e.preventDefault();e.stopImmediatePropagation();const state=materialBillState(),question=button.dataset.meddyQuestion;materialSay(state,materialConversation.key===materialChatKey(state)&&materialConversation.question===question?'':question);return}
  if(button.hasAttribute('data-meddy-wave')){materialSay(materialBillState());const svg=button.querySelector('svg');if(!materialPaused&&!matchMedia('(prefers-reduced-motion: reduce)').matches)svg?.animate?.([{transform:'rotate(-8deg)'},{transform:'rotate(8deg)'},{transform:'rotate(0)'}],{duration:450});}
 },true);
 document.addEventListener('click',e=>{if(!e.target.closest('.topbar .user'))materialToggleProfile(false)});

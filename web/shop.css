@@ -22,3 +22,12 @@ html body .shop-image-drop input{position:absolute;inset:0;width:100%;height:100
 html body .shop-pending-images,html body .shop-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin:12px 0;overflow:visible}
 .shop-pending-images figure,.shop-thumbs>div{position:relative;margin:0;min-width:0;padding:5px;border:1px solid #eee1e7;border-radius:13px;background:#fff}
 html body .shop-pending-images img,html body .shop-thumbs img{width:100%;height:100px;object-fit:contain;border-radius:9px;cursor:zoom-in}.shop-pending-images figcaption{font-size:10px;text-align:center;color:#9c7c8b;padding:5px}.shop-pending-images button{position:absolute;right:2px;top:2px;width:30px;height:30px;min-height:30px;padding:0;border-radius:50%;font-size:22px;background:white;color:#b12c52;box-shadow:0 2px 8px #43203022}.shop-thumbs button{width:100%;margin-top:4px}
+
+.shop-product{position:relative;isolation:isolate;overflow:hidden}
+.shop-product-content{transition:filter .2s,opacity .2s}
+.shop-sale-locked .shop-product-content{filter:blur(5px);pointer-events:none;user-select:none}
+.shop-sale-overlay{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;background:rgba(0,0,0,.64);color:white;border-radius:inherit}
+.shop-sale-overlay[hidden]{display:none}
+.shop-sale-overlay strong{font-size:clamp(20px,3vw,28px);font-weight:700;line-height:1.6;color:white}
+.shop-sale-overlay span{font-size:14px;color:#fff}
+.shop-sale-overlay small{font-size:12px;color:#e6e6e6;line-height:1.7}

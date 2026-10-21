@@ -43,7 +43,16 @@ async function cleanupDriveFiles(db:any){
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'',allowed=(Deno.env.get('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim());
  const cors={'Access-Control-Allow-Origin':allowed.includes(origin)?origin:'null','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,GET,OPTIONS','Vary':'Origin','Cache-Control':'no-store'};
- const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...cors,'Content-Type':'application/json'}});
+ let activityContext:any=null;
+ const json=async(data:any,status=200)=>{
+  if(activityContext&&status<400&&!data?.error){
+   const c=activityContext;activityContext=null;
+   const details={...c.details,after:c.fields(data?.product||data?.session||c.input)};
+   const result=await c.db.from('audit').insert({actor:c.actor,action:c.title,details});
+   if(result.error)console.error('Activity log write failed',c.details.action_code);
+  }
+  return new Response(JSON.stringify(data),{status,headers:{...cors,'Content-Type':'application/json'}});
+ };
  if(origin&&!allowed.includes(origin))return json({error:'Origin not allowed'},403);
  if(req.method==='OPTIONS')return new Response(null,{headers:cors});
  if(!['POST','GET'].includes(req.method))return json({error:'Method not allowed'},405);
@@ -70,6 +79,25 @@ Deno.serve(async req=>{
   let input:any,file:File|null=null,receiptFile:File|null=null;
   if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null;receiptFile=fd.get('receipt') as File|null}else input=await req.json();
   await limitRequest(db,'finance:'+profile.id,300,60);
+  // Log previously uncovered mutations; never retain passwords, tokens or rejected slips.
+  const extraActivities:Record<string,[string,string]>= {
+   'shop-save':['บันทึกสินค้า','shop_products'],'shop-delete':['ลบสินค้า','shop_products'],
+   'shop-set-active':['เปลี่ยนสถานะเปิดขายสินค้า','shop_products'],'shop-upload':['เพิ่มรูปสินค้า','shop_products'],
+   'shop-image-remove':['ลบรูปสินค้า','shop_products'],
+   'attendance-create':['สร้างรอบเช็กชื่อ','attendance_sessions'],'attendance-delete':['ลบรอบเช็กชื่อ','attendance_sessions'],
+   'attendance-toggle':['เปลี่ยนสถานะรอบเช็กชื่อ','attendance_sessions'],
+   'attendance-set':['ปรับสถานะเช็กชื่อ',''],'attendance-check':['สแกนเช็กชื่อ',''],
+   'announcement-entry-setting':['เปลี่ยนการแสดงประกาศตอนเข้าเว็บ','web_announcements'],
+   'delete-announcement':['ลบประกาศ','web_announcements'],
+   'read-notification':['อ่านข้อความแจ้งเตือน',''],'dismiss-announcement':['ปิดประกาศ','']
+  };
+  const event=extraActivities[input.action];
+  if(event){
+   if(event[1])requireAdmin();
+   const fields=(row:any)=>Object.fromEntries(['checked','student_id','id','title','price','stock','active','held_on','held_time','sale_starts_at','sale_ends_at','show_on_entry'].filter(k=>row&&row[k]!==undefined).map(k=>[k,row[k]]));
+   const before=event[1]&&input.id?await query(db.from(event[1]).select('*').eq('id',input.id).maybeSingle()):null;
+   activityContext={db,input,fields,actor:profile.name,title:event[0],details:{actor_id:profile.id,actor_student_id:profile.student_id,action_code:input.action,target_id:input.id||input.session_id||null,target_student_id:input.student_id||null,target_title:before?.title||input.title||null,before:fields(before)}};
+  }
   if(String(input.action||'').startsWith('attendance-'))return json(await attendanceAction(db,profile,input));
   if(String(input.action||'').startsWith('shop-'))return json(await shopAction(db,profile,input,file));
   switch(input.action){

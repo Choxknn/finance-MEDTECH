@@ -21,17 +21,7 @@ async function refreshInBackground(){
   const stable=value=>JSON.stringify(value,(key,v)=>key==='last_seen_at'?undefined:v);const changed=stable(db)!==stable(result.data)||stable(user)!==stable(result.profile);
   if(!changed)return;
   db=result.data;user=result.profile;for(const key of settingKeys)if(typeof db.settings?.[key]==='string')cfg[key]=db.settings[key];
-  const scroll=window.scrollY,activeAnnouncement=document.querySelector('[data-announcement-tab][aria-selected=true]')?.dataset.announcementTab;
-  const detailKey=el=>el.classList.contains('completed-bills')?'completed-bills':el.closest('.activity-card')?.textContent;
-  const openDetails=new Set([...document.querySelectorAll('main .completed-bills[open],main .activity-changes[open]')].map(detailKey));
-  render();
-  document.querySelectorAll('main .completed-bills,main .activity-changes').forEach(el=>el.open=openDetails.has(detailKey(el)));
-  if(activeAnnouncement&&[...document.querySelectorAll('[data-announcement-tab]')].some(el=>el.dataset.announcementTab===activeAnnouncement)){
-   document.querySelectorAll('[data-announcement-tab]').forEach(el=>el.setAttribute('aria-selected',String(el.dataset.announcementTab===activeAnnouncement)));
-   document.querySelectorAll('[data-announcement-pane]').forEach(el=>el.hidden=el.dataset.announcementPane!==activeAnnouncement);
-  }
-  document.querySelectorAll('main .mobile-record-table tr,main .clay-bill-body,main .record-original-content,main .individual-bill-body').forEach(el=>el.style.animation='none');
-  window.scrollTo({top:scroll,behavior:'instant'});
+  renderInBackground();
  }catch{/* Background sync retries on the next interval; user actions still report errors. */}
  finally{backgroundRefreshRunning=false}
 }

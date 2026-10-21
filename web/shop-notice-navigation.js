@@ -8,7 +8,7 @@
  function paintBadges(){const count=unread().length;document.querySelectorAll('.clay-notifications').forEach(b=>{b.querySelector('.unread-count')?.remove();b.setAttribute('aria-label',count?`ข้อความและการแจ้งเตือน ยังไม่อ่าน ${count} ข้อความ`:'ข้อความและการแจ้งเตือน');if(count)b.insertAdjacentHTML('beforeend',`<span class="unread-count" aria-hidden="true">${count>99?'99+':count}</span>`)})}
  function paintStore(){
   document.querySelectorAll('[data-store-entry]').forEach(el=>el.remove());
-  if(!user||!products.some(p=>!p.deleted_at&&p.stock>0&&shopSaleState(p)==='open'))return;
+  if(!user||!products.some(p=>!p.deleted_at&&['open','scheduled'].includes(shopSaleState(p))))return;
   const sidebar=document.querySelector('.sidebar .nav');
   if(sidebar&&!sidebar.querySelector('[data-view="shop"]'))sidebar.insertAdjacentHTML('beforeend',`<button data-store-entry data-view="shop" class="${view==='shop'?'active':''}">${storeIcon}<span class="nav-label">ร้านค้า</span></button>`);
   const dock=document.querySelector('.clay-dock');

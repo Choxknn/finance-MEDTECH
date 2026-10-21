@@ -1,0 +1,7 @@
+html:not(.primary-font-ready) body>*:not(#primary-font-gate){visibility:hidden!important}
+html:not(.primary-font-ready) body{overflow:hidden!important;pointer-events:none}
+#primary-font-gate{visibility:visible!important;pointer-events:auto;position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#fbf9fa;padding:24px;text-align:center;color:#6c5360;font-family:system-ui,sans-serif!important}
+#primary-font-gate p,.primary-font-spinner{width:36px;height:36px;border:3px solid #f0dce3;border-top-color:#b92348;border-radius:50%;animation:primary-font-spin .8s linear infinite}
+
+@keyframes primary-font-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.primary-font-spinner{animation-duration:2s}}

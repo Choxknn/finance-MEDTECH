@@ -1,0 +1,2 @@
+function paymentVerificationLabel(p){if(p.status!=='approved')return '';return p.verification_method==='admin'||p.source==='admin'?'แอดมินยืนยันชำระ':p.verification_method==='slipok'?'ตรวจผ่าน SlipOK':'ไม่ระบุวิธียืนยัน'}
+function paymentVerificationHtml(p){const label=paymentVerificationLabel(p);return label?`<small class="payment-verification ${p.verification_method==='slipok'?'is-slipok':''}">${icon(p.verification_method==='slipok'?'check':'users')}${esc(label)}</small>`:''}

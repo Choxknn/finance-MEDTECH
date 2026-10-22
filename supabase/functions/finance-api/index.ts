@@ -74,10 +74,10 @@ Deno.serve(async req=>{
    if(url.searchParams.get('action')!=='download'||!['charge','payment','legacy','expense','expense-receipt','income','income-receipt'].includes(kind||''))return json({error:'Not found'},404);
    const table=kind==='charge'?'charges':kind==='legacy'?'legacy_payments':kind==='payment'?'payments':kind?.startsWith('income')?'manual_incomes':'expenses';const record=await query(db.from(table).select('*').eq('id',id).single());if(kind!=='payment'&&!isAdmin&&(record.deleted_at||record.voided))throw Error('ไม่มีสิทธิ์เข้าถึงหลักฐานรายการนี้');
    if(['charge','payment','legacy'].includes(kind||'')&&!isAdmin&&record.profile_id!==profile.id)throw new Error('ไม่มีสิทธิ์เข้าถึงหลักฐาน');
-   const fileId=kind?.endsWith('-receipt')?record.receipt_file_id:record.drive_file_id;if(!fileId)throw new Error('ยังไม่มีไฟล์หลักฐาน');const r=await readEvidence(fileId);if(!r.ok)throw new Error('เปิดหลักฐานไม่สำเร็จ');return new Response(r.body,{headers:{...cors,'Content-Type':r.headers.get('Content-Type')||'application/octet-stream','X-Content-Type-Options':'nosniff'}});
+   const attachment=url.searchParams.get('attachment');if(attachment!==null&&(!['income','expense'].includes(kind||'')||!/^\d+$/.test(attachment)))throw Error('ไฟล์แนบไม่ถูกต้อง');const fileId=attachment!==null?record.attachments?.[Number(attachment)]?.file_id:kind?.endsWith('-receipt')?record.receipt_file_id:record.drive_file_id;if(!fileId)throw new Error('ยังไม่มีไฟล์หลักฐาน');const r=await readEvidence(fileId);if(!r.ok)throw new Error('เปิดหลักฐานไม่สำเร็จ');return new Response(r.body,{headers:{...cors,'Content-Type':r.headers.get('Content-Type')||'application/octet-stream','X-Content-Type-Options':'nosniff'}});
   }
-  let input:any,file:File|null=null,receiptFile:File|null=null;
-  if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null;receiptFile=fd.get('receipt') as File|null}else input=await req.json();
+  let input:any,file:File|null=null,receiptFile:File|null=null,galleryFiles:File[]=[],galleryReceipts:File[]=[];
+  if(req.headers.get('content-type')?.startsWith('multipart/form-data')){const fd=await req.formData();input={...JSON.parse(String(fd.get('payload')||'{}')),action:fd.get('action')};file=fd.get('file') as File|null;receiptFile=fd.get('receipt') as File|null;galleryFiles=fd.getAll('gallery_slip') as File[];galleryReceipts=fd.getAll('gallery_receipt') as File[]}else input=await req.json();
   await limitRequest(db,'finance:'+profile.id,300,60);
   // Log previously uncovered mutations; never retain passwords, tokens or rejected slips.
   const extraActivities:Record<string,[string,string]>= {
@@ -155,7 +155,7 @@ Deno.serve(async req=>{
     const rounds=await query(db.from('rounds').select('*').order('created_at'));
     const charges=await query(isAdmin?db.from('charges').select('*'):db.from('charges').select('*').eq('profile_id',profile.id));
     const totals=await query(db.rpc('charge_totals',{p_ids:charges.map((c:any)=>c.id)}));for(const c of charges)Object.assign(c,totals.find((t:any)=>t.id===c.id)||{});
-    const allPayments=await query(db.from('payments').select('id,charge_id,profile_id,amount,status,drive_file_id,trans_ref,source,note,reviewed_at,created_at,deleted_at,review_stage,review_cleared_at,charge_snapshot,member_snapshot').order('created_at'));
+    const allPayments=await query(db.from('payments').select('id,charge_id,profile_id,amount,status,drive_file_id,trans_ref,source,verification_method,note,reviewed_at,created_at,deleted_at,review_stage,review_cleared_at,charge_snapshot,member_snapshot').order('created_at'));
     const allIncomes=await query(db.from('manual_incomes').select('*').order('received_on',{ascending:false}));
     const allExpenses=await query(db.from('expenses').select('*').order('spent_on',{ascending:false}));
     const accounts=await query(isAdmin?db.from('line_accounts').select('profile_id,line_user_id'):db.from('line_accounts').select('profile_id').eq('profile_id',profile.id));
@@ -229,6 +229,20 @@ Deno.serve(async req=>{
     if(collected<=0)throw Error('บิลนี้ยังไม่มีการชำระที่ยืนยันแล้ว');
     const patch={title:text(input.title||'รับเงินจากบิล '+r.title,120),category:text(input.category||'เงินเก็บประจำเดือน',100),amount:amount(input.amount),received_on:day(input.received_on),received_time:clock(input.received_time),responsible_name:text(input.responsible_name||profile.name,120),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'นำรายรับจากบิลเข้ากองกลาง'};
     const id=await query(db.rpc('save_bill_fund_income',{p_round:rid,p_id:input.id||null,p_patch:patch,p_snapshot:snapshot,p_actor:profile.id}));return json({ok:true,id});
+   }
+   case 'save-finance-gallery':{
+    requireAdmin();const kind=text(input.kind,10);if(!['income','expense'].includes(kind))throw Error('ชนิดรายการไม่ถูกต้อง');
+    const patch:any={title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),responsible_name:text(input.responsible_name||profile.name,120),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายการการเงิน',voided:input.voided===true};
+    if(kind==='income'){patch.received_on=day(input.received_on);patch.received_time=clock(input.received_time)}else{patch.spent_on=day(input.spent_on);patch.spent_time=clock(input.spent_time)}
+    const id=input.id?text(input.id,36):null,request=text(input.request_key,36),uploads:any[]=[];
+    if(galleryFiles.length+galleryReceipts.length>20)throw Error('แนบได้ครั้งละไม่เกิน 20 ไฟล์ สามารถเพิ่มต่อในครั้งถัดไปได้');
+    // Validate the entire batch before uploading any file.
+    const validated=[];for(const f of galleryFiles)validated.push({file:await validateImage(f),kind:'slip'});for(const f of galleryReceipts)validated.push({file:await validateReceipt(f),kind:'receipt'});
+    try{for(const v of validated){const file_id=await uploadDrive(v.file,'finance-gallery-'+crypto.randomUUID());uploads.push({file_id,kind:v.kind,name:v.file.name.slice(0,200),mime_type:v.file.type})}
+     const result=await query(db.rpc('save_finance_gallery',{p_kind:kind,p_id:id,p_patch:patch,p_files:uploads,p_actor:profile.id,p_request:request}));
+     if(result.reused)for(const f of uploads)await deleteDrive(f.file_id);
+     return json({ok:true,...result});
+    }catch(e){for(const f of uploads){try{await deleteDrive(f.file_id)}catch{}}throw e}
    }
    case 'save-income':{
     requireAdmin();const patch:any={request_key:input.request_key||null,responsible_name:text(input.responsible_name||profile.name,120),title:text(input.title,120),category:text(input.category,100),amount:amount(input.amount),received_on:day(input.received_on),received_time:clock(input.received_time),note:String(input.note||'').slice(0,500),reason:input.id?text(input.reason,500):'เพิ่มรายรับ'};

@@ -64,7 +64,7 @@ const modalIndividualCard=individualCard;individualCard=function(c){
 function billStatusModal(id){
  if(user?.role!=='admin')return;
  const c=db.charges.find(c=>c.id===id);if(!c)return;
- modal('เปลี่ยนสถานะบิล',`<div class="detail-grid">${detailCard('รายการบิล',esc(round(c.round_id).title))}${detailCard('สมาชิก',esc(db.profiles.find(p=>p.id===c.profile_id)?.name))}${detailCard('สถานะปัจจุบัน',badge(status(c)))}${detailCard('ค้างชำระ','฿'+money(balance(c)))}</div><form id="bill-status-form" data-id="${esc(id)}" data-paid="${paid(c)}" data-balance="${balance(c)}" data-request="${crypto.randomUUID()}"><label for="bill-new-status">สถานะใหม่</label><select id="bill-new-status" name="status"><option value="approved">ชำระแล้ว</option><option value="unpaid">รอชำระ</option></select><p class="note" id="bill-status-impact"></p><label for="bill-status-reason">เหตุผลในการเปลี่ยนสถานะ</label><textarea id="bill-status-reason" name="reason" required maxlength="500"></textarea><div class="actions"><button type="button" class="secondary" data-action="close">ยกเลิก</button><button type="submit">ยืนยันเปลี่ยนสถานะ</button></div><div class="form-error"></div></form>`);
+ modal('เปลี่ยนสถานะบิล',`<div class="detail-grid">${detailCard('รายการบิล',esc(round(c.round_id).title))}${detailCard('สมาชิก',esc(db.profiles.find(p=>p.id===c.profile_id)?.name))}${detailCard('สถานะปัจจุบัน',badge(status(c)))}${detailCard('ค้างชำระ','฿'+money(balance(c)))}</div><form id="bill-status-form" data-id="${esc(id)}" data-paid="${paid(c)}" data-balance="${balance(c)}" data-request="${crypto.randomUUID()}"><label for="bill-new-status">สถานะใหม่</label><select id="bill-new-status" name="status"><option value="approved">ชำระแล้ว</option><option value="unpaid">รอชำระ</option></select><p class="note" id="bill-status-impact"></p><label for="bill-status-reason">เหตุผลในการเปลี่ยนสถานะ</label><textarea id="bill-status-reason" name="reason" required maxlength="500"></textarea>${billEvidenceFields(c)}<div class="actions"><button type="button" class="secondary" data-action="close">ยกเลิก</button><button type="submit">ยืนยันเปลี่ยนสถานะ</button></div><div class="form-error"></div></form>`);
  document.getElementById('bill-new-status').value=status(c)==='approved'?'unpaid':'approved';updateBillStatusImpact();
 }
 function updateBillStatusImpact(){const select=document.getElementById('bill-new-status'),box=document.getElementById('bill-status-impact');if(!select||!box)return;box.textContent=select.value==='approved'?'ยืนยันว่าได้รับเงินส่วนที่ค้างแล้ว ระบบจะบันทึกรับเงินเข้ากองกลางและสร้างเลขอ้างอิงภายในให้อัตโนมัติ หากมีสลิปรอตรวจ ให้ตรวจสลิปก่อน':'ยกเลิกการรับเงินที่เคยยืนยันในบิลนี้ทั้งหมด ยอดจะถูกหักออกจากเงินกองกลาง และกลับมาเรียกเก็บใหม่ ประวัติและหลักฐานเดิมยังคงอยู่'}
@@ -74,8 +74,8 @@ document.addEventListener('submit',async e=>{
  if(user?.role!=='admin'||form.dataset.saving)return;
  form.dataset.saving='true';const button=form.querySelector('[type=submit]');button.disabled=true;
  try{
-  const data=Object.fromEntries(new FormData(form));
-  if(cfg.mode==='live')await api('set-bill-status',{charge_id:form.dataset.id,status:data.status,reason:data.reason,expected_paid:Number(form.dataset.paid),expected_balance:Number(form.dataset.balance),request_id:form.dataset.request});
+  const data=Object.fromEntries(new FormData(form));const file=form.querySelector('[name=file]')?.files[0];if(file)validateFile(file);
+  if(cfg.mode==='live')await api('set-bill-status',{charge_id:form.dataset.id,status:data.status,reason:data.reason,expected_paid:Number(form.dataset.paid),expected_balance:Number(form.dataset.balance),request_id:form.dataset.request},file);
   else{
    const c=db.charges.find(c=>c.id===form.dataset.id);
    if(hasPending(c))throw Error('มีสลิปรอตรวจ กรุณาตรวจสอบการชำระก่อนเปลี่ยนสถานะ');

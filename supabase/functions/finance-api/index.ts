@@ -71,9 +71,9 @@ Deno.serve(async req=>{
   if(req.method==='GET'){
    const url=new URL(req.url),kind=url.searchParams.get('kind'),id=url.searchParams.get('id');
    if(url.searchParams.get('action')==='storage-file'){requireAdmin();const r=await downloadEvidence(db,'sb:'+text(id,100));return new Response(r.body,{headers:{...cors,'Content-Type':r.headers.get('Content-Type')||'application/octet-stream','X-Content-Type-Options':'nosniff'}})}
-   if(url.searchParams.get('action')!=='download'||!['payment','legacy','expense','expense-receipt','income','income-receipt'].includes(kind||''))return json({error:'Not found'},404);
-   const table=kind==='legacy'?'legacy_payments':kind==='payment'?'payments':kind?.startsWith('income')?'manual_incomes':'expenses';const record=await query(db.from(table).select('*').eq('id',id).single());if(kind!=='payment'&&!isAdmin&&(record.deleted_at||record.voided))throw Error('ไม่มีสิทธิ์เข้าถึงหลักฐานรายการนี้');
-   if(['payment','legacy'].includes(kind||'')&&!isAdmin&&record.profile_id!==profile.id)throw new Error('ไม่มีสิทธิ์เข้าถึงหลักฐาน');
+   if(url.searchParams.get('action')!=='download'||!['charge','payment','legacy','expense','expense-receipt','income','income-receipt'].includes(kind||''))return json({error:'Not found'},404);
+   const table=kind==='charge'?'charges':kind==='legacy'?'legacy_payments':kind==='payment'?'payments':kind?.startsWith('income')?'manual_incomes':'expenses';const record=await query(db.from(table).select('*').eq('id',id).single());if(kind!=='payment'&&!isAdmin&&(record.deleted_at||record.voided))throw Error('ไม่มีสิทธิ์เข้าถึงหลักฐานรายการนี้');
+   if(['charge','payment','legacy'].includes(kind||'')&&!isAdmin&&record.profile_id!==profile.id)throw new Error('ไม่มีสิทธิ์เข้าถึงหลักฐาน');
    const fileId=kind?.endsWith('-receipt')?record.receipt_file_id:record.drive_file_id;if(!fileId)throw new Error('ยังไม่มีไฟล์หลักฐาน');const r=await readEvidence(fileId);if(!r.ok)throw new Error('เปิดหลักฐานไม่สำเร็จ');return new Response(r.body,{headers:{...cors,'Content-Type':r.headers.get('Content-Type')||'application/octet-stream','X-Content-Type-Options':'nosniff'}});
   }
   let input:any,file:File|null=null,receiptFile:File|null=null;
@@ -286,8 +286,8 @@ Deno.serve(async req=>{
     else if(entity==='charge')patch={amount:amount(s.amount),reason:text(s.reason,500)};
     else throw new Error('ชนิดรายการไม่ถูกต้อง');
     const table={member:'profiles',round:'rounds',charge:'charges',payment:'payments',expense:'expenses'}[entity];await query(db.from(table!).select('id').eq('id',input.id).is('deleted_at',null).single());
-    let driveId:string|undefined,receiptId:string|undefined;if(file){if(entity!=='expense')throw new Error('รายการนี้ไม่รองรับไฟล์');const image=await validateImage(file);driveId=await uploadDrive(image,`expense-edit-${crypto.randomUUID()}.${image.type.split('/')[1]}`);patch.drive_file_id=driveId}
-    try{if(receiptFile){if(entity!=='expense')throw Error('รายการนี้ไม่รองรับใบเสร็จ');receiptId=await uploadDrive(await validateReceipt(receiptFile),`expense-receipt-${crypto.randomUUID()}`);patch.receipt_file_id=receiptId}await query(db.rpc('manage_record',{p_entity:entity,p_id:text(input.id,36),p_patch:patch,p_actor:profile.id}))}catch(e){if(driveId)await deleteDrive(driveId);if(receiptId)await deleteDrive(receiptId);throw e}
+    let driveId:string|undefined,receiptId:string|undefined;if(file){if(!['expense','charge'].includes(entity))throw new Error('รายการนี้ไม่รองรับไฟล์');const image=await validateImage(file);driveId=await uploadDrive(image,`${entity}-edit-${crypto.randomUUID()}.${image.type.split('/')[1]}`);patch.drive_file_id=driveId}
+    try{if(receiptFile){if(entity!=='expense')throw Error('รายการนี้ไม่รองรับใบเสร็จ');receiptId=await uploadDrive(await validateReceipt(receiptFile),`expense-receipt-${crypto.randomUUID()}`);patch.receipt_file_id=receiptId}await query(entity==='charge'&&driveId?db.rpc('admin_bill_with_evidence',{p_charge:text(input.id,36),p_actor:profile.id,p_file:driveId,p_patch:patch}):db.rpc('manage_record',{p_entity:entity,p_id:text(input.id,36),p_patch:patch,p_actor:profile.id}))}catch(e){if(driveId)await deleteDrive(driveId);if(receiptId)await deleteDrive(receiptId);throw e}
     return json({ok:true});
    }
    case 'change-student-id':{
@@ -367,7 +367,8 @@ Deno.serve(async req=>{
    }
    case 'set-bill-status':{
     requireAdmin();
-    const result=await query(db.rpc('admin_set_bill_status',{p_charge:input.charge_id,p_status:text(input.status,20),p_reason:text(input.reason,500),p_actor:profile.id,p_expected_paid:Number(input.expected_paid),p_expected_balance:Number(input.expected_balance),p_request:input.request_id}));return json({ok:true,result});
+    const args={p_charge:text(input.charge_id,36),p_status:text(input.status,20),p_reason:text(input.reason,500),p_actor:profile.id,p_expected_paid:Number(input.expected_paid),p_expected_balance:Number(input.expected_balance),p_request:text(input.request_id,36)};
+    let stored:string|undefined;try{if(file)stored=await uploadDrive(await validateImage(file),'bill-admin-'+crypto.randomUUID());const result=await query(stored?db.rpc('admin_bill_with_evidence',{...args,p_file:stored}):db.rpc('admin_set_bill_status',args));return json({ok:true,result})}catch(e){if(stored)await deleteDrive(stored);throw e}
    }
    case 'review-stage':{
     requireAdmin();const stage=text(input.stage,20);if(!['waiting','checking'].includes(stage))throw Error('ขั้นตอนตรวจไม่ถูกต้อง');
@@ -420,7 +421,7 @@ Deno.serve(async req=>{
    case 'link-code':{
     const code=crypto.randomUUID().replaceAll('-','').slice(0,16).toUpperCase();await query(db.from('line_link_codes').delete().eq('profile_id',profile.id));await query(db.from('line_link_codes').insert({profile_id:profile.id,code_hash:await hash(code),expires_at:new Date(Date.now()+600000).toISOString()}));return json({code});
    }
-   case 'file':{const kind=text(input.kind,10);if(!['payment','expense'].includes(kind))throw new Error('ชนิดรายการไม่ถูกต้อง');if(kind==='expense')requireAdmin();const record=await query(db.from(kind==='payment'?'payments':'expenses').select('*').eq('id',input.id).single());if(['payment','legacy'].includes(kind||'')&&!isAdmin&&record.profile_id!==profile.id)throw new Error('ไม่มีสิทธิ์เข้าถึง');return json({url:`${secret('SUPABASE_URL')}/functions/v1/finance-api?action=download&kind=${kind}&id=${encodeURIComponent(record.id)}`});}
+   case 'file':{const kind=text(input.kind,10);if(!['payment','expense'].includes(kind))throw new Error('ชนิดรายการไม่ถูกต้อง');if(kind==='expense')requireAdmin();const record=await query(db.from(kind==='payment'?'payments':'expenses').select('*').eq('id',input.id).single());if(['charge','payment','legacy'].includes(kind||'')&&!isAdmin&&record.profile_id!==profile.id)throw new Error('ไม่มีสิทธิ์เข้าถึง');return json({url:`${secret('SUPABASE_URL')}/functions/v1/finance-api?action=download&kind=${kind}&id=${encodeURIComponent(record.id)}`});}
    default:return json({error:'Action not found'},404);
   }
  }catch(e){return json({error:e instanceof Error?e.message:'ทำรายการไม่สำเร็จ'},(e as any)?.status===429?429:400)}

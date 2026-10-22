@@ -81,13 +81,13 @@ const individualEdit=editRecord;editRecord=function(entity,id){
  const c=db.charges.find(c=>c.id===id);if(!c)return;
  const p=db.profiles.find(p=>p.id===c.profile_id),r=round(c.round_id);
  if(individualLocked(c))return modal('แก้ยอดบิลรายบุคคล','<p class="note">บิลนี้มีการชำระหรือรอตรวจแล้ว จึงไม่สามารถเปลี่ยนยอดเรียกเก็บได้</p>');
- modal('แก้ยอดบิลรายบุคคล',`<div class="detail-grid">${detailCard('สมาชิก',esc(p?.name)+'<small>'+esc(p?.student_id)+'</small>')}${detailCard('รายการบิล',esc(r.title),'document')}</div>`+recordForm('charge',id,inputField('amount','ยอดเรียกเก็บเฉพาะคนนี้',c.amount,'number','required min="0.01" max="1000000" step="0.01"')+inputField('reason','เหตุผลที่เปลี่ยนยอด','','text','required maxlength="500"')+'<p class="help">ปรับเฉพาะยอดพื้นฐานของสมาชิกคนนี้ ค่าปรับยังคำนวณตามเงื่อนไขของบิล</p>'));
+ modal('แก้ยอดบิลรายบุคคล',`<div class="detail-grid">${detailCard('สมาชิก',esc(p?.name)+'<small>'+esc(p?.student_id)+'</small>')}${detailCard('รายการบิล',esc(r.title),'document')}</div>`+recordForm('charge',id,inputField('amount','ยอดเรียกเก็บเฉพาะคนนี้',c.amount,'number','required min="0.01" max="1000000" step="0.01"')+billEvidenceFields(c)+inputField('reason','เหตุผลที่เปลี่ยนยอด','','text','required maxlength="500"')+'<p class="help">ปรับเฉพาะยอดพื้นฐานของสมาชิกคนนี้ ค่าปรับยังคำนวณตามเงื่อนไขของบิล</p>'));
 };
 function individualHistory(id){
  if(user?.role!=='admin')return;
  const c=db.charges.find(c=>c.id===id);if(!c)return;
  const p=db.profiles.find(p=>p.id===c.profile_id),payments=db.payments.filter(p=>p.charge_id===id).slice().sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));
- modal('ประวัติการชำระรายบุคคล',`<div class="detail-grid">${detailCard('สมาชิก',esc(p?.name)+'<small>'+esc(p?.student_id)+'</small>')}${detailCard('รายการบิล',esc(round(c.round_id).title),'document')}</div>${paymentTable(payments,true)}`);
+ modal('ประวัติการชำระรายบุคคล',`<div class="detail-grid">${detailCard('สมาชิก',esc(p?.name)+'<small>'+esc(p?.student_id)+'</small>')}${detailCard('รายการบิล',esc(round(c.round_id).title),'document')}</div>${c.drive_file_id?proofHtml('charge',c,true):''}${paymentTable(payments,true)}`);watchProofs();
 }
 document.addEventListener('toggle',e=>{const el=e.target;if(!el.matches?.('[data-individual-id]'))return;if(el.open)individualOpen.add(el.dataset.individualId);else individualOpen.delete(el.dataset.individualId)},true);
 document.addEventListener('click',e=>{

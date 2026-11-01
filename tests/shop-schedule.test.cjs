@@ -20,7 +20,8 @@ test('shop data is Realtime on every visible app page and stops when the app is 
  assert.match(shop,/if\(v\.startsWith\('shop'\)\)\{shopLoadError=''/);
  assert.doesNotMatch(shop,/shopLoaded=false;shopLoadError='';if\(v==='shop'\)/);
  const nav=fs.readFileSync('web/shop-notice-navigation.js','utf8');
- assert.match(nav,/if\(!user\|\|view\.startsWith\('shop'\)\|\|!shopLoaded\|\|shopOwner!==user\.id\|\|!products\.some\(p=>!p\.deleted_at&&\['open','scheduled'\]\.includes\(shopSaleState\(p\)\)\)\)return;/);
+ assert.match(nav,/if\(!user\|\|!shopLoaded\|\|shopOwner!==user\.id\|\|!products\.some\(p=>!p\.deleted_at&&\['open','scheduled'\]\.includes\(shopSaleState\(p\)\)\)\)return;/);
+ assert.match(nav,/if\(view\.startsWith\('shop'\)\)return;[\s\S]*?const dock=document\.querySelector\('\.clay-dock'\)/);
  assert.doesNotMatch(nav,/api\('shop-list'\)|setInterval|Date\.now\(\)-checked/);
  const index=fs.readFileSync('web/index.html','utf8');
  assert.match(index,/live-updates\.js\?v=20261103eventdriven/);

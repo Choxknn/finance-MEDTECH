@@ -49,7 +49,7 @@ document.addEventListener('click',async event=>{
   await ensureLiveSession();
   const result=await FinanceLine.request({action:'friendship-audit'},token);
   await refresh();render();
-  toast(`ตรวจสอบ LINE แล้ว ${result.checked} บัญชี · เพิ่มเพื่อนแล้ว ${result.added} · ยังไม่ได้เพิ่มเพื่อน ${result.notFriend}${result.failed?` · ตรวจสอบไม่สำเร็จ ${result.failed}`:''}`);
+  toast(`ตรวจสอบใหม่ ${result.checked} บัญชี · บันทึกเดิมแล้ว ${result.alreadyAdded} · เพิ่มเพื่อนแล้ว ${result.added} · ยังไม่ได้เพิ่มเพื่อน ${result.notFriend}${result.failed?` · ตรวจสอบไม่สำเร็จ ${result.failed}`:''}`);
  }catch(error){toast(error instanceof Error?error.message:'ตรวจสอบสถานะเพื่อนไม่สำเร็จ')}
  finally{if(button.isConnected){button.disabled=false;button.textContent=original}}
 },true);

@@ -36,7 +36,8 @@ assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/action:'friendsh
 assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/target instanceof Element\?target\.closest\('\[data-friendship-audit\]'\):null/);
 assert.doesNotMatch(fs.readFileSync('web/line-friend-gate.js','utf8'),/if\(!button\|\|user\?\.role!=='admin'\)/);
 assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/if\(input\.reset===true\).*oa_friend_added_at:null/s);
-assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/oa_friend_check_status:'not_friend'/);
+assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/oa_friend_check_status:isNotFriend\?'not_friend':'error'/);
+assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/oa_friend_checked_at:checkedAt/,'every audit attempt records its check time');
 assert.match(fs.readFileSync('supabase/functions/finance-api/index.ts','utf8'),/oa_friend_check_status,oa_friend_check_error/);
 assert.match(fs.readFileSync('web/line-oauth.js','utf8'),/localStorage\.setItem\('finance-line-oauth'/);
 assert.match(fs.readFileSync('web/line-callback.js','utf8'),/localStorage\.getItem\('finance-line-oauth'\)/);

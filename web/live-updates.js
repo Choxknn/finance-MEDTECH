@@ -78,6 +78,7 @@ function syncFinanceShopChannel(client){
    if(status==='CLOSED'||status==='CHANNEL_ERROR'||status==='TIMED_OUT')window.financeShopRealtimeReady=false;
   });
  financeLiveShopChannel=channel;
+ queueFinanceShop();
 }
 async function syncFinanceLive(){
  if(!user||cfg.mode!=='live'||document.hidden){stopFinanceLive();return}

@@ -8,8 +8,8 @@
   location.replace('./');
  };
  try{
-  const raw=sessionStorage.getItem('finance-line-oauth');
-  sessionStorage.removeItem('finance-line-oauth');
+  const raw=localStorage.getItem('finance-line-oauth')||sessionStorage.getItem('finance-line-oauth');
+  localStorage.removeItem('finance-line-oauth');sessionStorage.removeItem('finance-line-oauth');
   flow=raw&&JSON.parse(raw);
   if(!flow||Date.now()-flow.createdAt>600000||params.get('state')!==flow.state)throw Error('ไม่พบคำขอเข้าสู่ระบบในเบราว์เซอร์นี้ กรุณาเริ่มใหม่');
   if(params.has('error'))throw Error('ยกเลิกการเข้าสู่ระบบด้วย LINE แล้ว');
@@ -22,10 +22,10 @@
   const result=await FinanceLine.request({action:'finish',state:flow.state,code:params.get('code'),verifier:flow.verifier},accessToken);
   if(result.mode!==flow.mode)throw Error('ผลการยืนยันไม่ตรงกับคำขอ');
   if(flow.mode==='signup'){
-   const signupRaw=sessionStorage.getItem('finance-signup-resume');
+   const signupRaw=localStorage.getItem('finance-signup-resume')||sessionStorage.getItem('finance-signup-resume');
    if(!signupRaw)throw Error('ไม่พบข้อมูลสมัคร กรุณาเปิดลิงก์สมัครใหม่');
    const context=JSON.parse(signupRaw);context.lineVerified=true;
-   sessionStorage.setItem('finance-signup-resume',JSON.stringify(context));
+   sessionStorage.setItem('finance-signup-resume',JSON.stringify(context));localStorage.setItem('finance-signup-resume',JSON.stringify(context));
    location.replace('./register.html');return;
   }
   if(flow.mode==='login'){

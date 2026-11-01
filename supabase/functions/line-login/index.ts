@@ -17,6 +17,14 @@ async function signState(data:any){const bytes=new TextEncoder().encode(JSON.str
 async function readState(value:any){if(typeof value!=='string'||value.length>3000||value.length<66||!/^[a-f0-9]+$/.test(value)||value.length%2)throw Error('ข้อมูลยืนยัน LINE ไม่ถูกต้อง');const bytes=unhex(value.slice(0,-64));if(!await crypto.subtle.verify('HMAC',await signingKey(),unhex(value.slice(-64)),bytes))throw Error('ข้อมูลยืนยัน LINE ไม่ถูกต้อง');const data=JSON.parse(new TextDecoder().decode(bytes));if(!Number.isFinite(data.exp)||data.exp<Date.now())throw Error('การเชื่อมต่อหมดอายุ กรุณาลองใหม่');return data}
 async function activeProfile(db:any,req:Request){const bearer=req.headers.get('authorization')?.replace(/^Bearer /,'');if(!bearer)throw Error('กรุณาเข้าสู่ระบบก่อนเชื่อม LINE');const auth=await db.auth.getUser(bearer);if(auth.error||!auth.data.user)throw Error('กรุณาเข้าสู่ระบบใหม่');return query(db.from('profiles').select('id,active').eq('id',auth.data.user.id).eq('active',true).is('deleted_at',null).single())}
 async function linePost(path:string,body:Record<string,string>){const r=await fetch('https://api.line.me/'+path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(body),signal:AbortSignal.timeout(15000)});const j=await r.json();if(!r.ok)throw Error('ยืนยัน LINE ไม่สำเร็จ กรุณาเริ่มใหม่');return j}
+async function verifyOfficialAccountFriendship(lineUserId:string){
+ const response=await fetch('https://api.line.me/v2/bot/profile/'+encodeURIComponent(lineUserId),{headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN')},signal:AbortSignal.timeout(12000)});
+ if(response.status===404)throw Error('LINE นี้ยังไม่ได้เพิ่มเพื่อน LINE Official Account กรุณากลับไปกดเพิ่มเพื่อนก่อน');
+ if(!response.ok)throw Error('ตรวจสอบสถานะการเพิ่มเพื่อน LINE OA ไม่สำเร็จ กรุณาลองอีกครั้ง');
+ const profile=await response.json();
+ if(profile.userId!==lineUserId)throw Error('ไม่สามารถยืนยันบัญชี LINE Official Account ได้');
+ return profile;
+}
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'',allowed=(Deno.env.get('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim());
  const headers={'Access-Control-Allow-Origin':allowed.includes(origin)?origin:'null','Access-Control-Allow-Headers':'apikey,content-type,authorization','Access-Control-Allow-Methods':'POST,OPTIONS','Cache-Control':'no-store','Vary':'Origin'};
@@ -41,6 +49,7 @@ Deno.serve(async req=>{
    if(typeof input.id_token!=='string'||input.id_token.length>12000)throw Error('ไม่ได้รับข้อมูลยืนยันจาก LINE');
    const identity=await linePost('oauth2/v2.1/verify',{id_token:input.id_token,client_id:clientId!});
    if(String(identity.aud)!==clientId||identity.iss!=='https://access.line.me'||!Number.isFinite(identity.exp)||identity.exp*1000<=Date.now()||!/^U[0-9a-f]{32}$/.test(identity.sub))throw Error('ข้อมูลยืนยัน LIFF ไม่ถูกต้อง');
+   await verifyOfficialAccountFriendship(identity.sub);
    const linked=await query(db.from('line_accounts').select('profile_id').eq('line_user_id',identity.sub).maybeSingle());
    if(linked)throw Error('LINE นี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบแทนการสมัครใหม่');
    const session=await query(db.from('registration_sessions').select('code_hash').eq('session_hash',state.sessionHash).gt('expires_at',new Date().toISOString()).single());

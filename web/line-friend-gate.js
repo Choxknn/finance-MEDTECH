@@ -19,7 +19,8 @@
   try{
    await ensureLiveSession();
    const result=await FinanceLine.request({action:'friend-gate-start'},token);
-   if(result.required!==true){sessionStorage.removeItem('finance-line-friend-gate-pending');return true}
+   if(result.required===false){sessionStorage.removeItem('finance-line-friend-gate-pending');return true}
+   if(result.required!==true)throw Error('ไม่ได้รับผลตรวจสอบเพื่อน LINE ที่ถูกต้อง ระบบจึงยังไม่อนุญาตให้เข้าใช้งาน');
    const url=new URL(result.url);
    if(url.origin!=='https://liff.line.me'||url.pathname!=='/'+cfg.lineLiffId||!url.searchParams.has('friend_gate_state'))throw Error('ลิงก์ตรวจสอบ LINE ไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ');
    sessionStorage.setItem('finance-line-friend-gate-pending',JSON.stringify({profileId:user.id,createdAt:Date.now()}));
@@ -33,3 +34,7 @@
   }finally{checking=false}
  };
 })();
+window.addEventListener('pageshow',()=>{
+ const app=document.getElementById('app');
+ if(user&&user.role!=='admin'&&app?.textContent?.includes('กำลังเปิด LIFF…'))location.reload();
+});

@@ -22,6 +22,8 @@ run("db.profiles.find(p=>p.id==='u1').line_friend_added_at=null;db.profiles.find
 assert.match(w.document.body.textContent,/LINE เชื่อมแล้ว · ยังไม่ได้เพิ่มเพื่อน/,'admin sees explicit non-friend status after a verified negative check');
 run("db.profiles.find(p=>p.id==='u1').line_friend_checked_at=null;render()");
 assert.match(w.document.body.textContent,/LINE เชื่อมแล้ว · รอตรวจสอบเพื่อน OA/,'unverified legacy account is not mislabelled as non-friend');
+run("db.profiles.find(p=>p.id==='u1').line_friend_check_status='error';db.profiles.find(p=>p.id==='u1').line_friend_checked_at='2026-11-02T00:20:00Z';render()");
+assert.match(w.document.body.textContent,/ตรวจสอบไม่สำเร็จ · ตรวจล่าสุด/,'admin sees a technical check failure and timestamp');
 for(const view of ['dashboard','members','rounds','fund','reports','audit','settings','review']){
  run(`nav('${view}')`);assert.ok(w.document.querySelector('h1'),view+' renders');assert.ok(!w.document.body.textContent.includes('undefined'),view+' has no undefined labels');
 }

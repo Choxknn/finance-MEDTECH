@@ -16,6 +16,12 @@ vm.runInContext(fs.readFileSync(root+'/web/account-access.js','utf8'),context);
 vm.runInContext(fs.readFileSync(root+'/web/batch-registration.js','utf8'),context);
 const run=s=>vm.runInContext(s,context);
 run("demoLogin('admin')");
+run("demoLogin('admin');db.profiles.find(p=>p.id==='u1').line_linked=true;db.profiles.find(p=>p.id==='u1').line_friend_added_at='2026-11-02T00:00:00Z';db.profiles.find(p=>p.id==='u1').line_friend_checked_at='2026-11-02T00:00:00Z';nav('members')");
+assert.match(w.document.body.textContent,/LINE เชื่อมแล้ว · เพิ่มเพื่อนแล้ว/,'admin sees verified OA friendship after LINE link state');
+run("db.profiles.find(p=>p.id==='u1').line_friend_added_at=null;db.profiles.find(p=>p.id==='u1').line_friend_checked_at='2026-11-02T00:10:00Z';render()");
+assert.match(w.document.body.textContent,/LINE เชื่อมแล้ว · ยังไม่ได้เพิ่มเพื่อน/,'admin sees explicit non-friend status after a verified negative check');
+run("db.profiles.find(p=>p.id==='u1').line_friend_checked_at=null;render()");
+assert.match(w.document.body.textContent,/LINE เชื่อมแล้ว · รอตรวจสอบเพื่อน OA/,'unverified legacy account is not mislabelled as non-friend');
 for(const view of ['dashboard','members','rounds','fund','reports','audit','settings','review']){
  run(`nav('${view}')`);assert.ok(w.document.querySelector('h1'),view+' renders');assert.ok(!w.document.body.textContent.includes('undefined'),view+' has no undefined labels');
 }

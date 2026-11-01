@@ -7,6 +7,9 @@ test('shop data is Realtime on every visible app page and stops when the app is 
  assert.match(live,/client\.channel\('finance:shop'/);
  assert.match(live,/function queueFinanceShop\(\)\{if\(!user\|\|document\.hidden\)return;/);
  assert.match(live,/doShop=financeLiveShopPending/);
+ assert.match(live,/if\(!shopLoaded\|\|shopOwner!==owner\|\|stable\(shopData\)!==stable\(shop\)\)changed=true;/);
+ const navSource=fs.readFileSync('web/shop-notice-navigation.js','utf8');
+ assert.match(navSource,/shopLoaded&&!products\.some\(p=>!p\.deleted_at&&\['open','scheduled'\]\.includes\(shopSaleState\(p\)\)\)/);
  assert.match(live,/const should=!!user&&cfg\.mode==='live'&&!document\.hidden/);
  assert.doesNotMatch(live,/view\.startsWith\('shop'\)/);
  assert.match(live,/if\(status==='SUBSCRIBED'\)[\s\S]*?queueFinanceShop\(\)/);

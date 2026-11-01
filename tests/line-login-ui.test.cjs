@@ -15,6 +15,8 @@ const gateDom=new JSDOM('<main class="recovery-card"><p class="signup-intro"></p
 gr.FINANCE_CONFIG={lineLiffId:'2011933909-4qXo3pGn'};gr.setTimeout=()=>1;gr.liff={init:async()=>{},isLoggedIn:()=>true,getFriendship:async()=>({friendFlag:gateFriend}),requestFriendship:async()=>{gatePrompts++;gateFriend=true},getIDToken:()=> 'id-token',isInClient:()=>true,closeWindow:()=>{}};gr.FinanceLine={request:async data=>{gateFinish.push(data);return {ok:true,mode:'friend-gate'}}};gr.eval(fs.readFileSync('web/register-liff.js','utf8'));await tick();assert.equal(gatePrompts,1,'existing account must trigger LINE native add-friend prompt');assert.equal(gateFinish.length,1,'gate confirms after friendship is true');assert.equal(gateFinish[0].action,'friend-gate-finish');assert.equal(gateFinish[0].state,'d'.repeat(120));assert.match(gr.document.getElementById('register-status').textContent,/กำลังกลับเข้าสู่เว็บไซต์/);assert.equal(gr.document.querySelector('.signup-steps').hidden,true);gr.close();
 assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/searchParams\.set\('signup_state',signed\)/);assert.match(fs.readFileSync('web/register.html','utf8'),/liff\/edge\/2\/sdk\.js/);assert.match(fs.readFileSync('web/register.html','utf8'),/register-liff\.js/);
 assert.match(fs.readFileSync('web/line-callback.js','utf8'),/finance-line-return-notice/);
+assert.match(fs.readFileSync('web/line-callback.js','utf8'),/if\(flow\.mode==='login'\)[\s\S]*?returnHome\(\);return;/);
+assert.doesNotMatch(fs.readFileSync('web/line-login.js','utf8'),/line-login-success/,'LINE login no longer opens the welcome modal');
 assert.match(fs.readFileSync('web/line-login.js','utf8'),/line-already-linked/);
 assert.match(fs.readFileSync('web/register-liff.js','utf8'),/line-already-registered/);
 assert.match(fs.readFileSync('web/management.js','utf8'),/data-action="manual-add-member"/);
@@ -31,7 +33,11 @@ assert.match(fs.readFileSync('web/session-history.js','utf8'),/await window\.ens
 assert.match(fs.readFileSync('web/index.html','utf8'),/line-friend-gate\.js/);
 assert.match(fs.readFileSync('web/management.js','utf8'),/เช็คการเพิ่มเพื่อน \(ล้างสถานะ\)/);
 assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/action:'friendship-audit',reset:true/);
+assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/target instanceof Element\?target\.closest\('\[data-friendship-audit\]'\):null/);
+assert.doesNotMatch(fs.readFileSync('web/line-friend-gate.js','utf8'),/if\(!button\|\|user\?\.role!=='admin'\)/);
 assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/if\(input\.reset===true\).*oa_friend_added_at:null/s);
+assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/oa_friend_check_status:'not_friend'/);
+assert.match(fs.readFileSync('supabase/functions/finance-api/index.ts','utf8'),/oa_friend_check_status,oa_friend_check_error/);
 assert.match(fs.readFileSync('web/line-oauth.js','utf8'),/localStorage\.setItem\('finance-line-oauth'/);
 assert.match(fs.readFileSync('web/line-callback.js','utf8'),/localStorage\.getItem\('finance-line-oauth'\)/);
 assert.match(fs.readFileSync('web/register.js','utf8'),/localStorage\.getItem\('finance-signup-resume'\)/);

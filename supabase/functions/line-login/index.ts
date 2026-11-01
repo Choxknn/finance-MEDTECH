@@ -40,7 +40,7 @@ Deno.serve(async req=>{
   if(input.action==='friendship-audit'){
    const actor=await activeProfile(db,req);
    if(actor.role!=='admin')throw Error('เฉพาะแอดมินเท่านั้นที่ตรวจสอบสมาชิกทั้งหมดได้');
-   if(input.reset===true)await query(db.from('line_accounts').update({oa_friend_added_at:null,oa_friend_checked_at:null}).not('profile_id','is',null));
+   if(input.reset===true)await query(db.from('line_accounts').update({oa_friend_added_at:null,oa_friend_checked_at:null,oa_friend_check_status:null,oa_friend_check_error:null}).not('profile_id','is',null));
    const accounts=await query(db.from('line_accounts').select('profile_id,line_user_id,oa_friend_added_at'));
    let checked=0,alreadyAdded=0,added=0,notFriend=0,failed=0;
    for(let offset=0;offset<accounts.length;offset+=5){
@@ -48,18 +48,27 @@ Deno.serve(async req=>{
      if(account.oa_friend_added_at){alreadyAdded++;return}
      checked++;const checkedAt=new Date().toISOString();
      try{
+      await query(db.from('line_accounts').update({oa_friend_checked_at:checkedAt,oa_friend_check_status:'error',oa_friend_check_error:'กำลังตรวจสอบ'}).eq('profile_id',account.profile_id));
       await verifyOfficialAccountFriendship(account.line_user_id);
-      await query(db.from('line_accounts').update({oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt}).eq('profile_id',account.profile_id).is('oa_friend_added_at',null));
+      await query(db.from('line_accounts').update({oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt,oa_friend_check_status:'added',oa_friend_check_error:null}).eq('profile_id',account.profile_id));
       added++;
      }catch(error){
-      if(error instanceof Error&&error.message.startsWith('LINE นี้ยังไม่ได้เพิ่มเพื่อน')){
-       try{await query(db.from('line_accounts').update({oa_friend_checked_at:checkedAt}).eq('profile_id',account.profile_id).is('oa_friend_added_at',null));notFriend++}
-       catch{failed++}
-      }else failed++;
+      const message=error instanceof Error?error.message:'ตรวจสอบ LINE OA ไม่สำเร็จ';
+      const isNotFriend=message.startsWith('LINE นี้ยังไม่ได้เพิ่มเพื่อน');
+      try{
+       await query(db.from('line_accounts').update({
+        ...(isNotFriend?{oa_friend_added_at:null}:{}),
+        oa_friend_checked_at:checkedAt,
+        oa_friend_check_status:isNotFriend?'not_friend':'error',
+        oa_friend_check_error:isNotFriend?null:message.slice(0,240)
+       }).eq('profile_id',account.profile_id));
+       if(isNotFriend)notFriend++;else failed++;
+      }catch{failed++}
      }
     }));
    }
-   return json({checked,alreadyAdded,added,notFriend,failed});
+   console.info('LINE OA friendship audit completed',{actor:actor.id,total:accounts.length,checked,alreadyAdded,added,notFriend,failed});
+   return json({checked,alreadyAdded,added,notFriend,failed,finishedAt:new Date().toISOString()});
   }
   if(input.action==='friend-gate-start'){
    if(clientId!==LIFF_ID.split('-')[0])throw Error('LIFF ID นี้ไม่ได้อยู่ใน LINE Login Channel เดียวกับระบบ กรุณาตรวจสอบ LIFF App');
@@ -71,11 +80,13 @@ Deno.serve(async req=>{
     const checkedAt=new Date().toISOString();
     try{
      await verifyOfficialAccountFriendship(linked.line_user_id);
-     await query(db.from('line_accounts').update({oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt}).eq('profile_id',profile.id).is('oa_friend_added_at',null));
+     await query(db.from('line_accounts').update({oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt,oa_friend_check_status:'added',oa_friend_check_error:null}).eq('profile_id',profile.id));
      return json({required:false,alreadyVerified:true});
     }catch(error){
-     if(!(error instanceof Error)||!error.message.startsWith('LINE นี้ยังไม่ได้เพิ่มเพื่อน'))throw error;
-     await query(db.from('line_accounts').update({oa_friend_checked_at:checkedAt}).eq('profile_id',profile.id).is('oa_friend_added_at',null));
+     const message=error instanceof Error?error.message:'ตรวจสอบ LINE OA ไม่สำเร็จ';
+     const isNotFriend=message.startsWith('LINE นี้ยังไม่ได้เพิ่มเพื่อน');
+     await query(db.from('line_accounts').update({oa_friend_checked_at:checkedAt,oa_friend_check_status:isNotFriend?'not_friend':'error',oa_friend_check_error:isNotFriend?null:message.slice(0,240)}).eq('profile_id',profile.id));
+     if(!isNotFriend)throw error;
     }
    }
    const state=await signState({mode:'friend-gate',profile:profile.id,nonce:crypto.randomUUID(),exp:Date.now()+600000});
@@ -97,8 +108,8 @@ Deno.serve(async req=>{
    if(lineOwner&&lineOwner.profile_id!==profile.id)throw Error('LINE นี้เชื่อมกับสมาชิกคนอื่นแล้ว กรุณาใช้บัญชี LINE ที่ถูกต้อง');
    if(profileLink&&profileLink.line_user_id!==identity.sub)throw Error('บัญชีนี้เชื่อมกับ LINE อื่นอยู่ กรุณาใช้ LINE ที่เคยเชื่อมไว้ หรือติดต่อผู้ดูแลระบบ');
    const checkedAt=new Date().toISOString();
-   if(!profileLink)await query(db.from('line_accounts').insert({profile_id:profile.id,line_user_id:identity.sub,display_name:typeof identity.name==='string'?identity.name.slice(0,200):null,oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt}));
-   else await query(db.from('line_accounts').update({display_name:typeof identity.name==='string'?identity.name.slice(0,200):null,oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt}).eq('profile_id',profile.id));
+   if(!profileLink)await query(db.from('line_accounts').insert({profile_id:profile.id,line_user_id:identity.sub,display_name:typeof identity.name==='string'?identity.name.slice(0,200):null,oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt,oa_friend_check_status:'added',oa_friend_check_error:null}));
+   else await query(db.from('line_accounts').update({display_name:typeof identity.name==='string'?identity.name.slice(0,200):null,oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt,oa_friend_check_status:'added',oa_friend_check_error:null}).eq('profile_id',profile.id));
    await query(db.from('line_link_codes').delete().eq('profile_id',profile.id));
    return json({ok:true,mode:'friend-gate'});
   }

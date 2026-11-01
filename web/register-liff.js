@@ -75,7 +75,7 @@
   finally{busy=false}
  }
  retry.addEventListener('click',finish);
- back.addEventListener('click',()=>{if(flow==='friend-gate'){if(liff.isInClient()){try{liff.closeWindow()}catch{}}else location.replace('./')}else if(history.length>1)history.back();else location.replace('./register.html')});
+ back.addEventListener('click',()=>{if(flow==='friend-gate'){try{if(window.liff?.isInClient()){liff.closeWindow();return}}catch{}location.replace('./')}else if(history.length>1)history.back();else location.replace('./register.html')});
  async function start(){
   if(!readState())throw new Error(flow==='friend-gate'?'ไม่พบคำขอตรวจสอบเพื่อน กรุณาเข้าสู่ระบบเว็บไซต์ใหม่':'ไม่พบข้อมูลการสมัคร กรุณากลับไปหน้าสมัครสมาชิกแล้วกดเพิ่มเพื่อนอีกครั้ง');
   if(flow==='friend-gate')sessionStorage.setItem('finance-line-friend-gate-pending',JSON.stringify({createdAt:Date.now()}));else sessionStorage.setItem('finance-line-liff-signup-state',signupState);

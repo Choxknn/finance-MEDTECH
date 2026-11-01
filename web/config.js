@@ -9,4 +9,5 @@ window.FINANCE_CONFIG = {
   accountNumber: '006660001474178',
   paymentQrUrl: './payment-qr.png',
   lineOaUrl: 'https://lin.ee/rpHtjnI',
+  lineLiffId: '2011933909-4qXo3pGn',
 };

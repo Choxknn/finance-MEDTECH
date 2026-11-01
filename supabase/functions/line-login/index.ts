@@ -37,6 +37,28 @@ Deno.serve(async req=>{
   if(!configured)return json({error:'ยังไม่ได้ตั้งค่า LINE Login กรุณาใช้รหัสนักศึกษาเข้าสู่ระบบก่อน'},503);
   const db=adminDb();
 
+  if(input.action==='friendship-audit'){
+   const actor=await activeProfile(db,req);
+   if(actor.role!=='admin')throw Error('เฉพาะแอดมินเท่านั้นที่ตรวจสอบสมาชิกทั้งหมดได้');
+   const accounts=await query(db.from('line_accounts').select('profile_id,line_user_id'));
+   let added=0,notFriend=0,failed=0;
+   for(let offset=0;offset<accounts.length;offset+=5){
+    await Promise.all(accounts.slice(offset,offset+5).map(async(account:any)=>{
+     const checkedAt=new Date().toISOString();
+     try{
+      await verifyOfficialAccountFriendship(account.line_user_id);
+      await query(db.from('line_accounts').update({oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt}).eq('profile_id',account.profile_id));
+      added++;
+     }catch(error){
+      if(error instanceof Error&&error.message.startsWith('LINE นี้ยังไม่ได้เพิ่มเพื่อน')){
+       try{await query(db.from('line_accounts').update({oa_friend_added_at:null,oa_friend_checked_at:checkedAt}).eq('profile_id',account.profile_id));notFriend++}
+       catch{failed++}
+      }else failed++;
+     }
+    }));
+   }
+   return json({checked:accounts.length,added,notFriend,failed});
+  }
   if(input.action==='friend-gate-start'){
    if(clientId!==LIFF_ID.split('-')[0])throw Error('LIFF ID นี้ไม่ได้อยู่ใน LINE Login Channel เดียวกับระบบ กรุณาตรวจสอบ LIFF App');
    const profile=await activeProfile(db,req);

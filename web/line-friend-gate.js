@@ -47,9 +47,9 @@ document.addEventListener('click',async event=>{
  button.disabled=true;const original=button.textContent;button.textContent='กำลังตรวจสอบ…';
  try{
   await ensureLiveSession();
-  const result=await FinanceLine.request({action:'friendship-audit'},token);
+  const result=await FinanceLine.request({action:'friendship-audit',reset:true},token);
   await refresh();render();
-  toast(`ตรวจสอบใหม่ ${result.checked} บัญชี · บันทึกเดิมแล้ว ${result.alreadyAdded} · เพิ่มเพื่อนแล้ว ${result.added} · ยังไม่ได้เพิ่มเพื่อน ${result.notFriend}${result.failed?` · ตรวจสอบไม่สำเร็จ ${result.failed}`:''}`);
+  toast(`ตรวจสอบ ${result.checked} บัญชีใหม่ · เพิ่มเพื่อนแล้ว ${result.added} · ยังไม่ได้เพิ่มเพื่อน ${result.notFriend}${result.failed?` · ตรวจสอบไม่สำเร็จ ${result.failed}`:''}`);
  }catch(error){toast(error instanceof Error?error.message:'ตรวจสอบสถานะเพื่อนไม่สำเร็จ')}
  finally{if(button.isConnected){button.disabled=false;button.textContent=original}}
 },true);

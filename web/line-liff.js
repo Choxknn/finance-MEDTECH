@@ -6,6 +6,8 @@
  oa.href=cfg.lineOaUrl||'https://lin.ee/rpHtjnI';
  const say=(message)=>{status.textContent=message};
  function returnToSignup(){location.replace('./register.html')}
+ retry.addEventListener('click',finish);
+ back.addEventListener('click',returnToSignup);
  async function finish(){
   if(busy||completed)return;busy=true;retry.hidden=true;oa.hidden=true;
   try{
@@ -36,8 +38,6 @@
    return;
   }
   history.replaceState(null,'',location.pathname);
-  retry.addEventListener('click',finish);
-  back.addEventListener('click',returnToSignup);
   await finish();
  }
  start().catch(error=>{say(error.message||'เปิด LIFF ไม่สำเร็จ');retry.hidden=true;oa.hidden=false;back.hidden=false});

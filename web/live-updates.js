@@ -6,6 +6,7 @@ function financeLiveResource(message){return message?.payload?.resource||message
 function financeLiveIsShopResource(message){return ['shop_products','shop_orders','shop_payments'].includes(financeLiveResource(message))}
 function queueFinanceLive(message){if(message&&financeLiveIsShopResource(message))return;financeLivePending=true;scheduleFinanceLiveFlush()}
 function queueFinanceShop(){if(!user||!view.startsWith('shop')||document.hidden)return;financeLiveShopPending=true;scheduleFinanceLiveFlush()}
+window.queueFinanceShopRefresh=queueFinanceShop;
 async function flushFinanceLive(){
  financeLiveTimer=null;
  if(!user||cfg.mode!=='live'||document.hidden)return;
@@ -52,17 +53,16 @@ async function flushFinanceLive(){
  }
 }
 function stopFinanceLive(){
- if(financeLiveShopChannel&&financeLiveClient)financeLiveClient.removeChannel(financeLiveShopChannel);
- financeLiveShopChannel=null;
  if(financeLiveClient){financeLiveClient.removeAllChannels();financeLiveClient.realtime.disconnect()}
- financeLiveClient=null;financeLiveScope='';financeLiveToken='';
+ financeLiveClient=null;financeLiveScope='';financeLiveToken='';financeLiveShopChannel=null;
+ window.financeShopRealtimeReady=false;
  clearTimeout(financeLiveTimer);financeLiveTimer=null;
  financeLivePending=false;financeLiveShopPending=false;
 }
 function syncFinanceShopChannel(client){
  const should=!!user&&cfg.mode==='live'&&!document.hidden&&view.startsWith('shop');
  if(!should){
-  if(financeLiveShopChannel){const channel=financeLiveShopChannel;financeLiveShopChannel=null;void client.removeChannel(channel)}
+  if(financeLiveShopChannel){const channel=financeLiveShopChannel;financeLiveShopChannel=null;window.financeShopRealtimeReady=false;void client.removeChannel(channel)}
   financeLiveShopPending=false;
   return;
  }
@@ -70,7 +70,14 @@ function syncFinanceShopChannel(client){
  const refreshAfterSubscribe=shopLoaded&&shopOwner===user.id;
  const channel=client.channel('finance:shop',{config:{private:true}})
   .on('broadcast',{event:'changed'},message=>{if(financeLiveIsShopResource(message))queueFinanceShop()})
-  .subscribe(status=>{if(financeLiveShopChannel===channel&&status==='SUBSCRIBED'&&refreshAfterSubscribe)queueFinanceShop()});
+  .subscribe(status=>{
+   if(financeLiveShopChannel!==channel)return;
+   if(status==='SUBSCRIBED'){
+    window.financeShopRealtimeReady=true;
+    if(refreshAfterSubscribe)queueFinanceShop();
+   }
+   if(status==='CLOSED'||status==='CHANNEL_ERROR'||status==='TIMED_OUT')window.financeShopRealtimeReady=false;
+  });
  financeLiveShopChannel=channel;
 }
 async function syncFinanceLive(){
@@ -96,12 +103,13 @@ async function syncFinanceLive(){
    client.channel(topic,{config:{private:true}}).on('broadcast',{event:'changed'},onAppChange).subscribe(status=>{if(status==='SUBSCRIBED')queueFinanceLive()});
   }
   syncFinanceShopChannel(client);
- }catch{/* Reconnect on browser online/visibility changes; do not poll the server. */}
+ }catch{/* Reconnect on browser online/visibility changes; no periodic data polling. */}
 }
 const liveRender=render;render=function(){liveRender();queueMicrotask(syncFinanceLive)};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopFinanceLive();else syncFinanceLive()});
 window.addEventListener('online',()=>{syncFinanceLive();queueFinanceLive();if(view.startsWith('shop'))queueFinanceShop()});
 window.addEventListener('pagehide',stopFinanceLive);
+window.addEventListener('pageshow',()=>{if(!document.hidden)syncFinanceLive()});
 document.getElementById('dialog').addEventListener('close',()=>{if(financeLivePending||financeLiveShopPending)scheduleFinanceLiveFlush()});
 document.addEventListener('focusout',()=>{if(financeLivePending||financeLiveShopPending)scheduleFinanceLiveFlush()});
 syncFinanceLive();

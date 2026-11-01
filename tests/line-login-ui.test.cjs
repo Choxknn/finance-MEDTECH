@@ -14,6 +14,7 @@ assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/s
 assert.match(fs.readFileSync('web/line-callback.js','utf8'),/finance-line-return-notice/);
 assert.match(fs.readFileSync('web/line-login.js','utf8'),/line-already-linked/);
 assert.match(fs.readFileSync('web/register-liff.js','utf8'),/line-already-registered/);
-assert.match(fs.readFileSync('web/management.js','utf8'),/data-action="new-member"/);
-assert.match(fs.readFileSync('web/app.js','utf8'),/case'new-member':newMember\(\)/);
+assert.match(fs.readFileSync('web/management.js','utf8'),/data-action="manual-add-member"/);
+assert.match(fs.readFileSync('web/app.js','utf8'),/case'manual-add-member':newMember\(\)/);
+assert.doesNotMatch(fs.readFileSync('web/management.js','utf8'),/member-create-banner/);
 console.log('LINE signup state handoff, duplicate account modal and admin add-member action passed')})().catch(e=>{console.error(e);process.exitCode=1});

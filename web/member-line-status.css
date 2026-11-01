@@ -1,0 +1,14 @@
+.member-identity{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:190px}
+.member-name{display:block;font-weight:600;line-height:1.4;color:var(--text,#1c302a)}
+.member-identity-meta{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.member-student-id,.member-line-state,.member-line-linked,.member-status{display:inline-flex;align-items:center;gap:6px}
+.member-student-id{font-size:.82rem;color:var(--muted,#6a7a76);font-variant-numeric:tabular-nums}
+.member-meta-icon{width:15px;height:15px;flex:0 0 15px}
+.member-line-state{flex-wrap:wrap;gap:6px}
+.member-line-linked,.member-status{min-height:25px;padding:3px 8px;border-radius:7px;font-size:.76rem;font-weight:600;line-height:1.35;white-space:nowrap}
+.member-line-linked{background:#e8f3ee;color:#176b50}
+.member-status--added{background:#e4f4e9;color:#216b3b}
+.member-status--not-friend{background:#fde9e8;color:#a32f32}
+.member-status--error{background:#fff1d9;color:#95610e}
+.member-status--pending,.member-status--muted{background:#eef1f4;color:#5f6e7b}
+@media(max-width:700px){.member-identity{min-width:160px}.member-line-state{align-items:flex-start}.member-line-linked,.member-status{font-size:.72rem}}

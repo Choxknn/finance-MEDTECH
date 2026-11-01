@@ -43,8 +43,15 @@ Deno.serve(async req=>{
    if(profile.role==='admin')return json({required:false});
    const linked=await query(db.from('line_accounts').select('line_user_id').eq('profile_id',profile.id).maybeSingle());
    if(linked){
-    try{await verifyOfficialAccountFriendship(linked.line_user_id);return json({required:false})}
-    catch(error){if(!(error instanceof Error)||!error.message.startsWith('LINE นี้ยังไม่ได้เพิ่มเพื่อน'))throw error}
+    const checkedAt=new Date().toISOString();
+    try{
+     await verifyOfficialAccountFriendship(linked.line_user_id);
+     await query(db.from('line_accounts').update({oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt}).eq('profile_id',profile.id));
+     return json({required:false});
+    }catch(error){
+     if(!(error instanceof Error)||!error.message.startsWith('LINE นี้ยังไม่ได้เพิ่มเพื่อน'))throw error;
+     await query(db.from('line_accounts').update({oa_friend_added_at:null,oa_friend_checked_at:checkedAt}).eq('profile_id',profile.id));
+    }
    }
    const state=await signState({mode:'friend-gate',profile:profile.id,nonce:crypto.randomUUID(),exp:Date.now()+600000});
    const url=new URL('https://liff.line.me/'+LIFF_ID);url.searchParams.set('friend_gate_state',state);
@@ -64,7 +71,9 @@ Deno.serve(async req=>{
    ]);
    if(lineOwner&&lineOwner.profile_id!==profile.id)throw Error('LINE นี้เชื่อมกับสมาชิกคนอื่นแล้ว กรุณาใช้บัญชี LINE ที่ถูกต้อง');
    if(profileLink&&profileLink.line_user_id!==identity.sub)throw Error('บัญชีนี้เชื่อมกับ LINE อื่นอยู่ กรุณาใช้ LINE ที่เคยเชื่อมไว้ หรือติดต่อผู้ดูแลระบบ');
-   if(!profileLink)await query(db.from('line_accounts').insert({profile_id:profile.id,line_user_id:identity.sub,display_name:typeof identity.name==='string'?identity.name.slice(0,200):null}));
+   const checkedAt=new Date().toISOString();
+   if(!profileLink)await query(db.from('line_accounts').insert({profile_id:profile.id,line_user_id:identity.sub,display_name:typeof identity.name==='string'?identity.name.slice(0,200):null,oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt}));
+   else await query(db.from('line_accounts').update({display_name:typeof identity.name==='string'?identity.name.slice(0,200):null,oa_friend_added_at:checkedAt,oa_friend_checked_at:checkedAt}).eq('profile_id',profile.id));
    await query(db.from('line_link_codes').delete().eq('profile_id',profile.id));
    return json({ok:true,mode:'friend-gate'});
   }

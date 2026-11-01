@@ -5,13 +5,13 @@ function scheduleFinanceLiveFlush(){if(!financeLiveTimer)financeLiveTimer=setTim
 function financeLiveResource(message){return message?.payload?.resource||message?.resource||''}
 function financeLiveIsShopResource(message){return ['shop_products','shop_orders','shop_payments'].includes(financeLiveResource(message))}
 function queueFinanceLive(message){if(message&&financeLiveIsShopResource(message))return;financeLivePending=true;scheduleFinanceLiveFlush()}
-function queueFinanceShop(){if(!user||!view.startsWith('shop')||document.hidden)return;financeLiveShopPending=true;scheduleFinanceLiveFlush()}
+function queueFinanceShop(){if(!user||document.hidden)return;financeLiveShopPending=true;scheduleFinanceLiveFlush()}
 window.queueFinanceShopRefresh=queueFinanceShop;
 async function flushFinanceLive(){
  financeLiveTimer=null;
  if(!user||cfg.mode!=='live'||document.hidden)return;
  if(financeLiveBusy||backgroundRefreshRunning||financeLiveBlocked())return;
- const owner=user.id,screen=view,doApp=financeLivePending,doShop=financeLiveShopPending&&screen.startsWith('shop');
+ const owner=user.id,screen=view,doApp=financeLivePending,doShop=financeLiveShopPending;
  financeLiveShopPending=false;
  if(!doApp&&!doShop)return;
  financeLivePending=false;financeLiveBusy=true;
@@ -23,7 +23,7 @@ async function flushFinanceLive(){
    if(screen==='shop-summary'&&user.role==='admin')summary=await api('shop-summary',{paid:shopPaidOnly});
   }
   if(doApp&&screen==='attendance'&&user.role==='admin')attendance=await api('attendance-list',{session_id:attendanceSession||undefined});
-  if(user?.id!==owner||(doShop&&!view.startsWith('shop')))return;
+  if(user?.id!==owner)return;
   if(financeLiveBlocked()){
    if(doApp)financeLivePending=true;
    if(doShop)financeLiveShopPending=true;
@@ -49,7 +49,7 @@ async function flushFinanceLive(){
   if(doShop&&view.startsWith('shop'))financeLiveShopPending=true;
  }finally{
   financeLiveBusy=false;
-  if(financeLivePending||(financeLiveShopPending&&view.startsWith('shop')))scheduleFinanceLiveFlush();
+  if(financeLivePending||financeLiveShopPending)scheduleFinanceLiveFlush();
  }
 }
 function stopFinanceLive(){
@@ -60,21 +60,20 @@ function stopFinanceLive(){
  financeLivePending=false;financeLiveShopPending=false;
 }
 function syncFinanceShopChannel(client){
- const should=!!user&&cfg.mode==='live'&&!document.hidden&&view.startsWith('shop');
+ const should=!!user&&cfg.mode==='live'&&!document.hidden;
  if(!should){
   if(financeLiveShopChannel){const channel=financeLiveShopChannel;financeLiveShopChannel=null;window.financeShopRealtimeReady=false;void client.removeChannel(channel)}
   financeLiveShopPending=false;
   return;
  }
  if(financeLiveShopChannel)return;
- const refreshAfterSubscribe=shopLoaded&&shopOwner===user.id;
  const channel=client.channel('finance:shop',{config:{private:true}})
   .on('broadcast',{event:'changed'},message=>{if(financeLiveIsShopResource(message))queueFinanceShop()})
   .subscribe(status=>{
    if(financeLiveShopChannel!==channel)return;
    if(status==='SUBSCRIBED'){
     window.financeShopRealtimeReady=true;
-    if(refreshAfterSubscribe)queueFinanceShop();
+    queueFinanceShop();
    }
    if(status==='CLOSED'||status==='CHANNEL_ERROR'||status==='TIMED_OUT')window.financeShopRealtimeReady=false;
   });
@@ -107,7 +106,7 @@ async function syncFinanceLive(){
 }
 const liveRender=render;render=function(){liveRender();queueMicrotask(syncFinanceLive)};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopFinanceLive();else syncFinanceLive()});
-window.addEventListener('online',()=>{syncFinanceLive();queueFinanceLive();if(view.startsWith('shop'))queueFinanceShop()});
+window.addEventListener('online',()=>{syncFinanceLive();queueFinanceLive();queueFinanceShop()});
 window.addEventListener('pagehide',stopFinanceLive);
 window.addEventListener('pageshow',()=>{if(!document.hidden)syncFinanceLive()});
 document.getElementById('dialog').addEventListener('close',()=>{if(financeLivePending||financeLiveShopPending)scheduleFinanceLiveFlush()});

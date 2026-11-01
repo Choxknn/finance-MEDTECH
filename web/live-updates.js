@@ -46,7 +46,7 @@ async function flushFinanceLive(){
   if(changed)renderInBackground();
  }catch{
   if(doApp)financeLivePending=true;
-  if(doShop&&view.startsWith('shop'))financeLiveShopPending=true;
+  if(doShop)financeLiveShopPending=true;
  }finally{
   financeLiveBusy=false;
   if(financeLivePending||financeLiveShopPending)scheduleFinanceLiveFlush();

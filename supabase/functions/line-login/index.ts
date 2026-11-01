@@ -1,6 +1,14 @@
 import {adminDb,query,secret,hash} from '../_shared/services.ts';
 import {financeSite} from '../_shared/line-flex.ts';
 const callback=financeSite+'line-callback.html';
+const LIFF_ID='2011933909-4qXo3pGn';
+async function registrationSessionHash(db:any,sessionValue:any){
+ if(typeof sessionValue!=='string'||!/^[a-f0-9]{64}$/.test(sessionValue))throw Error('กรุณาเริ่มสมัครใหม่');
+ const sessionHash=await hash(sessionValue);
+ const session=await query(db.from('registration_sessions').select('invite_id,batch_id').eq('session_hash',sessionHash).gt('expires_at',new Date().toISOString()).single());
+ await query(db.from('member_invites').select('id').eq('id',session.invite_id).eq('batch_id',session.batch_id).eq('status','pending').single());
+ return sessionHash;
+}
 const hex=(bytes:Uint8Array)=>[...bytes].map(x=>x.toString(16).padStart(2,'0')).join('');
 const unhex=(value:string)=>Uint8Array.from(value.match(/../g)||[],v=>parseInt(v,16));
 const base64url=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
@@ -20,15 +28,31 @@ Deno.serve(async req=>{
   if(input.action==='status')return json({enabled:configured});
   if(!configured)return json({error:'ยังไม่ได้ตั้งค่า LINE Login กรุณาใช้รหัสนักศึกษาเข้าสู่ระบบก่อน'},503);
   const db=adminDb();
+  if(input.action==='liff-start'){
+   if(clientId!==LIFF_ID.split('-')[0])throw Error('LIFF ID นี้ไม่ได้อยู่ใน LINE Login Channel เดียวกับระบบ กรุณาตรวจสอบ LIFF App');
+   const sessionHash=await registrationSessionHash(db,input.session);
+   const signed=await signState({mode:'signup',flow:'liff',sessionHash,exp:Date.now()+600000});
+   const url=new URL('https://liff.line.me/'+LIFF_ID);url.searchParams.set('state',signed);
+   return json({url:url.href,state:signed});
+  }
+  if(input.action==='liff-finish'){
+   const state=await readState(input.state);
+   if(state.mode!=='signup'||state.flow!=='liff'||typeof state.sessionHash!=='string'||!/^[a-f0-9]{64}$/.test(state.sessionHash))throw Error('คำขอสมัครผ่าน LIFF ไม่ถูกต้อง');
+   if(typeof input.id_token!=='string'||input.id_token.length>12000)throw Error('ไม่ได้รับข้อมูลยืนยันจาก LINE');
+   const identity=await linePost('oauth2/v2.1/verify',{id_token:input.id_token,client_id:clientId!});
+   if(String(identity.aud)!==clientId||identity.iss!=='https://access.line.me'||!Number.isFinite(identity.exp)||identity.exp*1000<=Date.now()||!/^U[0-9a-f]{32}$/.test(identity.sub))throw Error('ข้อมูลยืนยัน LIFF ไม่ถูกต้อง');
+   const linked=await query(db.from('line_accounts').select('profile_id').eq('line_user_id',identity.sub).maybeSingle());
+   if(linked)throw Error('LINE นี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบแทนการสมัครใหม่');
+   const session=await query(db.from('registration_sessions').select('code_hash').eq('session_hash',state.sessionHash).gt('expires_at',new Date().toISOString()).single());
+   const id=await query(db.rpc('consume_registration_line_code',{p_hash:session.code_hash,p_line_user:identity.sub}));
+   if(!id)throw Error('การสมัครหมดอายุหรือ LINE นี้ถูกเชื่อมแล้ว กรุณาเริ่มใหม่');
+   return json({mode:'signup',ok:true});
+  }
   if(input.action==='start'){
    if(!['login','link','signup'].includes(input.mode)||typeof input.challenge!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(input.challenge))throw Error('คำขอ LINE Login ไม่ถูกต้อง');
    const state:any={mode:input.mode,challenge:input.challenge,nonce:crypto.randomUUID().replaceAll('-',''),exp:Date.now()+600000};
    if(input.mode==='link')state.profile=(await activeProfile(db,req)).id;
-   if(input.mode==='signup'){
-    if(typeof input.session!=='string'||!/^[a-f0-9]{64}$/.test(input.session))throw Error('กรุณาเริ่มสมัครใหม่');state.sessionHash=await hash(input.session);
-    const session=await query(db.from('registration_sessions').select('invite_id,batch_id').eq('session_hash',state.sessionHash).gt('expires_at',new Date().toISOString()).single());
-    await query(db.from('member_invites').select('id').eq('id',session.invite_id).eq('batch_id',session.batch_id).eq('status','pending').single());
-   }
+   if(input.mode==='signup')state.sessionHash=await registrationSessionHash(db,input.session);
    const signed=await signState(state),url=new URL('https://access.line.me/oauth2/v2.1/authorize');url.search=new URLSearchParams({response_type:'code',client_id:clientId!,redirect_uri:callback,state:signed,scope:'openid profile',nonce:state.nonce,prompt:'consent',code_challenge:state.challenge,code_challenge_method:'S256',bot_prompt:'aggressive'}).toString();return json({url:url.href,state:signed});
   }
   if(input.action!=='finish')throw Error('คำขอไม่ถูกต้อง');const state=await readState(input.state);

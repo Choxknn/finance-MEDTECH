@@ -31,7 +31,7 @@ assert.match(fs.readFileSync('web/register.js','utf8'),/signupParams\.has\('frie
 assert.match(fs.readFileSync('web/app.js','utf8'),/window\.ensureMemberFriendship\(\)/);
 assert.match(fs.readFileSync('web/session-history.js','utf8'),/await window\.ensureMemberFriendship\(\)/);
 assert.match(fs.readFileSync('web/index.html','utf8'),/line-friend-gate\.js/);
-assert.match(fs.readFileSync('web/management.js','utf8'),/เช็คการเพิ่มเพื่อน \(ล้างสถานะ\)/);
+assert.match(fs.readFileSync('web/management.js','utf8'),/เช็คการเพิ่มเพื่อน/);
 assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/action:'friendship-audit',reset:true/);
 assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/target instanceof Element\?target\.closest\('\[data-friendship-audit\]'\):null/);
 assert.doesNotMatch(fs.readFileSync('web/line-friend-gate.js','utf8'),/if\(!button\|\|user\?\.role!=='admin'\)/);

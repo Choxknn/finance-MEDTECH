@@ -1,23 +1,22 @@
 'use strict';
 (()=>{
- const cfg=window.FINANCE_CONFIG,status=document.getElementById('line-liff-status'),retry=document.getElementById('line-liff-retry'),back=document.getElementById('line-liff-back'),oa=document.getElementById('line-liff-oa');
+ const cfg=window.FINANCE_CONFIG,status=document.getElementById('line-liff-status'),retry=document.getElementById('line-liff-retry'),back=document.getElementById('line-liff-back');
  const state=new URLSearchParams(location.search).get('state');
  let busy=false,completed=false;
- oa.href=cfg.lineOaUrl||'https://lin.ee/rpHtjnI';
  const say=(message)=>{status.textContent=message};
  function returnToSignup(){location.replace('./register.html')}
  retry.addEventListener('click',finish);
  back.addEventListener('click',returnToSignup);
  async function finish(){
-  if(busy||completed)return;busy=true;retry.hidden=true;oa.hidden=true;
+  if(busy||completed)return;busy=true;retry.hidden=true;
   try{
    say('กำลังตรวจสอบสถานะการเป็นเพื่อน…');
    const friendship=await liff.getFriendship();
    if(!friendship.friendFlag){
-    say('กรุณากดเพิ่มเพื่อนใน LINE Official Account เพื่อรับแจ้งเตือนจากระบบ');
-    try{await liff.requestFriendship()}catch(error){say('ยังเพิ่มเพื่อนไม่สำเร็จ กรุณากดเปิด LINE Official Account แล้วลองตรวจสอบอีกครั้ง')}
+    say('LINE กำลังแสดงหน้าต่างเพิ่มเพื่อน กรุณากดยอมรับเพื่อดำเนินการต่อ…');
+    try{await liff.requestFriendship()}catch(error){/* The user may dismiss the native LIFF prompt; confirm the friend flag below. */}
     const after=await liff.getFriendship();
-    if(!after.friendFlag){retry.hidden=false;oa.hidden=false;busy=false;return}
+    if(!after.friendFlag){say('ยังไม่พบการเพิ่มเพื่อน กรุณากดยอมรับในหน้าต่าง LINE แล้วกดเรียกหน้าขอเพิ่มเพื่อนอีกครั้ง');retry.hidden=false;busy=false;return}
    }
    say('เพิ่มเพื่อนสำเร็จ กำลังยืนยันบัญชี…');
    const idToken=liff.getIDToken();
@@ -27,7 +26,7 @@
    completed=true;say('เพิ่มเพื่อนและเชื่อม LINE สำเร็จแล้ว กลับไปยังหน้าสมัครสมาชิกเพื่อดำเนินการต่อ');
    back.hidden=false;
    if(liff.isInClient())setTimeout(()=>{try{liff.closeWindow()}catch{}},900);
-  }catch(error){say(error.message||'เชื่อม LINE ไม่สำเร็จ กรุณาลองอีกครั้ง');retry.hidden=false;oa.hidden=false}
+  }catch(error){say(error.message||'เชื่อม LINE ไม่สำเร็จ กรุณาลองอีกครั้ง');retry.hidden=false}
   finally{busy=false}
  }
  async function start(){
@@ -40,5 +39,5 @@
   history.replaceState(null,'',location.pathname);
   await finish();
  }
- start().catch(error=>{say(error.message||'เปิด LIFF ไม่สำเร็จ');retry.hidden=true;oa.hidden=false;back.hidden=false});
+ start().catch(error=>{say(error.message||'เปิด LIFF ไม่สำเร็จ');retry.hidden=true;back.hidden=false});
 })();

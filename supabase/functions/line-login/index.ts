@@ -15,7 +15,7 @@ const base64url=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replaceA
 async function signingKey(){return crypto.subtle.importKey('raw',new TextEncoder().encode(secret('LINE_LOGIN_CHANNEL_SECRET')),{name:'HMAC',hash:'SHA-256'},false,['sign','verify'])}
 async function signState(data:any){const bytes=new TextEncoder().encode(JSON.stringify(data));return hex(bytes)+hex(new Uint8Array(await crypto.subtle.sign('HMAC',await signingKey(),bytes)))}
 async function readState(value:any){if(typeof value!=='string'||value.length>3000||value.length<66||!/^[a-f0-9]+$/.test(value)||value.length%2)throw Error('ข้อมูลยืนยัน LINE ไม่ถูกต้อง');const bytes=unhex(value.slice(0,-64));if(!await crypto.subtle.verify('HMAC',await signingKey(),unhex(value.slice(-64)),bytes))throw Error('ข้อมูลยืนยัน LINE ไม่ถูกต้อง');const data=JSON.parse(new TextDecoder().decode(bytes));if(!Number.isFinite(data.exp)||data.exp<Date.now())throw Error('การเชื่อมต่อหมดอายุ กรุณาลองใหม่');return data}
-async function activeProfile(db:any,req:Request){const bearer=req.headers.get('authorization')?.replace(/^Bearer /,'');if(!bearer)throw Error('กรุณาเข้าสู่ระบบก่อนเชื่อม LINE');const auth=await db.auth.getUser(bearer);if(auth.error||!auth.data.user)throw Error('กรุณาเข้าสู่ระบบใหม่');return query(db.from('profiles').select('id,active').eq('id',auth.data.user.id).eq('active',true).is('deleted_at',null).single())}
+async function activeProfile(db:any,req:Request){const bearer=req.headers.get('authorization')?.replace(/^Bearer /,'');if(!bearer)throw Error('กรุณาเข้าสู่ระบบก่อนเชื่อม LINE');const auth=await db.auth.getUser(bearer);if(auth.error||!auth.data.user)throw Error('กรุณาเข้าสู่ระบบใหม่');return query(db.from('profiles').select('id,active,role').eq('id',auth.data.user.id).eq('active',true).is('deleted_at',null).single())}
 async function linePost(path:string,body:Record<string,string>){const r=await fetch('https://api.line.me/'+path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(body),signal:AbortSignal.timeout(15000)});const j=await r.json();if(!r.ok)throw Error('ยืนยัน LINE ไม่สำเร็จ กรุณาเริ่มใหม่');return j}
 async function verifyOfficialAccountFriendship(lineUserId:string){
  const response=await fetch('https://api.line.me/v2/bot/profile/'+encodeURIComponent(lineUserId),{headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN')},signal:AbortSignal.timeout(12000)});
@@ -36,6 +36,38 @@ Deno.serve(async req=>{
   if(input.action==='status')return json({enabled:configured});
   if(!configured)return json({error:'ยังไม่ได้ตั้งค่า LINE Login กรุณาใช้รหัสนักศึกษาเข้าสู่ระบบก่อน'},503);
   const db=adminDb();
+
+  if(input.action==='friend-gate-start'){
+   if(clientId!==LIFF_ID.split('-')[0])throw Error('LIFF ID นี้ไม่ได้อยู่ใน LINE Login Channel เดียวกับระบบ กรุณาตรวจสอบ LIFF App');
+   const profile=await activeProfile(db,req);
+   if(profile.role==='admin')return json({required:false});
+   const linked=await query(db.from('line_accounts').select('line_user_id').eq('profile_id',profile.id).maybeSingle());
+   if(linked){
+    try{await verifyOfficialAccountFriendship(linked.line_user_id);return json({required:false})}
+    catch(error){if(!(error instanceof Error)||!error.message.startsWith('LINE นี้ยังไม่ได้เพิ่มเพื่อน'))throw error}
+   }
+   const state=await signState({mode:'friend-gate',profile:profile.id,nonce:crypto.randomUUID(),exp:Date.now()+600000});
+   const url=new URL('https://liff.line.me/'+LIFF_ID);url.searchParams.set('friend_gate_state',state);
+   return json({required:true,url:url.href,state});
+  }
+  if(input.action==='friend-gate-finish'){
+   const state=await readState(input.state);
+   if(state.mode!=='friend-gate'||typeof state.profile!=='string'||!/^[0-9a-f-]{36}$/i.test(state.profile))throw Error('คำขอตรวจสอบเพื่อนไลน์ไม่ถูกต้อง');
+   if(typeof input.id_token!=='string'||input.id_token.length>12000)throw Error('ไม่ได้รับข้อมูลยืนยันจาก LINE');
+   const profile=await query(db.from('profiles').select('id,role').eq('id',state.profile).eq('active',true).is('deleted_at',null).single());
+   const identity=await linePost('oauth2/v2.1/verify',{id_token:input.id_token,client_id:clientId!});
+   if(String(identity.aud)!==clientId||identity.iss!=='https://access.line.me'||!Number.isFinite(identity.exp)||identity.exp*1000<=Date.now()||!/^U[0-9a-f]{32}$/.test(identity.sub))throw Error('ข้อมูลยืนยัน LIFF ไม่ถูกต้อง');
+   await verifyOfficialAccountFriendship(identity.sub);
+   const [lineOwner,profileLink]=await Promise.all([
+    query(db.from('line_accounts').select('profile_id').eq('line_user_id',identity.sub).maybeSingle()),
+    query(db.from('line_accounts').select('line_user_id').eq('profile_id',profile.id).maybeSingle())
+   ]);
+   if(lineOwner&&lineOwner.profile_id!==profile.id)throw Error('LINE นี้เชื่อมกับสมาชิกคนอื่นแล้ว กรุณาใช้บัญชี LINE ที่ถูกต้อง');
+   if(profileLink&&profileLink.line_user_id!==identity.sub)throw Error('บัญชีนี้เชื่อมกับ LINE อื่นอยู่ กรุณาใช้ LINE ที่เคยเชื่อมไว้ หรือติดต่อผู้ดูแลระบบ');
+   if(!profileLink)await query(db.from('line_accounts').insert({profile_id:profile.id,line_user_id:identity.sub,display_name:typeof identity.name==='string'?identity.name.slice(0,200):null}));
+   await query(db.from('line_link_codes').delete().eq('profile_id',profile.id));
+   return json({ok:true,mode:'friend-gate'});
+  }
   if(input.action==='liff-start'){
    if(clientId!==LIFF_ID.split('-')[0])throw Error('LIFF ID นี้ไม่ได้อยู่ใน LINE Login Channel เดียวกับระบบ กรุณาตรวจสอบ LIFF App');
    const sessionHash=await registrationSessionHash(db,input.session);

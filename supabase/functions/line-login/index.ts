@@ -29,7 +29,7 @@ Deno.serve(async req=>{
     const session=await query(db.from('registration_sessions').select('invite_id,batch_id').eq('session_hash',state.sessionHash).gt('expires_at',new Date().toISOString()).single());
     await query(db.from('member_invites').select('id').eq('id',session.invite_id).eq('batch_id',session.batch_id).eq('status','pending').single());
    }
-   const signed=await signState(state),url=new URL('https://access.line.me/oauth2/v2.1/authorize');url.search=new URLSearchParams({response_type:'code',client_id:clientId!,redirect_uri:callback,state:signed,scope:'openid profile',nonce:state.nonce,code_challenge:state.challenge,code_challenge_method:'S256',bot_prompt:'normal'}).toString();return json({url:url.href,state:signed});
+   const signed=await signState(state),url=new URL('https://access.line.me/oauth2/v2.1/authorize');url.search=new URLSearchParams({response_type:'code',client_id:clientId!,redirect_uri:callback,state:signed,scope:'openid profile',nonce:state.nonce,prompt:'consent',code_challenge:state.challenge,code_challenge_method:'S256',bot_prompt:'aggressive'}).toString();return json({url:url.href,state:signed});
   }
   if(input.action!=='finish')throw Error('คำขอไม่ถูกต้อง');const state=await readState(input.state);
   if(typeof input.verifier!=='string'||!/^[A-Za-z0-9_-]{43,128}$/.test(input.verifier)||base64url(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(input.verifier))))!==state.challenge)throw Error('ไม่พบคำขอจากเบราว์เซอร์นี้ กรุณาเริ่มใหม่');

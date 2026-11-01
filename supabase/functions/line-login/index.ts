@@ -40,7 +40,7 @@ Deno.serve(async req=>{
    if(clientId!==LIFF_ID.split('-')[0])throw Error('LIFF ID นี้ไม่ได้อยู่ใน LINE Login Channel เดียวกับระบบ กรุณาตรวจสอบ LIFF App');
    const sessionHash=await registrationSessionHash(db,input.session);
    const signed=await signState({mode:'signup',flow:'liff',sessionHash,exp:Date.now()+600000});
-   const url=new URL('https://liff.line.me/'+LIFF_ID);url.searchParams.set('state',signed);
+   const url=new URL('https://liff.line.me/'+LIFF_ID);url.searchParams.set('signup_state',signed);
    return json({url:url.href,state:signed});
   }
   if(input.action==='liff-finish'){

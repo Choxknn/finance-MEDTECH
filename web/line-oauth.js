@@ -16,7 +16,7 @@ window.FinanceLine={
  showLiffAppLink(url){
   document.getElementById('line-launch-dialog')?.remove();
   const box=document.createElement('dialog');box.id='line-launch-dialog';box.className='line-launch-dialog';box.setAttribute('aria-labelledby','line-launch-title');
-  box.innerHTML='<div class="line-launch-symbol" aria-hidden="true">LINE</div><h2 id="line-launch-title">เพิ่มเพื่อนและเชื่อม LINE</h2><p>กดปุ่มด้านล่างเพื่อเปิด LIFF ในแอป LINE แล้วอนุญาตและเพิ่มเพื่อน LINE Official Account</p><a class="line-launch-primary">เปิด LIFF ใน LINE</a><button type="button" class="line-launch-cancel">ยกเลิก</button>';
+  box.innerHTML='<div class="line-launch-symbol" aria-hidden="true">LINE</div><h2 id="line-launch-title">เพิ่มเพื่อน LINE</h2><p>กดปุ่มด้านล่างเพื่อเปิด LINE และยอมรับหน้าต่างเพิ่มเพื่อน</p><a class="line-launch-primary">เปิด LINE เพื่อเพิ่มเพื่อน</a><button type="button" class="line-launch-cancel">ยกเลิก</button>';
   const link=box.querySelector('a');link.href=url.href;link.rel='noreferrer';
   box.querySelector('button').addEventListener('click',()=>box.close());box.addEventListener('close',()=>box.remove(),{once:true});document.body.append(box);box.showModal();
  },

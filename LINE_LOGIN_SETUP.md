@@ -9,7 +9,7 @@
 6. The matching LINE Login Channel ID must be `2011933909`; the server validates that the LIFF ID belongs to this channel. Supabase Edge Function secrets remain:
    - `LINE_LOGIN_CHANNEL_ID`
    - `LINE_LOGIN_CHANNEL_SECRET`
-7. The signup flow opens LIFF, checks `liff.getFriendship()`, invokes `liff.requestFriendship()` if needed, obtains the LIFF ID token, and verifies it server-side before allowing password setup.
+7. The signup flow opens LIFF, checks `liff.getFriendship()`, invokes `liff.requestFriendship()` if needed, obtains the LIFF ID token, checks the friend flag in LIFF, and verifies friendship again through the LINE Messaging API before allowing password setup.
 8. Test with a LINE account that has not added the OA yet. Existing OA friends will pass the friendship check without being prompted again.
 
 Never put LINE Login channel secrets, Messaging API access tokens, or Supabase service-role keys in frontend files.

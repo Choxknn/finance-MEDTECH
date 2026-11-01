@@ -34,7 +34,7 @@
    localStorage.removeItem('finance-medtech-session-v1');
    sessionStorage.removeItem('finance-medtech-session-v1');
    (flow.remember?localStorage:sessionStorage).setItem('finance-medtech-session-v1',JSON.stringify(s));
-   returnHome('line-login-success');return;
+   returnHome();return;
   }
   if(flow.mode==='link'){
    returnHome(result.alreadyLinked?'line-already-linked':'line-linked-success');return;

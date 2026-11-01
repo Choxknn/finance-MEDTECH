@@ -40,6 +40,7 @@ Deno.serve(async req=>{
   if(input.action==='friendship-audit'){
    const actor=await activeProfile(db,req);
    if(actor.role!=='admin')throw Error('เฉพาะแอดมินเท่านั้นที่ตรวจสอบสมาชิกทั้งหมดได้');
+   if(input.reset===true)await query(db.from('line_accounts').update({oa_friend_added_at:null,oa_friend_checked_at:null}).not('profile_id','is',null));
    const accounts=await query(db.from('line_accounts').select('profile_id,line_user_id,oa_friend_added_at'));
    let checked=0,alreadyAdded=0,added=0,notFriend=0,failed=0;
    for(let offset=0;offset<accounts.length;offset+=5){

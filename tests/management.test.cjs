@@ -32,6 +32,25 @@ run("db.profiles[0].name='<img src=x onerror=alert(1)>';render()");assert.ok(!w.
 run("nav('fund')");assert.ok(!w.document.body.textContent.includes('ซื้ออุปกรณ์ส่วนกลาง'));
 assert.equal(run('db.expenses.length'),1,'hidden expense history retained');
 (async()=>{
+ run("demoLogin('admin');nav('members')");
+ const manualButton=w.document.querySelector('[data-action="new-member"]');
+ assert.ok(manualButton,'admin has manual add-member button');
+ assert.match(manualButton.textContent,/เพิ่มสมาชิกด้วยตนเอง/);
+ manualButton.click();
+ const manualForm=w.document.querySelector('#member-form');
+ assert.ok(manualForm,'manual add-member form opens');
+ assert.equal(manualForm.querySelector('[name=password]').required,true,'admin sets initial password');
+ manualForm.querySelector('[name=student_id]').value='67019999';
+ manualForm.querySelector('[name=name]').value='สมาชิกที่แอดมินเพิ่ม';
+ manualForm.querySelector('[name=year]').value='2';
+ manualForm.querySelector('[name=password]').value='demo-password-value';
+ manualForm.requestSubmit();
+ await new Promise(resolve=>setImmediate(resolve));
+ const manualMember=run("db.profiles.find(p=>p.student_id==='67019999')");
+ assert.equal(manualMember.name,'สมาชิกที่แอดมินเพิ่ม');
+ assert.equal(manualMember.year,'2');
+ assert.equal(Object.hasOwn(manualMember,'password'),false,'demo must not retain plaintext password');
+ assert.match(w.document.querySelector('#toast').textContent,/สร้างบัญชีสมาชิกแล้ว/);
  run("demoLogin('admin');editRecord('member','u1')");
  w.document.querySelector('[name=name]').value='ชื่อที่แก้ไข';
  w.document.querySelector('#record-edit').requestSubmit();

@@ -12,6 +12,8 @@ vm.runInContext(fs.readFileSync(root+'/web/app.js','utf8'),context);
 vm.runInContext(fs.readFileSync(root+'/web/management.js','utf8'),context);
 vm.runInContext(fs.readFileSync(root+'/web/records.js','utf8'),context);
 vm.runInContext(fs.readFileSync(root+'/web/bills.js','utf8'),context);
+vm.runInContext(fs.readFileSync(root+'/web/account-access.js','utf8'),context);
+vm.runInContext(fs.readFileSync(root+'/web/batch-registration.js','utf8'),context);
 const run=s=>vm.runInContext(s,context);
 run("demoLogin('admin')");
 for(const view of ['dashboard','members','rounds','fund','reports','audit','settings','review']){
@@ -33,12 +35,15 @@ run("nav('fund')");assert.ok(!w.document.body.textContent.includes('ซื้อ
 assert.equal(run('db.expenses.length'),1,'hidden expense history retained');
 (async()=>{
  run("demoLogin('admin');nav('members')");
- const manualButton=w.document.querySelector('[data-action="new-member"]');
- assert.ok(manualButton,'admin has manual add-member button');
- assert.match(manualButton.textContent,/เพิ่มสมาชิกด้วยตนเอง/);
+ const manualButton=w.document.querySelector('.page-head [data-action="manual-add-member"]');
+ assert.ok(manualButton,'admin has manual add-member button in the top action row');
+ assert.equal(manualButton.textContent.trim(),'เพิ่มสมาชิก');
+ assert.equal(w.document.querySelector('.member-create-banner'),null,'no duplicate manual-add banner below the header');
+ assert.ok(w.document.querySelector('[data-new-invite]'),'member self-registration remains a separate top action');
  manualButton.click();
  const manualForm=w.document.querySelector('#member-form');
- assert.ok(manualForm,'manual add-member form opens');
+ assert.ok(manualForm,'manual add-member form opens directly');
+ assert.equal(w.document.querySelector('#prepare-members-form'),null,'manual add must not open prepared signup');
  assert.equal(manualForm.querySelector('[name=password]').required,true,'admin sets initial password');
  manualForm.querySelector('[name=student_id]').value='67019999';
  manualForm.querySelector('[name=name]').value='สมาชิกที่แอดมินเพิ่ม';
@@ -51,7 +56,13 @@ assert.equal(run('db.expenses.length'),1,'hidden expense history retained');
  assert.equal(manualMember.year,'2');
  assert.equal(Object.hasOwn(manualMember,'password'),false,'demo must not retain plaintext password');
  assert.match(w.document.querySelector('#toast').textContent,/สร้างบัญชีสมาชิกแล้ว/);
- run("demoLogin('admin');editRecord('member','u1')");
+ // The prepared list remains a separate signup-only workflow.
+ run("demoLogin('admin');nav('members');registrationList()");
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.ok(w.document.querySelector('[data-prepare-members]'),'signup list keeps its own prepare-members action');
+ w.document.querySelector('[data-prepare-members]').click();
+ assert.ok(w.document.querySelector('#prepare-members-form'),'prepared signup form opens independently');
+ run("$('#dialog').close();demoLogin('admin');editRecord('member','u1')");
  w.document.querySelector('[name=name]').value='ชื่อที่แก้ไข';
  w.document.querySelector('#record-edit').requestSubmit();
  await new Promise(resolve=>setImmediate(resolve));

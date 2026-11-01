@@ -13,5 +13,12 @@ window.FinanceLine={
  async request(data,accessToken){const cfg=window.FINANCE_CONFIG,r=await fetch(cfg.supabaseUrl+'/functions/v1/line-login',{method:'POST',headers:{apikey:cfg.supabaseAnonKey,'Content-Type':'application/json',...(accessToken?{Authorization:'Bearer '+accessToken}:{})},body:JSON.stringify(data)});const j=await r.json();if(!r.ok)throw Error(j.error||'เชื่อมต่อ LINE ไม่สำเร็จ');return j},
  async start(mode,{accessToken,session,remember=true}={}){const bytes=crypto.getRandomValues(new Uint8Array(32)),encode=b=>btoa(String.fromCharCode(...b)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');const verifier=encode(bytes),challenge=encode(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))));const result=await this.request({action:'start',mode,session,challenge},accessToken);const url=new URL(result.url);if(url.origin!=='https://access.line.me')throw Error('ลิงก์ LINE ไม่ถูกต้อง');sessionStorage.setItem('finance-line-oauth',JSON.stringify({state:result.state,verifier,mode,remember,createdAt:Date.now()}));if(this.isExternalMobile()){this.showAppLink(url);return}location.assign(url.href)}
 ,
- async startLiffSignup(session){const cfg=window.FINANCE_CONFIG,result=await this.request({action:'liff-start',session});const url=new URL(result.url);if(url.origin!=='https://liff.line.me'||url.pathname!=='/'+cfg.lineLiffId)throw Error('ลิงก์ LIFF ไม่ถูกต้อง');location.assign(url.href)}
+ showLiffAppLink(url){
+  document.getElementById('line-launch-dialog')?.remove();
+  const box=document.createElement('dialog');box.id='line-launch-dialog';box.className='line-launch-dialog';box.setAttribute('aria-labelledby','line-launch-title');
+  box.innerHTML='<div class="line-launch-symbol" aria-hidden="true">LINE</div><h2 id="line-launch-title">เพิ่มเพื่อนและเชื่อม LINE</h2><p>กดปุ่มด้านล่างเพื่อเปิด LIFF ในแอป LINE แล้วอนุญาตและเพิ่มเพื่อน LINE Official Account</p><a class="line-launch-primary">เปิด LIFF ใน LINE</a><button type="button" class="line-launch-cancel">ยกเลิก</button>';
+  const link=box.querySelector('a');link.href=url.href;link.rel='noreferrer';
+  box.querySelector('button').addEventListener('click',()=>box.close());box.addEventListener('close',()=>box.remove(),{once:true});document.body.append(box);box.showModal();
+ },
+ async startLiffSignup(session){const cfg=window.FINANCE_CONFIG,result=await this.request({action:'liff-start',session});const url=new URL(result.url);if(url.origin!=='https://liff.line.me'||url.pathname!=='/'+cfg.lineLiffId)throw Error('ลิงก์ LIFF ไม่ถูกต้อง');if(this.isExternalMobile()){this.showLiffAppLink(url);return}location.assign(url.href)}
 };

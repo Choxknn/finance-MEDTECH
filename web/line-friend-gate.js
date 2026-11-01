@@ -40,8 +40,9 @@ window.addEventListener('pageshow',()=>{
 });
 
 document.addEventListener('click',async event=>{
- const button=event.target.closest('[data-friendship-audit]');
- if(!button||user?.role!=='admin')return;
+ const target=event.target;
+ const button=target instanceof Element?target.closest('[data-friendship-audit]'):null;
+ if(!button)return;
  event.preventDefault();event.stopImmediatePropagation();
  if(button.disabled)return;
  button.disabled=true;const original=button.textContent;button.textContent='กำลังตรวจสอบ…';
@@ -49,7 +50,7 @@ document.addEventListener('click',async event=>{
   await ensureLiveSession();
   const result=await FinanceLine.request({action:'friendship-audit',reset:true},token);
   await refresh();render();
-  toast(`ตรวจสอบ ${result.checked} บัญชีใหม่ · เพิ่มเพื่อนแล้ว ${result.added} · ยังไม่ได้เพิ่มเพื่อน ${result.notFriend}${result.failed?` · ตรวจสอบไม่สำเร็จ ${result.failed}`:''}`);
+  toast(`ตรวจสอบแล้ว ${result.checked} บัญชี · เพิ่มเพื่อนแล้ว ${result.added} · ยังไม่ได้เพิ่มเพื่อน ${result.notFriend} · ตรวจสอบผิดพลาด ${result.failed}${result.alreadyAdded?` · เดิมที่ยืนยันแล้ว ${result.alreadyAdded}`:''}`);
  }catch(error){toast(error instanceof Error?error.message:'ตรวจสอบสถานะเพื่อนไม่สำเร็จ')}
  finally{if(button.isConnected){button.disabled=false;button.textContent=original}}
 },true);

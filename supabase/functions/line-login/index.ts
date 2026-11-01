@@ -62,7 +62,7 @@ Deno.serve(async req=>{
    const state:any={mode:input.mode,challenge:input.challenge,nonce:crypto.randomUUID().replaceAll('-',''),exp:Date.now()+600000};
    if(input.mode==='link')state.profile=(await activeProfile(db,req)).id;
    if(input.mode==='signup')state.sessionHash=await registrationSessionHash(db,input.session);
-   const signed=await signState(state),url=new URL('https://access.line.me/oauth2/v2.1/authorize');url.search=new URLSearchParams({response_type:'code',client_id:clientId!,redirect_uri:callback,state:signed,scope:'openid profile',nonce:state.nonce,prompt:'consent',code_challenge:state.challenge,code_challenge_method:'S256',bot_prompt:'aggressive'}).toString();return json({url:url.href,state:signed});
+   const signed=await signState(state),url=new URL('https://access.line.me/oauth2/v2.1/authorize');const params=new URLSearchParams({response_type:'code',client_id:clientId!,redirect_uri:callback,state:signed,scope:'openid profile',nonce:state.nonce,code_challenge:state.challenge,code_challenge_method:'S256'});if(input.mode==='signup'){params.set('prompt','consent');params.set('bot_prompt','normal')}else if(input.mode==='link'){params.set('bot_prompt','normal')}url.search=params.toString();return json({url:url.href,state:signed});
   }
   if(input.action!=='finish')throw Error('คำขอไม่ถูกต้อง');const state=await readState(input.state);
   if(typeof input.verifier!=='string'||!/^[A-Za-z0-9_-]{43,128}$/.test(input.verifier)||base64url(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(input.verifier))))!==state.challenge)throw Error('ไม่พบคำขอจากเบราว์เซอร์นี้ กรุณาเริ่มใหม่');

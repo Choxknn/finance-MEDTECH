@@ -37,7 +37,7 @@ async function flushFinanceLive(){
    for(const key of settingKeys)if(typeof db.settings?.[key]==='string')cfg[key]=db.settings[key];
   }
   if(shop){
-   if(stable(shopData)!==stable(shop))changed=true;
+   if(!shopLoaded||shopOwner!==owner||stable(shopData)!==stable(shop))changed=true;
    shopData=shop;shopLoaded=true;shopOwner=owner;db.shop_orders=shop.orders||[];
    shopSelected=new Set([...shopSelected].filter(id=>(shop.orders||[]).some(o=>o.id===id)));
    if(summary){if(stable(shopSummary)!==stable(summary))changed=true;shopSummary=summary}

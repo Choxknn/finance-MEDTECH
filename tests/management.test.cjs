@@ -31,6 +31,11 @@ run("db.profiles.find(p=>p.id==='u1').line_friend_check_status='error';db.profil
 assert.match(w.document.body.textContent,/ตรวจสอบไม่สำเร็จ/,'admin sees a technical check failure');
 assert.ok(w.document.querySelector('.member-status--error'),'technical failure has a warning-colored status chip');
 assert.doesNotMatch(w.document.body.textContent,/ตรวจล่าสุด|ตรวจพบเพิ่มเพื่อนแล้ว/,'member list hides friendship check timestamps');
+run("db.profiles.push({id:'a2',student_id:'0002',name:'ผู้ดูแลรหัสต่ำ',year:'',role:'admin'},{id:'m10',student_id:'67011110',name:'สมาชิก10',year:'1',role:'member'},{id:'m2',student_id:'6701112',name:'สมาชิก2',year:'1',role:'member'});render()");
+const memberOrder=[...w.document.querySelectorAll('.table-wrap tbody tr')].map(row=>({name:row.querySelector('.member-name').textContent,role:row.cells[1].textContent.includes('แอดมิน')?'admin':'member'}));
+assert.deepEqual(memberOrder.map(row=>row.name),['ผู้ดูแลรหัสต่ำ','ผู้ดูแลการเงิน','สมาชิก2','สมาชิก10','ชวิน เมดเทค','พิมพ์ชนก ใจดี'],'members are grouped by privilege (admin first), then sorted by numeric student ID ascending');
+assert.deepEqual(memberOrder.map(row=>row.role),['admin','admin','member','member','member','member'],'all admins appear before regular members');
+
 for(const view of ['dashboard','members','rounds','fund','reports','audit','settings','review']){
  run(`nav('${view}')`);assert.ok(w.document.querySelector('h1'),view+' renders');assert.ok(!w.document.body.textContent.includes('undefined'),view+' has no undefined labels');
 }

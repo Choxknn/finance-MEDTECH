@@ -29,5 +29,11 @@ assert.match(fs.readFileSync('web/register.js','utf8'),/signupParams\.has\('frie
 assert.match(fs.readFileSync('web/app.js','utf8'),/window\.ensureMemberFriendship\(\)/);
 assert.match(fs.readFileSync('web/session-history.js','utf8'),/await window\.ensureMemberFriendship\(\)/);
 assert.match(fs.readFileSync('web/index.html','utf8'),/line-friend-gate\.js/);
+assert.match(fs.readFileSync('web/management.js','utf8'),/เช็คการเพิ่มเพื่อน \(ล้างสถานะ\)/);
+assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/action:'friendship-audit',reset:true/);
+assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/if\(input\.reset===true\).*oa_friend_added_at:null/s);
+assert.match(fs.readFileSync('web/line-oauth.js','utf8'),/localStorage\.setItem\('finance-line-oauth'/);
+assert.match(fs.readFileSync('web/line-callback.js','utf8'),/localStorage\.getItem\('finance-line-oauth'\)/);
+assert.match(fs.readFileSync('web/register.js','utf8'),/localStorage\.getItem\('finance-signup-resume'\)/);
 
 console.log('LINE signup, existing-member friend gate, duplicate account modal and admin add-member flows passed')})().catch(e=>{console.error(e);process.exitCode=1});

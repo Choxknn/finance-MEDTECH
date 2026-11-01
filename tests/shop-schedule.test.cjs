@@ -13,6 +13,7 @@ test('shop data is Realtime on every visible app page and stops when the app is 
  assert.match(live,/const should=!!user&&cfg\.mode==='live'&&!document\.hidden/);
  assert.doesNotMatch(live,/view\.startsWith\('shop'\)/);
  assert.match(live,/if\(status==='SUBSCRIBED'\)[\s\S]*?queueFinanceShop\(\)/);
+ assert.match(live,/financeLiveShopChannel=channel;\s*queueFinanceShop\(\);/);
  assert.match(live,/client\.removeChannel\(channel\)/);
  assert.match(live,/document\.addEventListener\('visibilitychange'/);
  assert.doesNotMatch(live,/setInterval\(syncFinanceLive/);

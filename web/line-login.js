@@ -4,6 +4,20 @@ const lineLoginRender=render;render=function(){lineLoginRender();if(!user){const
 document.addEventListener('click',async e=>{const b=e.target.closest('#line-login-button,[data-action="link-line"]');if(!b)return;if(b.dataset.action==='link-line'&&!lineLoginEnabled)return;e.preventDefault();e.stopImmediatePropagation();b.disabled=true;try{if(cfg.mode!=='live')throw Error('โหมดทดลองไม่เชื่อมต่อ LINE จริง');if(user)await ensureLiveSession();await FinanceLine.start(user?'link':'login',{accessToken:user?token:null,remember:document.querySelector('[name=remember]')?.checked??true})}catch(err){toast(err.message)}finally{if(b.isConnected)b.disabled=false}},true);
 if(cfg.mode==='live')FinanceLine.request({action:'status'}).then(r=>{lineLoginEnabled=r.enabled;if(user&&lineLoginEnabled)document.querySelectorAll('[data-action="link-line"]').forEach(b=>b.textContent=user.line_linked?'เปลี่ยนบัญชี LINE':'เชื่อมบัญชีด้วย LINE Login')}).catch(()=>{});
 render();
+window.addEventListener('load',()=>{
+ const notice=sessionStorage.getItem('finance-line-return-notice');
+ if(!notice)return;
+ sessionStorage.removeItem('finance-line-return-notice');
+ const messages={
+  'line-login-success':['เข้าสู่ระบบด้วย LINE สำเร็จ','<p>ยินดีต้อนรับกลับสู่ Finance MEDTECH</p>'],
+  'line-linked-success':['เชื่อมบัญชี LINE สำเร็จ','<p>บัญชีของคุณพร้อมรับการแจ้งเตือนผ่าน LINE แล้ว</p>'],
+  'line-already-linked':['เชื่อมบัญชี LINE ไว้แล้ว','<p>LINE นี้เชื่อมกับบัญชีของคุณอยู่แล้ว ไม่จำเป็นต้องเชื่อมซ้ำ</p>'],
+  'line-linked-other':['LINE นี้ถูกใช้งานแล้ว','<p>บัญชี LINE นี้เชื่อมกับสมาชิกคนอื่นอยู่ จึงไม่สามารถนำมาเชื่อมซ้ำได้</p><p class="help">กรุณาใช้ LINE ของคุณเอง หรือติดต่อผู้ดูแลระบบ</p>'],
+  'line-already-registered':['บัญชี LINE นี้มีสมาชิกอยู่แล้ว','<p>LINE นี้มีบัญชี Finance MEDTECH อยู่แล้ว กรุณาเข้าสู่ระบบด้วย LINE แทนการสมัครซ้ำ</p>']
+ };
+ const entry=messages[notice];
+ if(entry)modal(entry[0],entry[1]);
+},{once:true});
 
 let ownLineProfile=null,ownLineProfileOwner='',ownLineProfilePending=false;
 function paintLineProfile(){if(!user||view!=='profile')return;const button=document.querySelector('[data-action="link-line"]'),body=button?.closest('.panel-body');if(!body)return;button.textContent=user.line_linked?'เปลี่ยนบัญชี LINE':'เชื่อมบัญชี LINE';let status=body.querySelector('.line-account-status');if(!status){body.querySelectorAll('p').forEach(p=>p.remove());body.insertAdjacentHTML('afterbegin','<div class="line-account-status" role="status"></div>');status=body.querySelector('.line-account-status')}const info=ownLineProfileOwner===user.id?ownLineProfile:null;status.innerHTML=user.line_linked?`<span class="badge approved">เชื่อมบัญชี LINE แล้ว</span><div class="line-account-name">${icon('person')}<strong>${esc(info?.display_name|| (info?'ยังดึงชื่อ LINE ไม่ได้':'กำลังตรวจสอบชื่อ LINE…'))}</strong></div>`:'<p>ยังไม่ได้เชื่อมบัญชี LINE</p><p class="help">เชื่อมเพื่อเข้าสู่ระบบและรับการแจ้งเตือน</p>';}

@@ -2,12 +2,16 @@ const {test}=require('node:test');const assert=require('node:assert/strict');con
 test('sale boundaries use absolute instants and respect manual closure',()=>{const p={active:true,sale_starts_at:'2026-10-18T09:00:00+07:00',sale_ends_at:'2026-10-18T17:00:00+07:00'};assert.equal(c.shopSaleState(p,Date.parse('2026-10-18T01:59:59Z')),'scheduled');assert.equal(c.shopSaleState(p,Date.parse('2026-10-18T02:00:00Z')),'open');assert.equal(c.shopSaleState(p,Date.parse('2026-10-18T10:00:00Z')),'ended');assert.equal(c.shopSaleState({...p,active:false},Date.parse('2026-10-18T03:00:00Z')),'closed');assert.equal(c.shopSaleState({active:true}), 'open')});
 test('saved sale instants reopen in Bangkok local time',()=>{assert.equal(c.shopLocalTime('2026-10-18T02:15:00Z'),'2026-10-18T09:15');assert.equal(c.shopLocalTime(null),'')});
 
-test('shop data is event-driven only while the store page is open',()=>{
+test('shop data is Realtime on every visible app page and stops when the app is hidden',()=>{
  const live=fs.readFileSync('web/live-updates.js','utf8');
  assert.match(live,/client\.channel\('finance:shop'/);
- assert.match(live,/view\.startsWith\('shop'\)/);
- assert.match(live,/financeLiveShopPending/);
+ assert.match(live,/function queueFinanceShop\(\)\{if\(!user\|\|document\.hidden\)return;/);
+ assert.match(live,/doShop=financeLiveShopPending/);
+ assert.match(live,/const should=!!user&&cfg\.mode==='live'&&!document\.hidden/);
+ assert.doesNotMatch(live,/view\.startsWith\('shop'\)/);
+ assert.match(live,/if\(status==='SUBSCRIBED'\)[\s\S]*?queueFinanceShop\(\)/);
  assert.match(live,/client\.removeChannel\(channel\)/);
+ assert.match(live,/document\.addEventListener\('visibilitychange'/);
  assert.doesNotMatch(live,/setInterval\(syncFinanceLive/);
  const shop=fs.readFileSync('web/shop.js','utf8');
  assert.match(shop,/if\(v\.startsWith\('shop'\)\)\{shopLoadError=''/);
@@ -17,4 +21,5 @@ test('shop data is event-driven only while the store page is open',()=>{
  const index=fs.readFileSync('web/index.html','utf8');
  assert.match(index,/live-updates\.js\?v=20261103eventdriven/);
  assert.match(index,/shop\.js\?v=20261103eventdriven/);
+ assert.match(index,/session-history\.js\?v=20261103eventdriven/);
 });

@@ -53,7 +53,14 @@
    say('ยืนยันการเพิ่มเพื่อนเรียบร้อยแล้ว กำลังกลับไปหน้าสมัครสมาชิก…');
    back.hidden=false;
    if(liff.isInClient())setTimeout(()=>{try{liff.closeWindow()}catch{}},650);
-  }catch(error){say(error.message||'ยืนยัน LINE ไม่สำเร็จ กรุณาลองอีกครั้ง');retry.hidden=false}
+  }catch(error){
+   const message=error.message||'ยืนยัน LINE ไม่สำเร็จ กรุณาลองอีกครั้ง';
+   if(/LINE นี้มีบัญชีแล้ว|LINE นี้เชื่อมกับบัญชีอื่น/.test(message)){
+    sessionStorage.setItem('finance-line-return-notice','line-already-registered');
+    location.replace('./');return;
+   }
+   say(message);retry.hidden=false;
+  }
   finally{busy=false}
  }
  retry.addEventListener('click',finish);

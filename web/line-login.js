@@ -9,7 +9,6 @@ window.addEventListener('load',()=>{
  if(!notice)return;
  sessionStorage.removeItem('finance-line-return-notice');
  const messages={
-  'line-login-success':['เข้าสู่ระบบด้วย LINE สำเร็จ','<p>ยินดีต้อนรับกลับสู่ Finance MEDTECH</p>'],
   'line-linked-success':['เชื่อมบัญชี LINE สำเร็จ','<p>บัญชีของคุณพร้อมรับการแจ้งเตือนผ่าน LINE แล้ว</p>'],
   'line-already-linked':['เชื่อมบัญชี LINE ไว้แล้ว','<p>LINE นี้เชื่อมกับบัญชีของคุณอยู่แล้ว ไม่จำเป็นต้องเชื่อมซ้ำ</p>'],
   'line-linked-other':['LINE นี้ถูกใช้งานแล้ว','<p>บัญชี LINE นี้เชื่อมกับสมาชิกคนอื่นอยู่ จึงไม่สามารถนำมาเชื่อมซ้ำได้</p><p class="help">กรุณาใช้ LINE ของคุณเอง หรือติดต่อผู้ดูแลระบบ</p>'],

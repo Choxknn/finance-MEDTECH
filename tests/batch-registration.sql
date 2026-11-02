@@ -12,13 +12,13 @@ begin
  info:=start_registration_session(h,sid,sh,ch);assert info->>'student_id'=sid;
  assert not (registration_session_state(sh,h,sid,false)->>'linked')::boolean;
  blocked:=false;begin perform registration_session_state(sh,h,sid,true);exception when others then blocked:=true;end;assert blocked,'LINE required';
- assert consume_registration_line_code(ch,lineid) is not null;
- assert consume_registration_line_code(ch,lineid) is null,'LINE code one-time';
+ assert consume_registration_line_code_with_name(ch,lineid,'LINE Test Name') is not null;
+ assert consume_registration_line_code_with_name(ch,lineid,'LINE Test Name') is null,'LINE code one-time';
  blocked:=false;begin perform registration_session_state(sh,h,sid||'1',true);exception when others then blocked:=true;end;assert blocked,'Session bound to student';
  info:=registration_session_state(sh,h,sid,true);
  blocked:=false;begin perform registration_session_state(sh,h,sid,true);exception when others then blocked:=true;end;assert blocked,'Concurrent signup blocked';
  insert into auth.users(id,email) values(uid,sid||'@qa.invalid');perform finish_member_invite(info->>'token_hash',uid);
- assert exists(select 1 from line_accounts where profile_id=uid and line_user_id=lineid and oa_friend_added_at is not null and oa_friend_checked_at is not null and oa_friend_check_status='added' and oa_friend_check_error is null),'New LINE signup saved as friend already added';
+ assert exists(select 1 from line_accounts where profile_id=uid and line_user_id=lineid and display_name='LINE Test Name' and oa_friend_added_at is not null and oa_friend_checked_at is not null and oa_friend_check_status='added' and oa_friend_check_error is null),'New LINE signup saved LINE display name and verified friendship';
  assert exists(select 1 from profiles where id=uid and student_id=sid and role='member');
  perform start_registration_session(h,sid||'1',repeat('d',64),repeat('e',64));
  perform revoke_member_invite((select id from member_invites where student_id=sid||'1' and status='pending'),a);
@@ -28,6 +28,7 @@ begin
  assert not (select data->'fund_categories' @> '["QA category"]'::jsonb from site_settings where id=true);
  perform add_fund_category('QA category',a);assert not (select data->'fund_categories_deleted' @> '["qa category"]'::jsonb from site_settings where id=true);
  assert not has_function_privilege('authenticated','public.registration_session_state(text,text,text,boolean)','execute');
+ assert not has_function_privilege('authenticated','public.consume_registration_line_code_with_name(text,text,text)','execute');
  assert not has_table_privilege('anon','public.registration_sessions','select');
 end;$$;
 rollback;

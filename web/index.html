@@ -5,19 +5,19 @@
 <link rel="stylesheet" href="./bot-protection.css?v=20261014">
 <link rel="stylesheet" href="./password-visibility.css?v=20261015"><script src="./password-visibility.js?v=20261017focus" defer></script><link rel="stylesheet" href="./mitr-fonts.css?v=20261017"><link rel="stylesheet" href="./mali-polish.css?v=20261021primary"><link rel="stylesheet" href="./auth-refresh.css?v=20261017name"><link rel="stylesheet" href="./line-launch.css?v=20261018line"><link rel="stylesheet" href="./member-line-status.css?v=20261103layout1"><style>
 [data-recent-login][hidden]{display:none!important}
-#boot-screen{position:fixed;inset:0;z-index:10000;display:block;overflow:hidden;background:#fff!important;text-align:center;opacity:1;visibility:visible;transition:opacity .85s ease,visibility .85s ease}
+#boot-screen{position:fixed;inset:0;z-index:10000;display:block;overflow:hidden;background:#fff!important;text-align:center;opacity:1;visibility:visible;transition:opacity 1.35s ease,visibility 1.35s ease}
 #boot-screen.boot-leave{opacity:0;visibility:hidden;pointer-events:none}
 #boot-screen .boot-card{position:absolute;inset:0;width:100%;height:100%;box-sizing:border-box;max-width:none;margin:0;padding:0;border:0;border-radius:0;background:#fff;box-shadow:none;backdrop-filter:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
 #boot-screen .boot-logo{display:none}
-#boot-screen .boot-wordmark{width:clamp(104px,22vw,164px);height:clamp(104px,22vw,164px);margin:3vh 0 0;display:grid;place-items:center;animation:medtech-mark-in 1.15s cubic-bezier(.2,.85,.25,1) both;will-change:transform,opacity}#boot-screen .boot-wordmark img{display:block;width:100%;height:100%;object-fit:contain}
+#boot-screen .boot-wordmark{width:clamp(150px,34vw,240px);height:clamp(150px,34vw,240px);margin:3vh 0 0;display:grid;place-items:center;animation:medtech-mark-in 1.15s cubic-bezier(.2,.85,.25,1) both;will-change:transform,opacity}#boot-screen .boot-wordmark img{display:block;width:100%;height:100%;object-fit:contain}
 #boot-screen #boot-hint{position:absolute;left:0;right:0;bottom:max(22px,env(safe-area-inset-bottom));font-size:12px;letter-spacing:.2em;font-weight:600;color:#b42336;margin:0;text-transform:uppercase;white-space:nowrap}
 #boot-screen .boot-card{padding-bottom:2vh}
 
 #boot-screen .boot-dots{display:none}
 #boot-screen #boot-retry{position:absolute;bottom:max(56px,calc(env(safe-area-inset-bottom) + 34px));left:50%;transform:translateX(-50%)}
-#boot-screen.boot-leave .boot-wordmark{animation:medtech-mark-out .85s cubic-bezier(.85,0,.15,1) both}
+#boot-screen.boot-leave .boot-wordmark{animation:medtech-mark-out 1.35s cubic-bezier(.4,0,.2,1) both}
 @keyframes medtech-mark-in{0%{opacity:0;transform:translate3d(0,24px,0) scale(.72)}48%{opacity:1;transform:translate3d(0,-7px,0) scale(1.07)}68%{transform:translate3d(0,3px,0) scale(.98)}84%{transform:translate3d(0,-2px,0) scale(1.01)}100%{opacity:1;transform:translate3d(0,0,0) scale(1)}}
-@keyframes medtech-mark-out{0%{opacity:1;transform:scale(1);filter:blur(0)}100%{opacity:0;transform:scale(1.55);filter:blur(3px)}}
+@keyframes medtech-mark-out{0%{opacity:1;transform:scale(1);filter:blur(0)}35%{opacity:1;transform:scale(1.08);filter:blur(0)}100%{opacity:0;transform:scale(1.6);filter:blur(3px)}}
 @media(max-height:500px){#boot-screen .boot-wordmark{font-size:12px}#boot-screen #boot-hint{bottom:max(10px,env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){#boot-screen,#boot-screen *{animation:none!important;transition:opacity .2s ease!important}}
 </style></head><body><div id="boot-screen" role="status" aria-live="polite"><div class="boot-card"><div class="boot-wordmark" aria-label="MEDTECH"><img src="./medtech-mark-20261011.png" alt="MEDTECH logo"></div><p id="boot-hint">PAYMENT SYSTEM</p><div class="boot-dots" aria-hidden="true"><i></i><i></i><i></i></div><button id="boot-retry" class="secondary small" hidden>ลองเชื่อมต่ออีกครั้ง</button></div></div><div id="app" inert aria-busy="true"></div><noscript>กรุณาเปิด JavaScript เพื่อใช้งาน finance MEDTECH</noscript><dialog id="dialog"></dialog><div id="toast" role="status" aria-live="polite"></div><script src="./record-modals.js?v=20261022evidence" defer></script>

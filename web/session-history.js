@@ -17,7 +17,17 @@ window.addEventListener('storage',e=>{if(e.key!==sessionKey)return;if(!e.newValu
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&user)ensureLiveSession().catch(()=>{})});
 function latestPaymentHistory(rows){const groups=new Map();for(const p of rows){const key=p.profile_id+'|'+(p.charge_id||p.id);const previous=groups.get(key);const stamp=Date.parse(p.created_at)||0;if(!previous||stamp>=(Date.parse(previous.created_at)||0))groups.set(key,p)}return [...groups.values()].sort((a,b)=>(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0))}
 const historyContent=content;content=function(){if(view!=='history')return historyContent();const rows=latestPaymentHistory(db.payments.filter(p=>p.profile_id===user.id));return head('ประวัติการชำระ','แสดงรายการล่าสุดของแต่ละบิล')+panel('การชำระเงิน',paymentTable(rows))};
-document.addEventListener('click',e=>{const b=e.target.closest('[data-history-proof]');if(!b)return;const p=db.payments.find(p=>p.id===b.dataset.historyProof&&(p.profile_id===user.id||user.role==='admin'));if(!p)return;modal('หลักฐานการชำระเงิน',`<p>฿${money(p.amount)} · ${esc(labels[p.status])} · ${dateTime(p.created_at)}</p>${paymentVerificationHtml(p)}${proofHtml('payment',p,true)}`);ensureLiveSession().then(watchProofs).catch(e=>toast(e.message))});
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-history-proof]');if(!b)return;
+ const p=db.payments.find(p=>p.id===b.dataset.historyProof&&(p.profile_id===user.id||user.role==='admin'));if(!p)return;
+ const c=db.charges.find(c=>c.id===p.charge_id)||p.charge_snapshot||{},person=db.profiles.find(x=>x.id===p.profile_id)||p.member_snapshot||{};
+ const title=round(c.round_id).title||c.title||'รายการชำระเงิน';
+ const details=[mpReadingRow('สมาชิก',esc(person.name||'สมาชิก'),'users'),mpReadingRow('วันที่ชำระ',esc(mpDateTime(p.created_at)),'calendar')];
+ if(p.reviewed_at)details.push(mpReadingRow('วันที่ตรวจสอบ',esc(mpDateTime(p.reviewed_at)),'check'));
+ if(p.trans_ref)details.push(mpReadingRow('เลขอ้างอิง',esc(p.trans_ref),'document'));
+ modal('หลักฐานการชำระเงิน',`<section class="reading-record"><div class="reading-summary"><span class="reading-summary-icon">${icon('history')}</span><div><small>${esc(title)}</small><strong>฿${money(p.amount)}</strong></div>${badge(p.status)}</div><dl class="reading-list">${details.join('')}</dl>${proofHtml('payment',p,true)}</section>`);
+ ensureLiveSession().then(watchProofs).catch(err=>toast(err.message));
+});
 window.addEventListener('load',()=>restoreLoginSession().finally(()=>window.finishBoot?.()),{once:true});
 
 

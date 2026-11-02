@@ -75,6 +75,10 @@
   const read=e.target.closest('[data-read-notice]');
   if(read&&['Enter',' '].includes(e.key)){e.preventDefault();void changeState(read.dataset.kind,read.dataset.readNotice,'read',read)}
  });
+ if(typeof showPaymentSuccess==='function'){
+  const previousPaymentSuccess=showPaymentSuccess;
+  showPaymentSuccess=function(...args){const result=previousPaymentSuccess(...args);updateBadge();return result};
+ }
  const previousRender=render;
  render=function(){previousRender();updateBadge()};
  if(typeof renderInBackground==='function'){

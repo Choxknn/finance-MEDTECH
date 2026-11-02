@@ -1,0 +1,14 @@
+.notification-center-card{position:relative;align-items:flex-start;padding:18px 48px 18px 0!important;min-width:0}
+.notification-center-card .message-symbol{margin-top:2px;flex:0 0 38px}
+.notification-read-target{display:block;flex:1;min-width:0;cursor:pointer;border:0;background:transparent;color:inherit;text-align:left;padding:0;font:inherit;outline-offset:5px}
+.notification-read-target:focus-visible{outline:2px solid #bd3154;border-radius:8px}
+.notification-read-target .message-heading{gap:10px;flex-wrap:wrap}
+.notification-read-target .message-description{white-space:pre-line}
+.notification-center-card.is-unread .message-content h3{font-weight:700}
+.notification-dismiss{position:absolute;right:8px;top:9px;width:30px;height:30px;min-width:30px;padding:0!important;border:0!important;border-radius:50%!important;background:#f8f1f4!important;color:#967887!important;display:grid;place-items:center;box-shadow:none!important;line-height:1;font-size:20px!important}
+.notification-dismiss:hover{background:#f5e4eb!important;color:#b42349!important}
+.notice-unread-dot{position:absolute;right:0;top:0;width:9px;height:9px;border:2px solid #fff;border-radius:50%;background:#df3046;box-sizing:content-box;pointer-events:none}
+.notification-center-card .notification-image{display:block;max-width:min(100%,320px);max-height:180px;object-fit:contain;border-radius:12px;margin:10px 0 2px;background:#fff}
+.notification-center-card .delivery-tag{display:inline-flex;align-items:center}
+.notification-center-card .message-content footer{margin-top:10px}
+@media(max-width:600px){.notification-center-card{padding-right:42px!important}.notification-center-card .message-symbol{width:32px;height:32px;flex-basis:32px}.notification-dismiss{right:4px;top:7px;width:28px;height:28px;min-width:28px}}

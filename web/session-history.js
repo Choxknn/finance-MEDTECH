@@ -24,9 +24,12 @@ document.addEventListener('click',e=>{
  const title=round(c.round_id).title||c.title||'รายการชำระเงิน';
  const row=typeof mpReadingRow==='function'?mpReadingRow:(label,value,name)=>`<div class="reading-row"><span class="reading-icon">${icon(name)}</span><div><dt>${esc(label)}</dt><dd>${value}</dd></div></div>`;
  const time=typeof mpDateTime==='function'?mpDateTime:dateTime;
- const details=[row('สมาชิก',esc(person.name||'สมาชิก'),'users'),row('วันที่ชำระ',esc(time(p.created_at)),'calendar')];
- if(p.reviewed_at)details.push(row('วันที่ตรวจสอบ',esc(time(p.reviewed_at)),'check'));
- if(p.trans_ref)details.push(row('เลขอ้างอิง',esc(p.trans_ref),'document'));
+ const details=[row('วันที่ชำระ',esc(time(p.created_at)),'calendar')];
+ if(user.role==='admin'){
+  details.unshift(row('สมาชิก',esc(person.name||'สมาชิก'),'users'));
+  if(p.reviewed_at)details.push(row('วันที่ตรวจสอบ',esc(time(p.reviewed_at)),'check'));
+  if(p.trans_ref)details.push(row('เลขอ้างอิง',esc(p.trans_ref),'document'));
+ }
  modal('หลักฐานการชำระเงิน',`<section class="reading-record"><div class="reading-summary"><span class="reading-summary-icon">${icon('history')}</span><div><small>${esc(title)}</small><strong>฿${money(p.amount)}</strong></div>${badge(p.status)}</div><dl class="reading-list">${details.join('')}</dl>${proofHtml('payment',p,true)}</section>`);
  ensureLiveSession().then(watchProofs).catch(err=>toast(err.message));
 });

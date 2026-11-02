@@ -126,11 +126,12 @@ Deno.serve(async req=>{
    if(typeof input.id_token!=='string'||input.id_token.length>12000)throw Error('ไม่ได้รับข้อมูลยืนยันจาก LINE');
    const identity=await linePost('oauth2/v2.1/verify',{id_token:input.id_token,client_id:clientId!});
    if(String(identity.aud)!==clientId||identity.iss!=='https://access.line.me'||!Number.isFinite(identity.exp)||identity.exp*1000<=Date.now()||!/^U[0-9a-f]{32}$/.test(identity.sub))throw Error('ข้อมูลยืนยัน LIFF ไม่ถูกต้อง');
-   await verifyOfficialAccountFriendship(identity.sub);
+   const lineProfile=await verifyOfficialAccountFriendship(identity.sub);
+   const displayName=(typeof identity.name==='string'&&identity.name.trim()?identity.name.trim():typeof lineProfile.displayName==='string'?lineProfile.displayName.trim():'').slice(0,200)||null;
    const linked=await query(db.from('line_accounts').select('profile_id').eq('line_user_id',identity.sub).maybeSingle());
    if(linked)throw Error('LINE นี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบแทนการสมัครใหม่');
    const session=await query(db.from('registration_sessions').select('code_hash').eq('session_hash',state.sessionHash).gt('expires_at',new Date().toISOString()).single());
-   const id=await query(db.rpc('consume_registration_line_code',{p_hash:session.code_hash,p_line_user:identity.sub}));
+   const id=await query(db.rpc('consume_registration_line_code_with_name',{p_hash:session.code_hash,p_line_user:identity.sub,p_display_name:displayName}));
    if(!id)throw Error('การสมัครหมดอายุหรือ LINE นี้ถูกเชื่อมแล้ว กรุณาเริ่มใหม่');
    return json({mode:'signup',ok:true});
   }
@@ -153,7 +154,8 @@ Deno.serve(async req=>{
   if(state.mode==='signup'){
    if(linked)throw Error('LINE นี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบด้วย LINE');
    const session=await query(db.from('registration_sessions').select('code_hash').eq('session_hash',state.sessionHash).gt('expires_at',new Date().toISOString()).single());
-   const id=await query(db.rpc('consume_registration_line_code',{p_hash:session.code_hash,p_line_user:identity.sub}));if(!id)throw Error('การสมัครหมดอายุหรือเชื่อมแล้ว กรุณาเริ่มใหม่');return json({mode:'signup',ok:true});
+   const displayName=typeof identity.name==='string'&&identity.name.trim()?identity.name.trim().slice(0,200):null;
+   const id=await query(db.rpc('consume_registration_line_code_with_name',{p_hash:session.code_hash,p_line_user:identity.sub,p_display_name:displayName}));if(!id)throw Error('การสมัครหมดอายุหรือเชื่อมแล้ว กรุณาเริ่มใหม่');return json({mode:'signup',ok:true});
   }
   if(state.mode==='link'){
    if(linked&&linked.profile_id!==state.profile)throw Error('LINE นี้เชื่อมกับสมาชิกคนอื่นแล้ว');

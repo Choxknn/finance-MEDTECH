@@ -22,9 +22,11 @@ document.addEventListener('click',e=>{
  const p=db.payments.find(p=>p.id===b.dataset.historyProof&&(p.profile_id===user.id||user.role==='admin'));if(!p)return;
  const c=db.charges.find(c=>c.id===p.charge_id)||p.charge_snapshot||{},person=db.profiles.find(x=>x.id===p.profile_id)||p.member_snapshot||{};
  const title=round(c.round_id).title||c.title||'รายการชำระเงิน';
- const details=[mpReadingRow('สมาชิก',esc(person.name||'สมาชิก'),'users'),mpReadingRow('วันที่ชำระ',esc(mpDateTime(p.created_at)),'calendar')];
- if(p.reviewed_at)details.push(mpReadingRow('วันที่ตรวจสอบ',esc(mpDateTime(p.reviewed_at)),'check'));
- if(p.trans_ref)details.push(mpReadingRow('เลขอ้างอิง',esc(p.trans_ref),'document'));
+ const row=typeof mpReadingRow==='function'?mpReadingRow:(label,value,name)=>`<div class="reading-row"><span class="reading-icon">${icon(name)}</span><div><dt>${esc(label)}</dt><dd>${value}</dd></div></div>`;
+ const time=typeof mpDateTime==='function'?mpDateTime:dateTime;
+ const details=[row('สมาชิก',esc(person.name||'สมาชิก'),'users'),row('วันที่ชำระ',esc(time(p.created_at)),'calendar')];
+ if(p.reviewed_at)details.push(row('วันที่ตรวจสอบ',esc(time(p.reviewed_at)),'check'));
+ if(p.trans_ref)details.push(row('เลขอ้างอิง',esc(p.trans_ref),'document'));
  modal('หลักฐานการชำระเงิน',`<section class="reading-record"><div class="reading-summary"><span class="reading-summary-icon">${icon('history')}</span><div><small>${esc(title)}</small><strong>฿${money(p.amount)}</strong></div>${badge(p.status)}</div><dl class="reading-list">${details.join('')}</dl>${proofHtml('payment',p,true)}</section>`);
  ensureLiveSession().then(watchProofs).catch(err=>toast(err.message));
 });

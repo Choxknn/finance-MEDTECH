@@ -211,7 +211,7 @@ Deno.serve(async req=>{
     const latestByPerson=new Map<string,string>();
     for(const c of eligibleCharges){const receipt=approvedByCharge.get(c.id),total=payerTotals.find((t:any)=>t.id===c.id);if(!receipt||!total||Math.round(receipt.amount*100)<Math.round(Number(total.total_amount)*100))continue;if(receipt.at>(latestByPerson.get(c.profile_id)||''))latestByPerson.set(c.profile_id,receipt.at);}
     const payerProfiles=latestByPerson.size?await query(db.from('profiles').select('id,student_id,name').in('id',[...latestByPerson.keys()]).eq('active',true).is('deleted_at',null)):[];
-    payerProfiles.sort((a:any,b:any)=>(latestByPerson.get(b.id)||'').localeCompare(latestByPerson.get(a.id)||'')||a.id.localeCompare(b.id));
+    payerProfiles.sort((a:any,b:any)=>(latestByPerson.get(a.id)||'').localeCompare(latestByPerson.get(b.id)||'')||a.id.localeCompare(b.id));
     const assignedIds=[...new Set(eligibleCharges.map((c:any)=>c.profile_id))];
     const assignedProfiles=assignedIds.length?await query(db.from('profiles').select('student_id').in('id',assignedIds).eq('active',true).is('deleted_at',null)):[];
     const waitingAssignments=isAdmin?preparedBills:await query(db.from('prepared_bill_members').select('round_id,invite_id'));

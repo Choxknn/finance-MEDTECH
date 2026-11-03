@@ -210,7 +210,7 @@ Deno.serve(async req=>{
     for(const p of allPayments){if(p.status!=='approved'||p.deleted_at||!p.charge_id)continue;const prior=approvedByCharge.get(p.charge_id)||{amount:0,at:''};prior.amount+=Number(p.amount);const at=p.reviewed_at||p.created_at;if(at>prior.at)prior.at=at;approvedByCharge.set(p.charge_id,prior);}
     const latestByPerson=new Map<string,string>();
     for(const c of eligibleCharges){const receipt=approvedByCharge.get(c.id),total=payerTotals.find((t:any)=>t.id===c.id);if(!receipt||!total||Math.round(receipt.amount*100)<Math.round(Number(total.total_amount)*100))continue;if(receipt.at>(latestByPerson.get(c.profile_id)||''))latestByPerson.set(c.profile_id,receipt.at);}
-    const payerProfiles=latestByPerson.size?await query(db.from('profiles').select('id,student_id').in('id',[...latestByPerson.keys()]).eq('active',true).is('deleted_at',null)):[];
+    const payerProfiles=latestByPerson.size?await query(db.from('profiles').select('id,student_id,name').in('id',[...latestByPerson.keys()]).eq('active',true).is('deleted_at',null)):[];
     payerProfiles.sort((a:any,b:any)=>(latestByPerson.get(b.id)||'').localeCompare(latestByPerson.get(a.id)||'')||a.id.localeCompare(b.id));
     const assignedIds=[...new Set(eligibleCharges.map((c:any)=>c.profile_id))];
     const assignedProfiles=assignedIds.length?await query(db.from('profiles').select('student_id').in('id',assignedIds).eq('active',true).is('deleted_at',null)):[];
@@ -218,7 +218,7 @@ Deno.serve(async req=>{
     const waitingIds=[...new Set(waitingAssignments.filter((b:any)=>openRoundIds.has(b.round_id)).map((b:any)=>b.invite_id).filter(validUuid))];
     const waitingPeople=waitingIds.length?await query(db.from('member_invites').select('student_id').in('id',waitingIds).in('status',['draft','pending'])):[];
     const assignedCount=new Set([...assignedProfiles,...waitingPeople].map((p:any)=>p.student_id)).size;
-    const recentPayers={assigned:assignedCount,total:payerProfiles.length,people:payerProfiles.slice(0,10).map((p:any)=>({suffix:String(p.student_id||'—').slice(-2)}))};
+    const recentPayers={assigned:assignedCount,total:payerProfiles.length,people:payerProfiles.slice(0,10).map((p:any)=>({suffix:String(p.student_id||'—').slice(-2),initial:Array.from(String(p.name||'สมาชิก').trim())[0]||'ส'}))};
 
     const visiblePayments=(isAdmin?allPayments:allPayments.filter((p:any)=>p.profile_id===profile.id));
     const activeRounds=rounds.filter((r:any)=>!r.deleted_at),activeProfiles=profiles.filter((p:any)=>!p.deleted_at);

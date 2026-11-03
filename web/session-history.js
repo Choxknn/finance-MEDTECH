@@ -3,11 +3,54 @@ const sessionKey='finance-medtech-session-v1';let loginSession=null,sessionPersi
 function persistLoginSession(){try{if(loginSession){(sessionPersistent?localStorage:sessionStorage).setItem(sessionKey,JSON.stringify(loginSession));(sessionPersistent?sessionStorage:localStorage).removeItem(sessionKey)}else{localStorage.removeItem(sessionKey);sessionStorage.removeItem(sessionKey)}}catch{}}
 function setLoginSession(s,remember=true){sessionPersistent=remember;loginSession={access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at||Math.floor(Date.now()/1000)+(s.expires_in||3600)};token=loginSession.access_token;persistLoginSession();scheduleSessionRefresh();queueMicrotask(()=>window.syncFinanceLive?.())}
 function clearLoginSession(){sessionGeneration++;loginSession=null;token=null;clearTimeout(sessionTimer);persistLoginSession()}
-function forceLogoutForConnectionLoss(){if(cfg.mode!=='live'||(!loginSession&&!user))return;clearLoginSession();user=null;render()}
+let connectionNoticeAt=0,restoreFlight=null,restoreTimer=null;
+function showSessionRestoreError(error){
+ if(user)return;
+ const app=document.getElementById('app');if(!app)return;
+ app.innerHTML=`<section class="login-page"><section class="login-form-area"><div class="login-form" role="status"><h1>กำลังเชื่อมต่อบัญชีเดิม</h1><p class="sub">ระบบยังเก็บสถานะเข้าสู่ระบบของคุณไว้ ไม่จำเป็นต้องกรอกรหัสผ่านใหม่</p><p class="error">${esc(error?.message||'การเชื่อมต่อขัดข้องชั่วคราว')}</p><div class="actions"><button type="button" id="session-restore-retry">ลองเชื่อมต่ออีกครั้ง</button></div><p class="help">ระบบจะลองเชื่อมต่อให้อัตโนมัติเมื่ออินเทอร์เน็ตกลับมา</p></div></section></section>`;
+ document.getElementById('session-restore-retry')?.addEventListener('click',()=>restoreLoginSession());
+}
+function scheduleSessionRestoreRetry(){clearTimeout(restoreTimer);restoreTimer=setTimeout(()=>{if(!user&&loginSession)restoreLoginSession()},15000)}
+function forceLogoutForConnectionLoss(){
+ if(cfg.mode!=='live'||(!loginSession&&!user))return;
+ if(user){if(Date.now()-connectionNoticeAt>10000){toast('การเชื่อมต่อขัดข้องชั่วคราว ระบบยังคงจำการเข้าสู่ระบบไว้');connectionNoticeAt=Date.now()}}
+ else showSessionRestoreError();
+}
 window.forceLogoutForConnectionLoss=forceLogoutForConnectionLoss;
+window.keepLoginSessionForRetry=error=>{if(loginSession&&!user){showSessionRestoreError(error);scheduleSessionRestoreRetry()}};
 window.addEventListener('offline',forceLogoutForConnectionLoss);
+window.addEventListener('online',()=>{
+ if(!loginSession)return;
+ if(user)ensureLiveSession().then(()=>refresh()).then(()=>render()).catch(()=>{});
+ else restoreLoginSession();
+});
 function scheduleSessionRefresh(){clearTimeout(sessionTimer);if(loginSession)sessionTimer=setTimeout(()=>ensureLiveSession().catch(()=>{}),Math.max(1000,(loginSession.expires_at*1000-Date.now())-45000))}
-async function ensureLiveSession(){if(cfg.mode!=='live'||!loginSession)return;if(loginSession.expires_at*1000-Date.now()>60000){token=loginSession.access_token;return}if(sessionFlight)return sessionFlight;const generation=sessionGeneration;sessionFlight=(async()=>{try{const r=await fetch(`${cfg.supabaseUrl}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{apikey:cfg.supabaseAnonKey,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:loginSession.refresh_token})});if(!r.ok){if(r.status===400||r.status===401){clearLoginSession();user=null;render()}const error=Error('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');error.status=r.status;throw error}const j=await r.json();if(generation===sessionGeneration)setLoginSession(j,sessionPersistent)}catch(e){if(loginSession&&(!e.status||e.status===401||e.status===403||e.status===408||e.status>=500))forceLogoutForConnectionLoss();else if(loginSession)sessionTimer=setTimeout(()=>ensureLiveSession().catch(()=>{}),30000);throw e}finally{sessionFlight=null}})();return sessionFlight}
+async function ensureLiveSession(){
+ if(cfg.mode!=='live'||!loginSession)return;
+ if(loginSession.expires_at*1000-Date.now()>60000){token=loginSession.access_token;return}
+ if(sessionFlight)return sessionFlight;
+ const generation=sessionGeneration;
+ sessionFlight=(async()=>{
+  try{
+   const r=await fetch(`${cfg.supabaseUrl}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{apikey:cfg.supabaseAnonKey,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:loginSession.refresh_token})});
+   const j=await r.json().catch(()=>({}));
+   if(!r.ok){const error=Error(j.msg||j.message||'เชื่อมต่อเซิร์ฟเวอร์ยืนยันตัวตนไม่สำเร็จ');error.status=r.status;throw error}
+   if(generation===sessionGeneration)setLoginSession(j,sessionPersistent);
+  }catch(e){
+   if(loginSession&&generation===sessionGeneration&&(e.status===400||e.status===401)){
+    clearLoginSession();user=null;render();toast('เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง');
+   }else if(loginSession)sessionTimer=setTimeout(()=>ensureLiveSession().catch(()=>{}),30000);
+   throw e;
+  }finally{sessionFlight=null}
+ })();
+ return sessionFlight
+}
+async function refreshLiveSessionNow(){
+ if(!loginSession)throw Error('ไม่พบเซสชันที่บันทึกไว้');
+ loginSession.expires_at=0;persistLoginSession();
+ return ensureLiveSession();
+}
+window.refreshLiveSessionNow=refreshLiveSessionNow;
 function logoutSession(){
  if(!user)return;
  modal('ออกจากระบบ?',`<div class="logout-confirm"><span class="logout-confirm-icon">${icon('logout')}</span><p>ต้องการออกจากบัญชีนี้ใช่ไหม?</p><div class="dialog-actions"><button type="button" class="secondary" data-action="close" autofocus>อยู่ต่อ</button><button type="button" data-confirm-logout>ออกจากระบบ</button></div></div>`);
@@ -15,7 +58,31 @@ function logoutSession(){
  button.addEventListener('click',async()=>{if(button.disabled)return;button.disabled=true;button.textContent='กำลังออกจากระบบ…';try{await performLogoutSession();document.getElementById('dialog').close()}catch(err){button.disabled=false;button.textContent='ออกจากระบบ';toast(err.message)}});
 }
 async function performLogoutSession(){const oldToken=token;if(cfg.mode==='live'&&user)try{await api('presence',{online:false})}catch{}clearLoginSession();user=null;render();if(cfg.mode==='live'&&oldToken)try{await fetch(`${cfg.supabaseUrl}/auth/v1/logout?scope=local`,{method:'POST',headers:{apikey:cfg.supabaseAnonKey,Authorization:`Bearer ${oldToken}`}})}catch{}}
-async function restoreLoginSession(){if(cfg.mode!=='live')return;try{const local=localStorage.getItem(sessionKey),stored=local||sessionStorage.getItem(sessionKey);if(!stored)return;const s=JSON.parse(stored);if(!s.access_token||!s.refresh_token||!Number.isFinite(s.expires_at))throw Error('Invalid session');loginSession=s;sessionPersistent=!!local;token=s.access_token;await ensureLiveSession();await refresh();if(typeof window.ensureMemberFriendship!=='function')throw Error('ระบบตรวจสอบการเพิ่มเพื่อน LINE ยังโหลดไม่ครบ กรุณารีเฟรช');if(!(await window.ensureMemberFriendship()))return;view='dashboard';render();scheduleSessionRefresh()}catch(e){forceLogoutForConnectionLoss();clearLoginSession();user=null;render()}}
+async function restoreLoginSession(){
+ if(cfg.mode!=='live'||user)return;
+ if(restoreFlight)return restoreFlight;
+ restoreFlight=(async()=>{
+  try{
+   if(!loginSession){
+    const local=localStorage.getItem(sessionKey),stored=local||sessionStorage.getItem(sessionKey);
+    if(!stored)return;
+    const saved=JSON.parse(stored);
+    if(!saved.access_token||!saved.refresh_token||!Number.isFinite(saved.expires_at))throw Error('ข้อมูลเซสชันไม่ถูกต้อง');
+    loginSession=saved;sessionPersistent=!!local;token=saved.access_token;
+   }
+   await ensureLiveSession();
+   if(!loginSession)return;
+   await refresh();
+   if(typeof window.ensureMemberFriendship!=='function')throw Error('ระบบตรวจสอบการเพิ่มเพื่อน LINE ยังโหลดไม่ครบ กรุณาลองใหม่');
+   if(!(await window.ensureMemberFriendship()))return;
+   view='dashboard';render();scheduleSessionRefresh();
+  }catch(e){
+   if(e.sessionRejected||!loginSession){clearLoginSession();user=null;render()}
+   else{user=null;showSessionRestoreError(e);scheduleSessionRestoreRetry()}
+  }finally{restoreFlight=null}
+ })();
+ return restoreFlight
+}
 window.addEventListener('storage',e=>{if(e.key!==sessionKey)return;if(!e.newValue){clearLoginSession();user=null;render()}else{try{loginSession=JSON.parse(e.newValue);token=loginSession.access_token;scheduleSessionRefresh()}catch{}}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&user)ensureLiveSession().catch(()=>{})});
 function latestPaymentHistory(rows){const groups=new Map();for(const p of rows){const key=p.profile_id+'|'+(p.charge_id||p.id);const previous=groups.get(key);const stamp=Date.parse(p.created_at)||0;if(!previous||stamp>=(Date.parse(previous.created_at)||0))groups.set(key,p)}return [...groups.values()].sort((a,b)=>(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0))}

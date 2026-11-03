@@ -20,7 +20,8 @@ function mpBill(c){
 }
 function mpPaymentVerification(p,hideSlipOk=false){
  const html=paymentVerificationHtml(p);
- return hideSlipOk&&((String(p.verification_method||'').trim().toLowerCase()==='slipok')||/SlipOK/i.test(html))?'':html;
+ const slipOkSource=[p.verification_method,p.source,p.note,html].some(value=>/slip\\s*ok/i.test(String(value||'')));
+ return hideSlipOk&&slipOkSource?'':html;
 }
 function mpPaymentRows(rows,review=false,history=false,hideVerification=false){return rows.length?`<div class="mp-activity">${rows.map(p=>{
  const c=(db.charges||[]).find(c=>c.id===p.charge_id)||(db.references?.charges||[]).find(c=>c.id===p.charge_id),r=round(c?.round_id),person=review?db.profiles.find(x=>x.id===p.profile_id):null;

@@ -19,9 +19,8 @@ function mpBill(c){
  return `<article data-bill-card="${esc(c.id)}" tabindex="-1" class="mp-bill ${overdue||needsCorrection?'bill-attention':''} ${overdue?'bill-overdue':''}"><div class="mp-bill-top"><span class="mp-bill-symbol">${icon('document')}</span><div class="mp-bill-title"><h3>${esc(r.title)}</h3>${r.description?`<p class="bill-description">${esc(r.description)}</p>`:''}<p>${icon('calendar')}ครบกำหนด ${esc(recordTime(r,'due_date'))}</p></div>${statusHtml}</div><div class="mp-bill-bottom"><div class="mp-bill-amount"><small>${due?'ยอดที่ต้องชำระ':'ชำระแล้ว'}</small><strong>฿${mpAmount(due||paid(c))}</strong></div>${action}</div>${Number(c.fee_amount)>0?`<p class="mp-fee">${icon('clock')}รวมค่าปรับ ฿${mpAmount(c.fee_amount)}</p>`:''}<button class="muted-link mp-link mp-bill-detail" data-mp-bill="${esc(c.id)}">ดูรายละเอียดบิล${icon('arrow')}</button></article>`;
 }
 function mpPaymentVerification(p,hideSlipOk=false){
- const html=paymentVerificationHtml(p);
- const slipOkSource=[p.verification_method,p.source,p.note,html].some(value=>/slip\s*ok/i.test(String(value||'')));
- return hideSlipOk&&slipOkSource?'':html;
+ if(hideSlipOk)return '';
+ return paymentVerificationHtml(p);
 }
 function mpPaymentRows(rows,review=false,history=false,hideVerification=false){return rows.length?`<div class="mp-activity">${rows.map(p=>{
  const c=(db.charges||[]).find(c=>c.id===p.charge_id)||(db.references?.charges||[]).find(c=>c.id===p.charge_id),r=round(c?.round_id),person=review?db.profiles.find(x=>x.id===p.profile_id):null;

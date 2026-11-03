@@ -20,7 +20,7 @@ function mpBill(c){
 }
 function mpPaymentVerification(p,hideSlipOk=false){
  const html=paymentVerificationHtml(p);
- const slipOkSource=[p.verification_method,p.source,p.note,html].some(value=>/slip\\s*ok/i.test(String(value||'')));
+ const slipOkSource=[p.verification_method,p.source,p.note,html].some(value=>/slip\s*ok/i.test(String(value||'')));
  return hideSlipOk&&slipOkSource?'':html;
 }
 function mpPaymentRows(rows,review=false,history=false,hideVerification=false){return rows.length?`<div class="mp-activity">${rows.map(p=>{

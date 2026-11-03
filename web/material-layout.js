@@ -25,7 +25,7 @@ function mpPaymentRows(rows,review=false,history=false,hideVerification=false){r
 function mpRecentPayers(){
  const summary=db.recent_payers;
  if(!summary?.people?.length)return '';
- return `<div class="mp-paid-people" aria-label="ผู้ชำระครบล่าสุด">${summary.people.slice(0,10).map(p=>`<span class="mp-paid-avatar" title="ผู้ชำระแล้ว · รหัสลงท้าย ${esc(p.suffix)}">${esc(p.initial||'•')}</span>`).join('')}${summary.total>10?`<span class="mp-paid-avatar mp-paid-more" aria-label="ผู้ชำระแล้วอีก ${summary.total-10} คน" title="อีก ${summary.total-10} คน">…</span>`:''}</div><small class="mp-paid-caption">ผู้ชำระครบล่าสุด</small>`;
+ return `<div class="mp-paid-people" aria-label="ผู้ชำระครบล่าสุด">${summary.people.slice(0,10).map(p=>`<span class="mp-paid-avatar" title="ผู้ชำระแล้ว · รหัสลงท้าย ${esc(p.suffix)}">${esc(p.suffix||'—')}</span>`).join('')}${summary.total>10?`<span class="mp-paid-avatar mp-paid-more" aria-label="ผู้ชำระแล้วอีก ${summary.total-10} คน" title="อีก ${summary.total-10} คน">…</span>`:''}</div><small class="mp-paid-caption">ผู้ชำระครบล่าสุด</small>`;
 }
 function mpProgress(charges){
  const summary=db.recent_payers,total=Number(summary?.assigned)||0,complete=Number(summary?.total)||0;

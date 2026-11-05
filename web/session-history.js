@@ -4,11 +4,21 @@ function persistLoginSession(){try{if(loginSession){(sessionPersistent?localStor
 function setLoginSession(s,remember=true){sessionPersistent=remember;loginSession={access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at||Math.floor(Date.now()/1000)+(s.expires_in||3600)};token=loginSession.access_token;persistLoginSession();scheduleSessionRefresh();queueMicrotask(()=>window.syncFinanceLive?.())}
 function clearLoginSession(){sessionGeneration++;loginSession=null;token=null;clearTimeout(sessionTimer);persistLoginSession()}
 let connectionNoticeAt=0,restoreFlight=null,restoreTimer=null;
+function exitSessionToLogin(){
+ const oldToken=token;
+ clearTimeout(restoreTimer);restoreTimer=null;
+ clearLoginSession();user=null;
+ try{sessionStorage.removeItem('finance-line-friend-gate-pending')}catch{}
+ render();
+ if(cfg.mode==='live'&&oldToken)void fetch(`${cfg.supabaseUrl}/auth/v1/logout?scope=local`,{method:'POST',headers:{apikey:cfg.supabaseAnonKey,Authorization:`Bearer ${oldToken}`}}).catch(()=>{});
+}
+window.exitSessionToLogin=exitSessionToLogin;
 function showSessionRestoreError(error){
  if(user)return;
  const app=document.getElementById('app');if(!app)return;
- app.innerHTML=`<section class="login-page"><section class="login-form-area"><div class="login-form" role="status"><h1>กำลังเชื่อมต่อบัญชีเดิม</h1><p class="sub">ระบบยังเก็บสถานะเข้าสู่ระบบของคุณไว้ ไม่จำเป็นต้องกรอกรหัสผ่านใหม่</p><p class="error">${esc(error?.message||'การเชื่อมต่อขัดข้องชั่วคราว')}</p><div class="actions"><button type="button" id="session-restore-retry">ลองเชื่อมต่ออีกครั้ง</button></div><p class="help">ระบบจะลองเชื่อมต่อให้อัตโนมัติเมื่ออินเทอร์เน็ตกลับมา</p></div></section></section>`;
+ app.innerHTML=`<section class="login-page"><section class="login-form-area"><div class="login-form" role="status"><h1>กำลังเชื่อมต่อบัญชีเดิม</h1><p class="sub">ระบบยังเก็บสถานะเข้าสู่ระบบของคุณไว้ ไม่จำเป็นต้องกรอกรหัสผ่านใหม่</p><p class="error">${esc(error?.message||'การเชื่อมต่อขัดข้องชั่วคราว')}</p><div class="actions"><button type="button" id="session-restore-retry">ลองเชื่อมต่ออีกครั้ง</button><button type="button" class="secondary" id="session-restore-exit">ออก</button></div><p class="help">ระบบจะลองเชื่อมต่อให้อัตโนมัติเมื่ออินเทอร์เน็ตกลับมา</p></div></section></section>`;
  document.getElementById('session-restore-retry')?.addEventListener('click',()=>restoreLoginSession());
+ document.getElementById('session-restore-exit')?.addEventListener('click',()=>exitSessionToLogin());
 }
 function scheduleSessionRestoreRetry(){clearTimeout(restoreTimer);restoreTimer=setTimeout(()=>{if(!user&&loginSession)restoreLoginSession()},15000)}
 function forceLogoutForConnectionLoss(){

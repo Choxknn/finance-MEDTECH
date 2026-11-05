@@ -9,5 +9,11 @@ run("db.payments.push({...db.payments.find(p=>p.profile_id===user.id),id:'latest
 run("setLoginSession({access_token:'test-access',refresh_token:'test-refresh',expires_at:Math.floor(Date.now()/1000)+3600},true)");assert.ok(w.localStorage.getItem('finance-medtech-session-v1'));assert.ok(!w.localStorage.getItem('finance-medtech-session-v1').includes('password'));
 run("setLoginSession({access_token:'test-access',refresh_token:'test-refresh',expires_at:Math.floor(Date.now()/1000)+3600},false)");assert.equal(w.localStorage.getItem('finance-medtech-session-v1'),null);assert.ok(w.sessionStorage.getItem('finance-medtech-session-v1'));
 let calls=0;w.fetch=async()=>{calls++;return {ok:true,json:async()=>({access_token:'rotated',refresh_token:'rotated-refresh',expires_at:Math.floor(Date.now()/1000)+3600})}};run("cfg.mode='live';loginSession.expires_at=0");await run('Promise.all([ensureLiveSession(),ensureLiveSession()])');assert.equal(calls,1);assert.equal(run('token'),'rotated');await run('logoutSession()');assert.equal(run('token'),null);assert.equal(w.sessionStorage.getItem('finance-medtech-session-v1'),null);assert.equal(w.localStorage.getItem('finance-medtech-session-v1'),null);
+run("setLoginSession({access_token:'exit-access',refresh_token:'exit-refresh',expires_at:Math.floor(Date.now()/1000)+3600},true);user=null;showSessionRestoreError(Error('temporary connection failure'))");
+assert.ok(w.document.querySelector('#session-restore-exit'),'session recovery screen exposes an exit button');
+w.document.querySelector('#session-restore-exit').click();
+assert.equal(run('token'),null,'exit clears the in-memory access token');
+assert.equal(w.localStorage.getItem('finance-medtech-session-v1'),null,'exit removes the remembered session');
+assert.match(w.document.querySelector('#app .login-form h1').textContent,/ยินดีต้อนรับกลับมา/,'exit returns to the login screen');
 console.log('History grouping retains records, latest evidence, admin-only profile UI, logo home, remembered/session-only login, refresh rotation and logout passed');w.close();
 })().catch(e=>{console.error(e);process.exitCode=1;w.close()});

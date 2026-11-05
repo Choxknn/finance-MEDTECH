@@ -1,4 +1,5 @@
-var FinanceFlex=(()=>{\nconst financeSite='https://choxknn.github.io/finance-MEDTECH/';
+var FinanceFlex=(()=>{
+const financeSite='https://choxknn.github.io/finance-MEDTECH/';
 const txt=(text,size='sm',color='#334155',extra={})=>({type:'text',text:text||' ',size,color,wrap:true,...extra});
 const box=(contents[],extra={})=>({type:'box',layout:'vertical',contents,...extra});
 const picture=(kind,size='40px')=>({type:'image',url:financeSite+'assets/flex-'+kind+'.png',size,aspectRatio:'1:1',aspectMode:'fit',flex:0});
@@ -8,24 +9,24 @@ const footer=(label,url,color,secondary=false)=>box([{type:'button',style:second
 function noticeFacts(body){const lines=body.split('\n');const amount=lines.findIndex(s=>/^(ยอดชำระ:|ยอดค้าง\s)/.test(s));const due=lines.findIndex(s=>/^ครบกำหนด[:\s]/.test(s));return {amount:amount<0?'':lines[amount].replace(/^(ยอดชำระ:|ยอดค้าง)\s*/,''),due:due<0?'':lines[due].replace(/^ครบกำหนด[:\s]+/,''),rest:lines.filter((_,i)=>i!==amount&&i!==due).join('\n')}}
 function paymentFacts(body){
  const out={bill:'',amount:'',reason:'',rest:[] as string[]};
- for(const raw of body.split('\\n')){
+ for(const raw of body.split('\n')){
   const line=raw.trim();if(!line||/^finance MEDTECH$/i.test(line)||/^ยืนยันรับเงินแล้ว$/.test(line))continue;
-  let m=line.match(/^รายการ\\s*[:：]\\s*(.+)$/);if(m){out.bill=m[1].trim();continue}
-  m=line.match(/^ยืนยันชำระ\\s+(.+)$/);if(m){out.bill=m[1].trim();continue}
-  m=line.match(/^จำนวน\\s*[:：]?\\s*(.+)$/);if(m){out.amount=m[1].trim();continue}
-  m=line.match(/^(?:เหตุผล|หมายเหตุ)\\s*[:：]\\s*(.+)$/);if(m){out.reason=m[1].trim();continue}
+  let m=line.match(/^รายการ\s*[:：]\s*(.+)$/);if(m){out.bill=m[1].trim();continue}
+  m=line.match(/^ยืนยันชำระ\s+(.+)$/);if(m){out.bill=m[1].trim();continue}
+  m=line.match(/^จำนวน\s*[:：]?\s*(.+)$/);if(m){out.amount=m[1].trim();continue}
+  m=line.match(/^(?:เหตุผล|หมายเหตุ)\s*[:：]\s*(.+)$/);if(m){out.reason=m[1].trim();continue}
   out.rest.push(line);
  }
- return {...out,rest:out.rest.join('\\n')};
+ return {...out,rest:out.rest.join('\n')};
 }
 function billUpdateFacts(body){
  const out={bill:'',oldAmount:'',newAmount:'',reason:''};
- for(const raw of body.split('\\n')){
+ for(const raw of body.split('\n')){
   const line=raw.trim();if(!line||/^finance MEDTECH$/i.test(line)||/^มีการเปลี่ยนแปลงยอดบิลรายบุคคล$/.test(line))continue;
-  let m=line.match(/^รายการ\\s*[:：]\\s*(.+)$/);if(m){out.bill=m[1].trim();continue}
-  m=line.match(/^ยอดเดิม\\s*[:：]\\s*(.+)$/);if(m){out.oldAmount=m[1].trim();continue}
-  m=line.match(/^ยอดใหม่\\s*[:：]\\s*(.+)$/);if(m){out.newAmount=m[1].trim();continue}
-  m=line.match(/^เหตุผล\\s*[:：]\\s*(.*)$/);if(m){out.reason=m[1].trim();continue}
+  let m=line.match(/^รายการ\s*[:：]\s*(.+)$/);if(m){out.bill=m[1].trim();continue}
+  m=line.match(/^ยอดเดิม\s*[:：]\s*(.+)$/);if(m){out.oldAmount=m[1].trim();continue}
+  m=line.match(/^ยอดใหม่\s*[:：]\s*(.+)$/);if(m){out.newAmount=m[1].trim();continue}
+  m=line.match(/^เหตุผล\s*[:：]\s*(.*)$/);if(m){out.reason=m[1].trim();continue}
  }
  return out;
 }
@@ -73,4 +74,6 @@ function financeFlex(title,body,kind='message',actionUrl=''){
  return {type:'flex',altText:(labels[k]+' · '+heading).slice(0,400),contents:{type:'bubble',size:'mega',styles:{header:{backgroundColor:'#FFFFFF'},body:{backgroundColor:'#FFFFFF'},footer:{backgroundColor:'#FFFFFF'}},header,body:content,footer:foot}};
 }
 function automaticTitle(body){return /กรุณาแก้ไข/.test(body)?'กรุณาแก้ไขหลักฐาน':/ยอดค้าง/.test(body)?'แจ้งเตือนยอดค้างชำระ':'ข้อความจาก finance MEDTECH'}
-\nreturn {financeFlex,automaticTitle,financeSite};\n})();\n
+
+return {financeFlex,automaticTitle,financeSite};
+})();

@@ -161,7 +161,23 @@ Deno.serve(async req=>{
    case 'presence':{await query(db.from('profiles').update({last_seen_at:input.online===false?null:new Date().toISOString()}).eq('id',profile.id));return json({ok:true});}
    case 'admin-payment-records':{
     requireAdmin();
-    const payments=await query(db.from('payments').select('id,profile_id,charge_id,amount,status,drive_file_id,trans_ref,source,note,verification,verification_method,reviewed_by,reviewed_at,created_at,deleted_at,charge_snapshot,member_snapshot,profiles(name,student_id),charges(round_id,rounds(title))').order('created_at',{ascending:false}).limit(500));
+    const payments=await query(db.from('payments').select('id,profile_id,charge_id,amount,status,drive_file_id,trans_ref,source,note,verification,verification_method,reviewed_by,reviewed_at,created_at,deleted_at,charge_snapshot,member_snapshot').order('created_at',{ascending:false}).limit(500));
+    const profileIds=[...new Set(payments.map((p:any)=>p.profile_id).filter(Boolean))];
+    const chargeIds=[...new Set(payments.map((p:any)=>p.charge_id).filter(Boolean))];
+    const [memberRows,chargeRows]=await Promise.all([
+     profileIds.length?query(db.from('profiles').select('id,name,student_id').in('id',profileIds)):Promise.resolve([]),
+     chargeIds.length?query(db.from('charges').select('id,round_id,round_snapshot').in('id',chargeIds)):Promise.resolve([])
+    ]);
+    const roundIds=[...new Set(chargeRows.map((c:any)=>c.round_id).filter(Boolean))];
+    const roundRows=roundIds.length?await query(db.from('rounds').select('id,title').in('id',roundIds)):[];
+    const memberMap=new Map(memberRows.map((p:any)=>[p.id,p]));
+    const chargeMap=new Map(chargeRows.map((c:any)=>[c.id,c]));
+    const roundMap=new Map(roundRows.map((r:any)=>[r.id,r]));
+    for(const p of payments){
+     p.profiles=memberMap.get(p.profile_id)||p.member_snapshot||null;
+     const c=chargeMap.get(p.charge_id)||p.charge_snapshot||null;
+     p.charges=c?{...c,rounds:roundMap.get(c.round_id)||c.round_snapshot||null}:null;
+    }
     return json({payments});
    }
    case 'bootstrap':{

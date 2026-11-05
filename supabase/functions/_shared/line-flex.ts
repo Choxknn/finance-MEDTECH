@@ -1,7 +1,7 @@
 export const financeSite='https://choxknn.github.io/finance-MEDTECH/';
 const txt=(text:string,size='sm',color='#334155',extra:any={})=>({type:'text',text:text||' ',size,color,wrap:true,...extra});
 const box=(contents:any[],extra:any={})=>({type:'box',layout:'vertical',contents,...extra});
-const picture=(kind:string,size='40px')=>({type:'image',url:financeSite+'assets/flex-'+kind+'.png'+(kind==='new_bill'?'?v=2026110602':''),size,aspectRatio:'1:1',aspectMode:'fit',flex:0});
+const picture=(kind:string,size='40px')=>({type:'image',url:financeSite+'assets/flex-'+kind+'.png'+(kind==='new_bill'?'?v=2026110603':''),size,aspectRatio:'1:1',aspectMode:'fit',flex:0});
 const iconTile=(kind:string,size='40px')=>box([picture(kind,size)],{backgroundColor:'#FFFFFF',paddingAll:'10px',cornerRadius:'16px',flex:0});
 const separator=(color='#E2E8F0')=>({type:'separator',color});
 const footer=(label:string,url:string,color:string,secondary=false)=>box([{type:'button',style:secondary?'secondary':'primary',color:secondary?'#EAF0F7':color,height:'sm',action:{type:'uri',label,uri:url}},txt('Finance · MEDTECH','xxs','#94A3B8',{align:'center'})],{paddingAll:'24px',paddingTop:'8px',spacing:'md'});

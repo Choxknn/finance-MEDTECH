@@ -33,6 +33,8 @@ assert.match(fs.readFileSync('web/session-history.js','utf8'),/await window\.ens
 assert.match(fs.readFileSync('web/index.html','utf8'),/line-friend-gate\.js/);
 assert.match(fs.readFileSync('web/management.js','utf8'),/เช็คการเพิ่มเพื่อน/);
 assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/action:'friendship-audit',reset:true/);
+assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/friend-gate-exit/);
+assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/window\\.exitSessionToLogin/);
 assert.match(fs.readFileSync('web/line-friend-gate.js','utf8'),/target instanceof Element\?target\.closest\('\[data-friendship-audit\]'\):null/);
 assert.doesNotMatch(fs.readFileSync('web/line-friend-gate.js','utf8'),/if\(!button\|\|user\?\.role!=='admin'\)/);
 assert.match(fs.readFileSync('supabase/functions/line-login/index.ts','utf8'),/if\(input\.reset===true\).*oa_friend_added_at:null/s);

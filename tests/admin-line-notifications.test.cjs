@@ -27,10 +27,12 @@ vm.runInNewContext(esbuild.transformSync(source,{loader:'ts',format:'esm'}).code
 const request=body=>new Request('https://project.test/functions/v1/finance-api',{method:'POST',headers:{origin:'https://example.test',authorization:'Bearer session','content-type':'application/json'},body:JSON.stringify(body)});
 async function call(body){const res=await handler(request(body));const data=await res.json();assert.equal(res.status,200,JSON.stringify(data));return data}
 (async()=>{
- await call({action:'edit-record',entity:'charge',id:'charge-id',patch:{amount:150,reason:'ปรับยอด'},notify_line:true});
+ const editEnabled=await call({action:'edit-record',entity:'charge',id:'charge-id',patch:{amount:150,reason:'ปรับยอด'},notify_line:true});
+ assert.equal(editEnabled.line_notification,'sent','individual bill edit reports successful LINE delivery');
  assert.equal(calls.notify.length,1,'individual bill edit sends when enabled');
  assert.equal(calls.notify[0][1],'member-id');assert.equal(calls.notify[0][2],'bill_updated');
- await call({action:'edit-record',entity:'charge',id:'charge-id',patch:{amount:160,reason:'ปรับยอด'},notify_line:false});
+ const editDisabled=await call({action:'edit-record',entity:'charge',id:'charge-id',patch:{amount:160,reason:'ปรับยอด'},notify_line:false});
+ assert.equal(editDisabled.line_notification,'not_requested','disabled LINE toggle reports no request');
  assert.equal(calls.notify.length,1,'individual bill edit does not send when disabled');
  await call({action:'set-bill-status',charge_id:'charge-id',status:'approved',reason:'รับเงินแล้ว',expected_paid:0,expected_balance:100,request_id:'request-1',notify_line:true});
  assert.equal(calls.success.length,1,'manual mark-paid sends when enabled');assert.equal(calls.success[0][1],'member-id');assert.equal(calls.success[0][3],true);

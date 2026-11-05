@@ -1,14 +1,14 @@
 var FinanceFlex=(()=>{
 const financeSite='https://choxknn.github.io/finance-MEDTECH/';
 const txt=(text,size='sm',color='#334155',extra={})=>({type:'text',text:text||' ',size,color,wrap:true,...extra});
-const box=(contents[],extra={})=>({type:'box',layout:'vertical',contents,...extra});
+const box=(contents,extra={})=>({type:'box',layout:'vertical',contents,...extra});
 const picture=(kind,size='40px')=>({type:'image',url:financeSite+'assets/flex-'+kind+'.png',size,aspectRatio:'1:1',aspectMode:'fit',flex:0});
 const iconTile=(kind,size='40px')=>box([picture(kind,size)],{backgroundColor:'#FFFFFF',paddingAll:'10px',cornerRadius:'16px',flex:0});
 const separator=(color='#E2E8F0')=>({type:'separator',color});
 const footer=(label,url,color,secondary=false)=>box([{type:'button',style:secondary?'secondary':'primary',color:secondary?'#EAF0F7':color,height:'sm',action:{type:'uri',label,uri:url}},txt('Finance · MEDTECH','xxs','#94A3B8',{align:'center'})],{paddingAll:'24px',paddingTop:'8px',spacing:'md'});
 function noticeFacts(body){const lines=body.split('\n');const amount=lines.findIndex(s=>/^(ยอดชำระ:|ยอดค้าง\s)/.test(s));const due=lines.findIndex(s=>/^ครบกำหนด[:\s]/.test(s));return {amount:amount<0?'':lines[amount].replace(/^(ยอดชำระ:|ยอดค้าง)\s*/,''),due:due<0?'':lines[due].replace(/^ครบกำหนด[:\s]+/,''),rest:lines.filter((_,i)=>i!==amount&&i!==due).join('\n')}}
 function paymentFacts(body){
- const out={bill:'',amount:'',reason:'',rest:[] as string[]};
+ const out={bill:'',amount:'',reason:'',rest:[]};
  for(const raw of body.split('\n')){
   const line=raw.trim();if(!line||/^finance MEDTECH$/i.test(line)||/^ยืนยันรับเงินแล้ว$/.test(line))continue;
   let m=line.match(/^รายการ\s*[:：]\s*(.+)$/);if(m){out.bill=m[1].trim();continue}

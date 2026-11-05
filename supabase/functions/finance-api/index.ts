@@ -413,7 +413,7 @@ Deno.serve(async req=>{
     if(validDate&&slipOverpaid(result.body,Number(p.amount))){await query(db.from('payments').update({status:'review',note:overpaidMessage}).eq('id',p.id).in('status',['pending','review']));return json({message:overpaidMessage,status:'review',contact_admin:true});}
     if(result.ok&&validDate){
      await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK (ตรวจซ้ำ)',p_ref:String(detail.transRef),p_actor:null}));
-     await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`,input.notify_line===true);
+     await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`,true);
      return json({message:'SlipOK ยืนยันการชำระแล้ว'});
     }
     const note=!validDate&&(result.ok||detail?.transTimestamp)?'สลิปเกิน 48 ชั่วโมง ก่อนสร้างบิล หรือวันเวลาบนสลิปไม่ถูกต้อง':'ผลตรวจต้องตรวจเพิ่มเติม: '+String(result.body.message||detail?.message||'ยอดหรือบัญชีไม่ตรง');

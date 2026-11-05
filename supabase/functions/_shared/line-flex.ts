@@ -72,6 +72,6 @@ export function financeFlex(title:string,body:string,kind='message',actionUrl=''
   content=box([txt(heading,'xl','#243C59',{weight:'bold'}),box([txt(clean,'sm','#49627C',{lineSpacing:'6px'})],{paddingAll:'18px',backgroundColor:'#F0F5FC',cornerRadius:'18px'})],{paddingAll:'24px',paddingTop:'12px',spacing:'lg'});
   foot=footer('เปิดอ่านข้อความ',actionUrl||financeSite+'?view=notifications','#476A94',true);
  }
- return {type:'flex',altText:(heading.trim()===labels[k]?labels[k]:(labels[k]+' · '+heading)).slice(0,400),contents:{type:'bubble',size:'mega',styles:{header:{backgroundColor:'#FFFFFF'},body:{backgroundColor:'#FFFFFF'},footer:{backgroundColor:'#FFFFFF'}},header,body:content,footer:foot}};
+ return {type:'flex',altText:(heading.trim().startsWith(labels[k])?heading.trim():(labels[k]+' · '+heading)).slice(0,400),contents:{type:'bubble',size:'mega',styles:{header:{backgroundColor:'#FFFFFF'},body:{backgroundColor:'#FFFFFF'},footer:{backgroundColor:'#FFFFFF'}},header,body:content,footer:foot}};
 }
 export function automaticTitle(body:string){return /กรุณาแก้ไข/.test(body)?'กรุณาแก้ไขหลักฐาน':/ยอดค้าง/.test(body)?'แจ้งเตือนยอดค้างชำระ':'ข้อความจาก finance MEDTECH'}

@@ -5,7 +5,17 @@ const picture=(kind:string,size='40px')=>({type:'image',url:financeSite+'assets/
 const iconTile=(kind:string,size='40px')=>box([picture(kind,size)],{backgroundColor:'#FFFFFF',paddingAll:'10px',cornerRadius:'16px',flex:0});
 const separator=(color='#E2E8F0')=>({type:'separator',color});
 const footer=(label:string,url:string,color:string,secondary=false)=>box([{type:'button',style:secondary?'secondary':'primary',color:secondary?'#EAF0F7':color,height:'sm',action:{type:'uri',label,uri:url}},txt('Finance · MEDTECH','xxs','#94A3B8',{align:'center'})],{paddingAll:'24px',paddingTop:'8px',spacing:'md'});
-function noticeFacts(body:string){const lines=body.split('\n');const amount=lines.findIndex(s=>/^(ยอดชำระ:|ยอดค้าง\s)/.test(s));const due=lines.findIndex(s=>/^ครบกำหนด[:\s]/.test(s));return {amount:amount<0?'':lines[amount].replace(/^(ยอดชำระ:|ยอดค้าง)\s*/,''),due:due<0?'':lines[due].replace(/^ครบกำหนด[:\s]+/,''),rest:lines.filter((_,i)=>i!==amount&&i!==due).join('\n')}}
+function noticeFacts(body:string){
+ const lines=body.split('\n');
+ const amount=lines.findIndex(s=>/^(ยอดชำระ:|ยอดค้าง\s)/.test(s));
+ const due=lines.findIndex(s=>/^ครบกำหนด[:\s]/.test(s));
+ const time=lines.findIndex(s=>/^เวลาครบกำหนด[:\s]/.test(s));
+ const dueLine=due<0?'':lines[due].replace(/^ครบกำหนด[:\s]+/,'');
+ const embeddedTime=dueLine.match(/\s+เวลา\s+(\d{2}:\d{2})\s*น\.?$/);
+ const dueTime=time>=0?lines[time].replace(/^เวลาครบกำหนด[:\s]+/,''):embeddedTime?.[1]||'';
+ const cleanDue=dueLine.replace(/\s+เวลา\s+\d{2}:\d{2}\s*น\.?$/,'');
+ return {amount:amount<0?'':lines[amount].replace(/^(ยอดชำระ:|ยอดค้าง)\s*/,''),due:cleanDue,dueTime,rest:lines.filter((_,i)=>i!==amount&&i!==due&&i!==time).join('\n')};
+}
 function paymentFacts(body:string){
  const out={bill:'',amount:'',reason:'',rest:[] as string[]};
  for(const raw of body.split('\n')){
@@ -35,12 +45,10 @@ export function financeFlex(title:string,body:string,kind='message',actionUrl=''
  let header:any,content:any,foot:any;
  if(k==='new_bill'){
   const facts=noticeFacts(clean);
-  const billPaper=box([txt('BILL','xxs','#AF2448',{weight:'bold'}),box([],{height:'3px',width:'18px',backgroundColor:'#F1B8C8',cornerRadius:'2px'}),box([],{height:'3px',width:'13px',backgroundColor:'#F1B8C8',cornerRadius:'2px'}),box([],{height:'3px',width:'16px',backgroundColor:'#F1B8C8',cornerRadius:'2px'})],{paddingAll:'6px',backgroundColor:'#FFFFFF',cornerRadius:'6px',spacing:'4px',width:'34px'});
-  const billPlus=box([billPaper,box([txt('+','md','#FFFFFF',{weight:'bold',align:'center'})],{width:'19px',height:'19px',backgroundColor:'#E65A7B',cornerRadius:'99px',alignItems:'center',justifyContent:'center'})],{layout:'horizontal',alignItems:'center',spacing:'xs',paddingAll:'7px',backgroundColor:'#FFE8EE',cornerRadius:'14px',flex:0});
-  header=box([txt('FINANCE / BILL','xxs','#FFE0E6',{weight:'bold'}),box([txt('บิลใหม่สำหรับคุณ','lg','#FFFFFF',{weight:'bold',flex:1}),billPlus],{layout:'horizontal',alignItems:'center',spacing:'md'})],{paddingAll:'22px',backgroundColor:'#AF2448',spacing:'sm'});
-  content=box([txt(heading,'lg','#3E2631',{weight:'bold'}),...(facts.amount?[box([txt('ยอดที่ต้องชำระ','xs','#986573'),txt(facts.amount,'xxl','#AF2448',{weight:'bold'})],{paddingAll:'20px',backgroundColor:'#FFF1F4',cornerRadius:'16px',spacing:'sm'})]:[]),...(facts.due?[box([txt('วันครบกำหนด','xs','#8B6370'),txt(facts.due,'md','#3E2631',{weight:'bold'})],{spacing:'xs'})]:[]),separator('#EDD9DF'),txt(facts.rest||clean,'sm','#735762')],{paddingAll:'24px',spacing:'lg'});
+  header=box([picture('new_bill','48px'),box([txt('FINANCE / BILL','xxs','#FFE0E6',{weight:'bold'}),txt('บิลใหม่สำหรับคุณ','lg','#FFFFFF',{weight:'bold'})],{flex:1,spacing:'xs'})],{layout:'horizontal',alignItems:'center',paddingAll:'22px',backgroundColor:'#AF2448',spacing:'md'});
+  content=box([txt(heading,'lg','#3E2631',{weight:'bold'}),...(facts.amount?[box([txt('ยอดที่ต้องชำระ','xs','#986573'),txt(facts.amount,'xxl','#AF2448',{weight:'bold'})],{paddingAll:'20px',backgroundColor:'#FFF1F4',cornerRadius:'16px',spacing:'sm'})]:[]),...(facts.due?[box([txt('วันครบกำหนด','xs','#8B6370'),txt(facts.due,'md','#3E2631',{weight:'bold'}),...(facts.dueTime?[txt('เวลา '+facts.dueTime+' น.','sm','#AF2448',{weight:'bold'})]:[])],{spacing:'xs'})]:[]),separator('#EDD9DF'),txt(facts.rest||clean,'sm','#735762')],{paddingAll:'24px',spacing:'lg'});
   foot=footer('ดูรายการชำระเงิน',actionUrl||financeSite+'?view=bills','#AF2448');
- }else if(k==='payment_success'){
+}else if(k==='payment_success'){
   const facts=paymentFacts(clean);
   header=box([box([txt('FINANCE / PAYMENT','xxs','#BFEFD5',{weight:'bold'}),txt('ชำระเงินสำเร็จ','xl','#FFFFFF',{weight:'bold'}),txt('ยืนยันรายการเรียบร้อยแล้ว','xs','#DDF8E8')],{flex:1,spacing:'sm'}),box([txt('✓','xxl','#0E8055',{weight:'bold',align:'center'})],{backgroundColor:'#DDF8E8',cornerRadius:'999px',paddingAll:'10px',width:'52px',alignItems:'center'})],{layout:'horizontal',paddingAll:'24px',backgroundColor:'#116B4E',spacing:'md',alignItems:'center'});
   content=box([box([txt('BILL / รายการที่ชำระแล้ว','xxs','#628472',{weight:'bold'}),txt(facts.bill||'รายการชำระเงิน','lg','#173E2E',{weight:'bold'})],{paddingAll:'18px',backgroundColor:'#FFFFFF',cornerRadius:'14px',spacing:'sm'}),separator('#D7EBDF'),box([txt('ยอดที่ชำระ','xs','#5D7C6B'),txt(facts.amount||'ตรวจสอบรายละเอียดในระบบ','xxl','#0E8655',{weight:'bold'})],{spacing:'xs'}),...(facts.reason?[box([txt('หมายเหตุ','xs','#628472',{weight:'bold'}),txt(facts.reason,'sm','#426453')],{paddingAll:'14px',backgroundColor:'#E6F6EC',cornerRadius:'12px',spacing:'xs'})]:[]),...(facts.rest?[txt(facts.rest,'xs','#648071')]:[])],{paddingAll:'22px',backgroundColor:'#F1FAF4',spacing:'md'});
@@ -53,7 +61,7 @@ export function financeFlex(title:string,body:string,kind='message',actionUrl=''
  }else if(k==='reminder'){
   const facts=noticeFacts(clean);
   header=box([picture('reminder','48px'),box([txt('เตือนกำหนดชำระ','xs','#966318',{weight:'bold'}),txt(heading,'xl','#684213',{weight:'bold'})],{flex:1,spacing:'xs'})],{layout:'horizontal',paddingAll:'24px',spacing:'lg',alignItems:'center',backgroundColor:'#FFF3D8'});
-  content=box([...(facts.due?[box([txt('ครบกำหนด','xs','#88652A'),txt(facts.due,'xl','#684213',{weight:'bold'})],{paddingAll:'18px',borderColor:'#E8C684',borderWidth:'1px',cornerRadius:'12px',spacing:'sm'})]:[]),...(facts.amount?[box([txt('ยอดค้างชำระ','sm','#85683C'),txt(facts.amount,'lg','#684213',{weight:'bold'})],{spacing:'sm'})]:[]),txt(facts.rest||clean,'sm','#6D5C41')],{paddingAll:'24px',spacing:'lg'});
+  content=box([...(facts.due?[box([txt('ครบกำหนด','xs','#88652A'),txt(facts.due,'xl','#684213',{weight:'bold'}),...(facts.dueTime?[txt('เวลา '+facts.dueTime+' น.','sm','#A66B16',{weight:'bold'})]:[])],{paddingAll:'18px',borderColor:'#E8C684',borderWidth:'1px',cornerRadius:'12px',spacing:'sm'})]:[]),...(facts.amount?[box([txt('ยอดค้างชำระ','sm','#85683C'),txt(facts.amount,'lg','#684213',{weight:'bold'})],{spacing:'sm'})]:[]),txt(facts.rest||clean,'sm','#6D5C41')],{paddingAll:'24px',spacing:'lg'});
   foot=footer('ตรวจสอบยอดและชำระ',actionUrl||financeSite+'?view=bills','#A66B16');
  }else if(k==='correction'){
   header=box([iconTile('correction','30px'),box([txt('ต้องดำเนินการ','xs','#FFFFFF',{weight:'bold'}),txt('แก้ไขหลักฐานการชำระ','md','#FFFFFF',{weight:'bold'})],{flex:1,spacing:'xs'})],{layout:'horizontal',alignItems:'center',spacing:'md',paddingAll:'20px',backgroundColor:'#BB4434'});

@@ -71,14 +71,23 @@ export async function deliverNotification(db:any,n:any){
  if(!account){await query(db.from('notifications').update({status:'unlinked'}).eq('id',n.id));return 'unlinked'}
  try{let actionUrl='';
  let flexBody=String(n.body||'');
- if(n.new_bill_id){const bill=await query(db.from('rounds').select('id,archived,deleted_at,due_time').eq('id',n.new_bill_id).maybeSingle());const charge=await query(db.from('charges').select('id').eq('round_id',n.new_bill_id).eq('profile_id',n.profile_id).is('deleted_at',null).maybeSingle());if(!bill||bill.archived||bill.deleted_at||!charge){await query(db.from('notifications').update({status:'in_app',error:'บิลถูกลบ ปิดรับชำระ หรือสมาชิกไม่ได้อยู่ในบิลแล้ว'}).eq('id',n.id));return 'in_app'}if(bill.due_time){const t=String(bill.due_time).slice(0,5);flexBody=flexBody.split('\n').map(line=>line.startsWith('ครบกำหนด')?`${line} เวลา ${t} น.`:line).join('\n')}actionUrl=financeSite+'?view=bills';}
+ const appendDueTime=(body:string,value:any)=>{
+  const time=value?String(value).slice(0,5):'';
+  if(!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(time))return body;
+  const lines=body.split(/\\r?\\n/).filter(line=>!/^เวลาครบกำหนด[:\\s]/.test(line.trim()));
+  const dueIndex=lines.findIndex(line=>/^ครบกำหนด[:\\s]/.test(line.trim()));
+  if(dueIndex>=0){lines[dueIndex]=lines[dueIndex].replace(/\\s+เวลา\\s+\\d{2}:\\d{2}\\s*น\\.?$/,'');lines.splice(dueIndex+1,0,'เวลาครบกำหนด: '+time+' น.')}
+  else lines.push('เวลาครบกำหนด: '+time+' น.');
+  return lines.join('\\n');
+ };
+ if(n.new_bill_id){const bill=await query(db.from('rounds').select('id,archived,deleted_at,due_time').eq('id',n.new_bill_id).maybeSingle());const charge=await query(db.from('charges').select('id').eq('round_id',n.new_bill_id).eq('profile_id',n.profile_id).is('deleted_at',null).maybeSingle());if(!bill||bill.archived||bill.deleted_at||!charge){await query(db.from('notifications').update({status:'in_app',error:'บิลถูกลบ ปิดรับชำระ หรือสมาชิกไม่ได้อยู่ในบิลแล้ว'}).eq('id',n.id));return 'in_app'}if(bill.due_time)flexBody=appendDueTime(flexBody,bill.due_time);actionUrl=financeSite+'?view=bills';}
 
  if(n.message_kind==='reminder'){
   const c=await query(db.from('charges').select('*,rounds(due_date,due_time,archived,deleted_at)').eq('id',n.reminder_charge_id).maybeSingle());
   const ps=c?await query(db.from('payments').select('amount,status').eq('charge_id',c.id).is('deleted_at',null)):[];
   const totals=c?await query(db.rpc('charge_totals',{p_ids:[c.id]})):[];
   if(!c||c.deleted_at||c.rounds.deleted_at||c.rounds.archived||!n.reminder_key.includes(':'+c.rounds.due_date+':')||Date.parse(n.expires_at)<=Date.now()||ps.some((x:any)=>['pending','review'].includes(x.status))||ps.filter((x:any)=>x.status==='approved').reduce((a:number,x:any)=>a+Number(x.amount),0)>=Number(totals[0]?.total_amount??c.amount)){await query(db.from('notifications').update({status:'in_app',error:'รายการชำระแล้ว รอตรวจสอบ หรือเปลี่ยนกำหนดชำระ'}).eq('id',n.id));return 'in_app'}
-  if(c.rounds.due_time){const t=String(c.rounds.due_time).slice(0,5);flexBody=flexBody.split('\n').map(line=>line.startsWith('ครบกำหนด')?`${line} เวลา ${t} น.`:line).join('\n')}
+  if(c.rounds.due_time)flexBody=appendDueTime(flexBody,c.rounds.due_time)
  }
  if(n.message_kind==='password'){
   const u=await db.auth.admin.getUserById(n.profile_id);if(u.error||!u.data.user?.email)throw Error('ไม่พบบัญชีสำหรับตั้งรหัสผ่าน');

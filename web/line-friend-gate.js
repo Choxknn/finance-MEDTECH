@@ -25,7 +25,10 @@
    if(url.origin!=='https://liff.line.me'||url.pathname!=='/'+cfg.lineLiffId||!url.searchParams.has('friend_gate_state'))throw Error('ลิงก์ตรวจสอบ LINE ไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ');
    sessionStorage.setItem('finance-line-friend-gate-pending',JSON.stringify({profileId:user.id,createdAt:Date.now()}));
    const app=document.getElementById('app');
-   if(app)app.innerHTML='<section class="login-page"><section class="login-form-area"><div class="login-form"><div class="line-login-symbol" aria-hidden="true">LINE</div><h1>กำลังเปิด LINE เพื่อเพิ่มเพื่อน</h1><p class="sub">กรุณากดยอมรับหน้าต่างเพิ่มเพื่อน LINE Official Account แล้วระบบจะพากลับเข้าเว็บไซต์</p><div class="login-loading" role="status">กำลังเปิด LIFF…</div></div></section></section>';
+   if(app){
+    app.innerHTML='<section class="login-page"><section class="login-form-area"><div class="login-form"><div class="line-login-symbol" aria-hidden="true">LINE</div><h1>กำลังเปิด LINE เพื่อเพิ่มเพื่อน</h1><p class="sub">กรุณากดยอมรับหน้าต่างเพิ่มเพื่อน LINE Official Account แล้วระบบจะพากลับเข้าเว็บไซต์</p><div class="login-loading" role="status">กำลังเปิด LIFF…</div><div class="actions"><button type="button" class="secondary" id="friend-gate-exit">ออก</button></div></div></section></section>';
+    document.getElementById('friend-gate-exit')?.addEventListener('click',()=>window.exitSessionToLogin?.());
+   }
    location.assign(url.href);
    return false;
   }catch(error){

@@ -7,7 +7,7 @@ const separator=(color='#E2E8F0')=>({type:'separator',color});
 const footer=(label:string,url:string,color:string,secondary=false)=>box([{type:'button',style:secondary?'secondary':'primary',color:secondary?'#EAF0F7':color,height:'sm',action:{type:'uri',label,uri:url}},txt('Finance · MEDTECH','xxs','#94A3B8',{align:'center'})],{paddingAll:'24px',paddingTop:'8px',spacing:'md'});
 function noticeFacts(body:string){const lines=body.split('\n');const amount=lines.findIndex(s=>/^(ยอดชำระ:|ยอดค้าง\s)/.test(s));const due=lines.findIndex(s=>/^ครบกำหนด[:\s]/.test(s));return {amount:amount<0?'':lines[amount].replace(/^(ยอดชำระ:|ยอดค้าง)\s*/,''),due:due<0?'':lines[due].replace(/^ครบกำหนด[:\s]+/,''),rest:lines.filter((_,i)=>i!==amount&&i!==due).join('\n')}}
 export function financeFlex(title:string,body:string,kind='message',actionUrl=''){
- const labels:Record<string,string>={new_bill:'บิลใหม่',reminder:'เตือนครบกำหนด',correction:'ต้องแก้ไขหลักฐาน',announcement:'ประกาศ',password:'ความปลอดภัยบัญชี',message:'ข้อความถึงคุณ'};
+ const labels:Record<string,string>={new_bill:'บิลใหม่',reminder:'เตือนครบกำหนด',correction:'ต้องแก้ไขหลักฐาน',announcement:'ประกาศ',password:'ความปลอดภัยบัญชี',payment_success:'ชำระเงินสำเร็จ',bill_updated:'ปรับยอดบิล',message:'ข้อความถึงคุณ'};
  const k=labels[kind]?kind:'message',heading=(title||labels[k]).slice(0,120),clean=(body||'').replace(/^finance MEDTECH\s*\n?/i,'').trim().slice(0,2000)||'เปิดเว็บเพื่อตรวจสอบรายละเอียด';
  let header:any,content:any,foot:any;
  if(k==='new_bill'){
@@ -15,6 +15,14 @@ export function financeFlex(title:string,body:string,kind='message',actionUrl=''
   header=box([txt('FINANCE / BILL','xxs','#FFE0E6',{weight:'bold'}),box([txt('บิลใหม่สำหรับคุณ','lg','#FFFFFF',{weight:'bold',flex:1}),txt('฿','xxl','#FFFFFF',{weight:'bold',flex:0})],{layout:'horizontal',alignItems:'center',spacing:'md'})],{paddingAll:'22px',backgroundColor:'#AF2448',spacing:'sm'});
   content=box([txt(heading,'lg','#3E2631',{weight:'bold'}),...(facts.amount?[box([txt('ยอดที่ต้องชำระ','xs','#986573'),txt(facts.amount,'xxl','#AF2448',{weight:'bold'})],{paddingAll:'20px',backgroundColor:'#FFF1F4',cornerRadius:'16px',spacing:'sm'})]:[]),...(facts.due?[box([txt('วันครบกำหนด','xs','#8B6370'),txt(facts.due,'md','#3E2631',{weight:'bold'})],{spacing:'xs'})]:[]),separator('#EDD9DF'),txt(facts.rest||clean,'sm','#735762')],{paddingAll:'24px',spacing:'lg'});
   foot=footer('ดูรายการชำระเงิน',actionUrl||financeSite+'?view=bills','#AF2448');
+ }else if(k==='payment_success'){
+  header=box([txt('FINANCE / PAYMENT','xxs','#D1FAE5',{weight:'bold'}),txt('ชำระเงินสำเร็จ','xl','#FFFFFF',{weight:'bold'})],{paddingAll:'24px',backgroundColor:'#167A52',spacing:'md'});
+  content=box([txt(heading,'lg','#164B35',{weight:'bold'}),box([txt(clean,'sm','#315B48',{lineSpacing:'7px'})],{paddingAll:'20px',backgroundColor:'#EFFAF3',cornerRadius:'16px',spacing:'sm'})],{paddingAll:'24px',spacing:'lg'});
+  foot=footer('ดูรายการชำระเงิน',actionUrl||financeSite+'?view=bills','#167A52');
+ }else if(k==='bill_updated'){
+  header=box([txt('FINANCE / BILL UPDATE','xxs','#FFE0E6',{weight:'bold'}),txt('มีการปรับยอดบิล','lg','#FFFFFF',{weight:'bold'})],{paddingAll:'22px',backgroundColor:'#AF2448',spacing:'sm'});
+  content=box([txt(heading,'lg','#3E2631',{weight:'bold'}),box([txt(clean,'sm','#735762',{lineSpacing:'7px'})],{paddingAll:'20px',backgroundColor:'#FFF1F4',cornerRadius:'16px',spacing:'sm'})],{paddingAll:'24px',spacing:'lg'});
+  foot=footer('ดูรายการบิล',actionUrl||financeSite+'?view=bills','#AF2448');
  }else if(k==='reminder'){
   const facts=noticeFacts(clean);
   header=box([picture('reminder','48px'),box([txt('เตือนกำหนดชำระ','xs','#966318',{weight:'bold'}),txt(heading,'xl','#684213',{weight:'bold'})],{flex:1,spacing:'xs'})],{layout:'horizontal',paddingAll:'24px',spacing:'lg',alignItems:'center',backgroundColor:'#FFF3D8'});

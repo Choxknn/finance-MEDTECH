@@ -339,9 +339,10 @@ Deno.serve(async req=>{
     else if(entity==='payment')patch={note:String(s.note||'').slice(0,500),reason:text(s.reason,500)};
     else if(entity==='charge')patch={amount:amount(s.amount),reason:text(s.reason,500)};
     else throw new Error('ชนิดรายการไม่ถูกต้อง');
-    const table={member:'profiles',round:'rounds',charge:'charges',payment:'payments',expense:'expenses'}[entity];await query(db.from(table!).select('id').eq('id',input.id).is('deleted_at',null).single());
+    const table={member:'profiles',round:'rounds',charge:'charges',payment:'payments',expense:'expenses'}[entity];const prior=await query(db.from(table!).select(entity==='charge'?'id,amount,profile_id,round_id':'id').eq('id',input.id).is('deleted_at',null).single());
     let driveId:string|undefined,receiptId:string|undefined;if(file){if(!['expense','charge'].includes(entity))throw new Error('รายการนี้ไม่รองรับไฟล์');const image=await validateImage(file);driveId=await uploadDrive(image,`${entity}-edit-${crypto.randomUUID()}.${image.type.split('/')[1]}`);patch.drive_file_id=driveId}
     try{if(receiptFile){if(entity!=='expense')throw Error('รายการนี้ไม่รองรับใบเสร็จ');receiptId=await uploadDrive(await validateReceipt(receiptFile),`expense-receipt-${crypto.randomUUID()}`);patch.receipt_file_id=receiptId}await query(entity==='charge'&&driveId?db.rpc('admin_bill_with_evidence',{p_charge:text(input.id,36),p_actor:profile.id,p_file:driveId,p_patch:patch}):db.rpc('manage_record',{p_entity:entity,p_id:text(input.id,36),p_patch:patch,p_actor:profile.id}))}catch(e){if(driveId)await deleteDrive(driveId);if(receiptId)await deleteDrive(receiptId);throw e}
+    if(entity==='charge'&&input.notify_line===true&&Number(prior.amount)!==Number(patch.amount)){const bill=await query(db.from('rounds').select('title').eq('id',prior.round_id).maybeSingle());const body=`finance MEDTECH\nมีการเปลี่ยนแปลงยอดบิลรายบุคคล\nรายการ: ${bill?.title||'บิล'}\nยอดเดิม: ${Number(prior.amount).toFixed(2)} บาท\nยอดใหม่: ${Number(patch.amount).toFixed(2)} บาท\nเหตุผล: ${patch.reason}`;try{await notify(db,prior.profile_id,body,'bill_updated','ปรับยอดบิลรายบุคคล')}catch(error){console.warn('Bill update LINE notification could not be queued',error)}}
     return json({ok:true});
    }
    case 'change-student-id':{
@@ -412,7 +413,7 @@ Deno.serve(async req=>{
     if(validDate&&slipOverpaid(result.body,Number(p.amount))){await query(db.from('payments').update({status:'review',note:overpaidMessage}).eq('id',p.id).in('status',['pending','review']));return json({message:overpaidMessage,status:'review',contact_admin:true});}
     if(result.ok&&validDate){
      await query(db.rpc('decide_payment',{p_id:p.id,p_decision:'approved',p_note:'ตรวจสอบผ่าน SlipOK (ตรวจซ้ำ)',p_ref:String(detail.transRef),p_actor:null}));
-     await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`);
+     await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันชำระ ${p.charges.rounds.title}\nจำนวน ${Number(p.amount).toFixed(2)} บาท`,input.notify_line===true);
      return json({message:'SlipOK ยืนยันการชำระแล้ว'});
     }
     const note=!validDate&&(result.ok||detail?.transTimestamp)?'สลิปเกิน 48 ชั่วโมง ก่อนสร้างบิล หรือวันเวลาบนสลิปไม่ถูกต้อง':'ผลตรวจต้องตรวจเพิ่มเติม: '+String(result.body.message||detail?.message||'ยอดหรือบัญชีไม่ตรง');
@@ -422,7 +423,7 @@ Deno.serve(async req=>{
    case 'set-bill-status':{
     requireAdmin();
     const args={p_charge:text(input.charge_id,36),p_status:text(input.status,20),p_reason:text(input.reason,500),p_actor:profile.id,p_expected_paid:Number(input.expected_paid),p_expected_balance:Number(input.expected_balance),p_request:text(input.request_id,36)};
-    let stored:string|undefined;try{if(file)stored=await uploadDrive(await validateImage(file),'bill-admin-'+crypto.randomUUID());const result=await query(stored?db.rpc('admin_bill_with_evidence',{...args,p_file:stored}):db.rpc('admin_set_bill_status',args));return json({ok:true,result})}catch(e){if(stored)await deleteDrive(stored);throw e}
+    let stored:string|undefined;try{if(file)stored=await uploadDrive(await validateImage(file),'bill-admin-'+crypto.randomUUID());const result=await query(stored?db.rpc('admin_bill_with_evidence',{...args,p_file:stored}):db.rpc('admin_set_bill_status',args));if(args.p_status==='approved'&&input.notify_line===true){const charge=await query(db.from('charges').select('profile_id,round_id').eq('id',args.p_charge).single());const bill=await query(db.from('rounds').select('title').eq('id',charge.round_id).maybeSingle());await paymentSuccess(db,charge.profile_id,`finance MEDTECH\nยืนยันรับเงินแล้ว\nรายการ: ${bill?.title||'บิล'}\nจำนวน: ${Number(args.p_expected_balance||0).toFixed(2)} บาท\nเหตุผล: ${args.p_reason}`,true)}return json({ok:true,result})}catch(e){if(stored)await deleteDrive(stored);throw e}
    }
    case 'review-stage':{
     requireAdmin();const stage=text(input.stage,20);if(!['waiting','checking'].includes(stage))throw Error('ขั้นตอนตรวจไม่ถูกต้อง');
@@ -437,7 +438,7 @@ Deno.serve(async req=>{
     requireAdmin();const decision=text(input.decision,20);if(!['approved','rejected'].includes(decision))throw new Error('สถานะไม่ถูกต้อง');const p=await query(db.from('payments').select('*').eq('id',input.payment_id).single());
     await query(db.rpc('decide_payment',{p_id:p.id,p_decision:decision,p_note:text(input.note,500),p_ref:p.trans_ref||p.verification?.data?.transRef||`ADMIN-${p.id}`,p_actor:profile.id}));
     if(decision==='rejected')await discardRejectedSlip(db,'payments',p.id);
-    if(decision==='approved')await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันรับเงินแล้ว\nจำนวน ${Number(p.amount).toFixed(2)} บาท`);return json({ok:true,message:decision==='rejected'?'ปฏิเสธสลิปและลบรายการแล้ว':'ยืนยันการชำระแล้ว'});
+    if(decision==='approved'){const charge=await query(db.from('charges').select('round_id').eq('id',p.charge_id).maybeSingle());const bill=charge?await query(db.from('rounds').select('title').eq('id',charge.round_id).maybeSingle()):null;await paymentSuccess(db,p.profile_id,`finance MEDTECH\nยืนยันรับเงินแล้ว\nรายการ: ${bill?.title||'บิล'}\nจำนวน: ${Number(p.amount).toFixed(2)} บาท\nหมายเหตุ: ${text(input.note,500)}`,input.notify_line===true)}return json({ok:true,message:decision==='rejected'?'ปฏิเสธสลิปและลบรายการแล้ว':'ยืนยันการชำระแล้ว'});
    }
    case 'new-expense':{
     requireAdmin();if(input.request_key){const existing=await query(db.from('expenses').select('id').eq('created_by',profile.id).eq('request_key',input.request_key).maybeSingle());if(existing)return json({ok:true,id:existing.id});}const title=text(input.title,120),category=text(input.category,100),value=amount(input.amount),spentOn=day(input.spent_on),responsible=text(input.responsible_name||profile.name,120),id=crypto.randomUUID();const uploaded:string[]=[];

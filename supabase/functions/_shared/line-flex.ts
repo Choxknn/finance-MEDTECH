@@ -1,7 +1,7 @@
 export const financeSite='https://choxknn.github.io/finance-MEDTECH/';
 const txt=(text:string,size='sm',color='#334155',extra:any={})=>({type:'text',text:text||' ',size,color,wrap:true,...extra});
 const box=(contents:any[],extra:any={})=>({type:'box',layout:'vertical',contents,...extra});
-const picture=(kind:string,size='40px')=>({type:'image',url:financeSite+'assets/flex-'+kind+'.png',size,aspectRatio:'1:1',aspectMode:'fit',flex:0});
+const picture=(kind:string,size='40px')=>({type:'image',url:financeSite+'assets/flex-'+kind+'.png'+(kind==='new_bill'?'?v=2026110602':''),size,aspectRatio:'1:1',aspectMode:'fit',flex:0});
 const iconTile=(kind:string,size='40px')=>box([picture(kind,size)],{backgroundColor:'#FFFFFF',paddingAll:'10px',cornerRadius:'16px',flex:0});
 const separator=(color='#E2E8F0')=>({type:'separator',color});
 const footer=(label:string,url:string,color:string,secondary=false)=>box([{type:'button',style:secondary?'secondary':'primary',color:secondary?'#EAF0F7':color,height:'sm',action:{type:'uri',label,uri:url}},txt('Finance · MEDTECH','xxs','#94A3B8',{align:'center'})],{paddingAll:'24px',paddingTop:'8px',spacing:'md'});
@@ -45,7 +45,7 @@ export function financeFlex(title:string,body:string,kind='message',actionUrl=''
  let header:any,content:any,foot:any;
  if(k==='new_bill'){
   const facts=noticeFacts(clean);
-  header=box([picture('new_bill','48px'),box([txt('FINANCE / BILL','xxs','#FFE0E6',{weight:'bold'}),txt('บิลใหม่สำหรับคุณ','lg','#FFFFFF',{weight:'bold'})],{flex:1,spacing:'xs'})],{layout:'horizontal',alignItems:'center',paddingAll:'22px',backgroundColor:'#AF2448',spacing:'md'});
+  header=box([iconTile('new_bill','34px'),box([txt('FINANCE / BILL','xxs','#FFE0E6',{weight:'bold'}),txt('บิลใหม่สำหรับคุณ','lg','#FFFFFF',{weight:'bold'})],{flex:1,spacing:'xs'})],{layout:'horizontal',alignItems:'center',paddingAll:'22px',backgroundColor:'#AF2448',spacing:'md'});
   content=box([txt(heading,'lg','#3E2631',{weight:'bold'}),...(facts.amount?[box([txt('ยอดที่ต้องชำระ','xs','#986573'),txt(facts.amount,'xxl','#AF2448',{weight:'bold'})],{paddingAll:'20px',backgroundColor:'#FFF1F4',cornerRadius:'16px',spacing:'sm'})]:[]),...(facts.due?[box([txt('วันครบกำหนด','xs','#8B6370'),txt(facts.due,'md','#3E2631',{weight:'bold'}),...(facts.dueTime?[txt('เวลา '+facts.dueTime+' น.','sm','#AF2448',{weight:'bold'})]:[])],{spacing:'xs'})]:[]),separator('#EDD9DF'),txt(facts.rest||clean,'sm','#735762')],{paddingAll:'24px',spacing:'lg'});
   foot=footer('ดูรายการชำระเงิน',actionUrl||financeSite+'?view=bills','#AF2448');
 }else if(k==='payment_success'){

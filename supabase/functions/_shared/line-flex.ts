@@ -8,24 +8,24 @@ const footer=(label:string,url:string,color:string,secondary=false)=>box([{type:
 function noticeFacts(body:string){const lines=body.split('\n');const amount=lines.findIndex(s=>/^(ยอดชำระ:|ยอดค้าง\s)/.test(s));const due=lines.findIndex(s=>/^ครบกำหนด[:\s]/.test(s));return {amount:amount<0?'':lines[amount].replace(/^(ยอดชำระ:|ยอดค้าง)\s*/,''),due:due<0?'':lines[due].replace(/^ครบกำหนด[:\s]+/,''),rest:lines.filter((_,i)=>i!==amount&&i!==due).join('\n')}}
 function paymentFacts(body:string){
  const out={bill:'',amount:'',reason:'',rest:[] as string[]};
- for(const raw of body.split('\\n')){
+ for(const raw of body.split('\n')){
   const line=raw.trim();if(!line||/^finance MEDTECH$/i.test(line)||/^ยืนยันรับเงินแล้ว$/.test(line))continue;
-  let m=line.match(/^รายการ\\s*[:：]\\s*(.+)$/);if(m){out.bill=m[1].trim();continue}
-  m=line.match(/^ยืนยันชำระ\\s+(.+)$/);if(m){out.bill=m[1].trim();continue}
-  m=line.match(/^จำนวน\\s*[:：]?\\s*(.+)$/);if(m){out.amount=m[1].trim();continue}
-  m=line.match(/^(?:เหตุผล|หมายเหตุ)\\s*[:：]\\s*(.+)$/);if(m){out.reason=m[1].trim();continue}
+  let m=line.match(/^รายการ\s*[:：]\s*(.+)$/);if(m){out.bill=m[1].trim();continue}
+  m=line.match(/^ยืนยันชำระ\s+(.+)$/);if(m){out.bill=m[1].trim();continue}
+  m=line.match(/^จำนวน\s*[:：]?\s*(.+)$/);if(m){out.amount=m[1].trim();continue}
+  m=line.match(/^(?:เหตุผล|หมายเหตุ)\s*[:：]\s*(.+)$/);if(m){out.reason=m[1].trim();continue}
   out.rest.push(line);
  }
- return {...out,rest:out.rest.join('\\n')};
+ return {...out,rest:out.rest.join('\n')};
 }
 function billUpdateFacts(body:string){
  const out={bill:'',oldAmount:'',newAmount:'',reason:''};
- for(const raw of body.split('\\n')){
+ for(const raw of body.split('\n')){
   const line=raw.trim();if(!line||/^finance MEDTECH$/i.test(line)||/^มีการเปลี่ยนแปลงยอดบิลรายบุคคล$/.test(line))continue;
-  let m=line.match(/^รายการ\\s*[:：]\\s*(.+)$/);if(m){out.bill=m[1].trim();continue}
-  m=line.match(/^ยอดเดิม\\s*[:：]\\s*(.+)$/);if(m){out.oldAmount=m[1].trim();continue}
-  m=line.match(/^ยอดใหม่\\s*[:：]\\s*(.+)$/);if(m){out.newAmount=m[1].trim();continue}
-  m=line.match(/^เหตุผล\\s*[:：]\\s*(.*)$/);if(m){out.reason=m[1].trim();continue}
+  let m=line.match(/^รายการ\s*[:：]\s*(.+)$/);if(m){out.bill=m[1].trim();continue}
+  m=line.match(/^ยอดเดิม\s*[:：]\s*(.+)$/);if(m){out.oldAmount=m[1].trim();continue}
+  m=line.match(/^ยอดใหม่\s*[:：]\s*(.+)$/);if(m){out.newAmount=m[1].trim();continue}
+  m=line.match(/^เหตุผล\s*[:：]\s*(.*)$/);if(m){out.reason=m[1].trim();continue}
  }
  return out;
 }

@@ -46,7 +46,7 @@
   if(user?.role!=='admin'||loading)return;
   loading=true;loadError='';render();
   try{const result=await api('admin-payment-records');if(!Array.isArray(result.payments))throw Error('รูปแบบข้อมูลจากเซิร์ฟเวอร์ไม่ถูกต้อง');rows=result.payments;loaded=true}
-  catch(error){loadError=error instanceof Error?error.message:'โหลดข้อมูลไม่สำเร็จ'}
+  catch(error){loadError=error instanceof Error?error.message:'โหลดข้อมูลไม่สำเร็จ';loaded=true}
   finally{loading=false;if(user?.role==='admin'&&view==='payments-admin')render()}
  }
  function findPayment(id){return rows.find(p=>p.id===id)}

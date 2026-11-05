@@ -159,6 +159,11 @@ Deno.serve(async req=>{
     const summary=await query(db.rpc('campaign_summary',{p_actor:profile.id,p_id:id}));if(!summary.length)throw Error('ไม่พบชุดข้อความ');return json({campaign:summary[0],processed:jobs.length});
    }
    case 'presence':{await query(db.from('profiles').update({last_seen_at:input.online===false?null:new Date().toISOString()}).eq('id',profile.id));return json({ok:true});}
+   case 'admin-payment-records':{
+    requireAdmin();
+    const payments=await query(db.from('payments').select('id,profile_id,charge_id,amount,status,drive_file_id,trans_ref,source,note,verification,verification_method,reviewed_by,reviewed_at,created_at,deleted_at,charge_snapshot,member_snapshot,profiles(name,student_id),charges(round_id,rounds(title))').order('created_at',{ascending:false}).limit(500));
+    return json({payments});
+   }
    case 'bootstrap':{
     await query(db.from('profiles').update({last_seen_at:new Date().toISOString()}).eq('id',profile.id));
     const signedAt=auth.data.user.last_sign_in_at;if(signedAt&&(!profile.last_login_at||Date.parse(signedAt)>Date.parse(profile.last_login_at)))await query(db.from('profiles').update({last_login_at:signedAt}).eq('id',profile.id));
@@ -315,7 +320,7 @@ Deno.serve(async req=>{
     if(entity==='member'){if(!['member','admin'].includes(s.role)||typeof s.active!=='boolean'||!['1','2','3','4',''].includes(String(s.year)))throw new Error('สิทธิ์ สถานะ หรือชั้นปีไม่ถูกต้อง');patch={name:text(s.name,120),year:String(s.year),role:s.role,active:s.active,phone:String(s.phone||'').slice(0,30),contact_email:String(s.contact_email||'').slice(0,254),profile_note:String(s.profile_note||'').slice(0,1000)}}
     else if(entity==='round'){if(typeof s.archived!=='boolean')throw new Error('สถานะไม่ถูกต้อง');patch={title:text(s.title,120),description:String(s.description||'').slice(0,1000),amount:amount(s.amount),due_date:day(s.due_date),due_time:clock(s.due_time),archived:s.archived,profile_ids:memberIds(s.profile_ids),penalty_enabled:s.penalty_enabled===true,penalty_per_day:s.penalty_enabled===true?amount(s.penalty_per_day):0,penalty_max:s.penalty_enabled===true&&s.penalty_max!=null?amount(s.penalty_max):null}}
     else if(entity==='expense'){if(typeof s.voided!=='boolean')throw new Error('สถานะไม่ถูกต้อง');patch={responsible_name:text(s.responsible_name||profile.name,120),title:text(s.title,120),category:text(s.category,100),amount:amount(s.amount),spent_on:day(s.spent_on),spent_time:clock(s.spent_time),note:String(s.note||'').slice(0,500),voided:s.voided,reason:text(s.reason,500)}}
-    else if(entity==='payment')patch={note:String(s.note||'').slice(0,500)};
+    else if(entity==='payment')patch={note:String(s.note||'').slice(0,500),reason:text(s.reason,500)};
     else if(entity==='charge')patch={amount:amount(s.amount),reason:text(s.reason,500)};
     else throw new Error('ชนิดรายการไม่ถูกต้อง');
     const table={member:'profiles',round:'rounds',charge:'charges',payment:'payments',expense:'expenses'}[entity];await query(db.from(table!).select('id').eq('id',input.id).is('deleted_at',null).single());

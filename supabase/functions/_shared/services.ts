@@ -72,13 +72,19 @@ export async function deliverNotification(db:any,n:any){
  try{let actionUrl='';
  let flexBody=String(n.body||'');
  const appendDueTime=(body:string,value:any)=>{
-  const time=value?String(value).slice(0,5):'';
-  if(!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(time))return body;
-  const lines=body.split(/\\r?\\n/).filter(line=>!/^เวลาครบกำหนด[:\\s]/.test(line.trim()));
-  const dueIndex=lines.findIndex(line=>/^ครบกำหนด[:\\s]/.test(line.trim()));
-  if(dueIndex>=0){lines[dueIndex]=lines[dueIndex].replace(/\\s+เวลา\\s+\\d{2}:\\d{2}\\s*น\\.?$/,'');lines.splice(dueIndex+1,0,'เวลาครบกำหนด: '+time+' น.')}
-  else lines.push('เวลาครบกำหนด: '+time+' น.');
-  return lines.join('\\n');
+  const rawTime=String(value??'').trim();
+  const match=rawTime.match(/^([01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?$/);
+  if(!match)return body;
+  const time=rawTime.slice(0,5);
+  const lines=String(body||'').split(/\r?\n/).filter(line=>!/^เวลาครบกำหนด[:\s]/.test(line.trim()));
+  const dueIndex=lines.findIndex(line=>/^ครบกำหนด[:\s]/.test(line.trim()));
+  if(dueIndex>=0){
+   lines[dueIndex]=lines[dueIndex].replace(/\s+เวลา\s+\d{2}:\d{2}\s*น\.?$/,'');
+   lines.splice(dueIndex+1,0,'เวลาครบกำหนด: '+time+' น.');
+  }else{
+   lines.push('เวลาครบกำหนด: '+time+' น.');
+  }
+  return lines.join('\n');
  };
  if(n.new_bill_id){const bill=await query(db.from('rounds').select('id,archived,deleted_at,due_time').eq('id',n.new_bill_id).maybeSingle());const charge=await query(db.from('charges').select('id').eq('round_id',n.new_bill_id).eq('profile_id',n.profile_id).is('deleted_at',null).maybeSingle());if(!bill||bill.archived||bill.deleted_at||!charge){await query(db.from('notifications').update({status:'in_app',error:'บิลถูกลบ ปิดรับชำระ หรือสมาชิกไม่ได้อยู่ในบิลแล้ว'}).eq('id',n.id));return 'in_app'}if(bill.due_time)flexBody=appendDueTime(flexBody,bill.due_time);actionUrl=financeSite+'?view=bills';}
 

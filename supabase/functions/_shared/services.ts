@@ -73,7 +73,7 @@ export async function deliverNotification(db:any,n:any){
  let flexBody=String(n.body||'');
  const appendDueTime=(body:string,value:any)=>{
   const rawTime=String(value??'').trim();
-  const match=rawTime.match(/^([01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?$/);
+  const match=rawTime.match(/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?$/);
   if(!match)return body;
   const time=rawTime.slice(0,5);
   const lines=String(body||'').split(/\r?\n/).filter(line=>!/^เวลาครบกำหนด[:\s]/.test(line.trim()));

@@ -80,9 +80,9 @@ export async function deliverNotification(db:any,n:any){
   const dueIndex=lines.findIndex(line=>/^ครบกำหนด[:\s]/.test(line.trim()));
   if(dueIndex>=0){
    lines[dueIndex]=lines[dueIndex].replace(/\s+เวลา\s+\d{2}:\d{2}\s*น\.?$/,'');
-   lines.splice(dueIndex+1,0,'เวลาครบกำหนด: '+time+' น.');
+   lines.splice(dueIndex+1,0,'เวลาครบกำหนด: '+time);
   }else{
-   lines.push('เวลาครบกำหนด: '+time+' น.');
+   lines.push('เวลาครบกำหนด: '+time);
   }
   return lines.join('\n');
  };

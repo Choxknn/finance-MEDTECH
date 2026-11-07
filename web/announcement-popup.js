@@ -2,7 +2,6 @@
 (()=>{
  const originalCompose=composeMessage;composeMessage=function(kind,webOnly,...rest){if(!webOnly)return originalCompose(kind,webOnly,...rest);modal('สร้างประกาศในเว็บ',`<form id="announcement-compose"><label for="announcement-title">หัวข้อประกาศ</label><input id="announcement-title" name="title" maxlength="120" required><label for="announcement-body">ข้อความ (เว้นว่างได้เมื่อแนบรูป)</label><textarea id="announcement-body" name="body" maxlength="2000" rows="4"></textarea><label class="announcement-upload">${icon('image')||''} รูปประกาศ<input name="image" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG หรือ WEBP ไม่เกิน 5 MB</small></label><div id="announcement-image-preview"></div><label class="announcement-entry-option"><input name="show_on_entry" type="checkbox"> แสดงประกาศเป็นหน้าต่างเมื่อเข้าเว็บ</label><p class="help">ประกาศถึงสมาชิกทุกคนในเว็บ · ไม่ส่ง LINE</p><div class="actions"><button type="button" class="secondary" data-action="close">ยกเลิก</button><button type="submit">เผยแพร่ประกาศ</button></div><p class="form-error" role="alert"></p></form>`)};
  let previewUrl=null;
- function showCurrentImage(form){const box=document.getElementById('announcement-image-preview');if(!box)return;box.replaceChildren();const url=form.dataset.currentImage;if(url){const img=document.createElement('img');img.src=url;img.alt='รูปประกาศปัจจุบัน';box.append(img)}}
  function editAnnouncement(a){
   const currentImage=a.image_url||'',hasImage=!!(a.drive_file_id||currentImage);
   modal('แก้ไขประกาศในเว็บ',`<form id="announcement-edit" data-id="${esc(a.id)}" data-has-image="${hasImage?'true':'false'}" data-current-image="${esc(currentImage)}">
@@ -23,9 +22,9 @@
   if(['announcement-compose','announcement-edit'].includes(form?.id)&&input.name==='image'){
    if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null;
    const box=document.getElementById('announcement-image-preview');box.replaceChildren();const file=input.files[0];
-   if(file)try{validateFile(file);previewUrl=URL.createObjectURL(file);const img=document.createElement('img');img.src=previewUrl;img.alt='ตัวอย่างรูปประกาศใหม่';box.append(img)}
-   catch(err){input.value='';form.querySelector('.form-error').textContent=err.message;if(form.id==='announcement-edit')showCurrentImage(form)}
-   else if(form.id==='announcement-edit')showCurrentImage(form);
+   if(file){try{validateFile(file);previewUrl=URL.createObjectURL(file);const img=document.createElement('img');img.src=previewUrl;img.alt='ตัวอย่างรูปประกาศใหม่';box.append(img)}
+   catch(err){input.value='';form.querySelector('.form-error').textContent=err.message}}
+
   }
   if(input.matches('[data-announcement-entry]')){input.disabled=true;try{await api('announcement-entry-setting',{id:input.dataset.announcementEntry,show_on_entry:input.checked});const a=db.announcements.find(a=>a.id===input.dataset.announcementEntry);if(a)a.show_on_entry=input.checked;toast('บันทึกการแสดงประกาศแล้ว')}catch(err){input.checked=!input.checked;toast(err.message)}finally{input.disabled=false}}
  });

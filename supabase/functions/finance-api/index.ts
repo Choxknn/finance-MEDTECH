@@ -130,6 +130,24 @@ Deno.serve(async req=>{
     const result=await query(db.rpc('clear_old_messages',{p_kind:input.kind,p_months:months,p_actor:profile.id,p_confirmed:confirmed,p_anchor:confirmed?input.anchor:null}));return json(result);
    }
    case 'publish-announcement':{requireAdmin();const title=text(input.title,120),body=String(input.body||'').trim();if(body.length>2000||(!body&&!file))throw Error('ระบุข้อความหรือแนบรูปประกาศ');let stored:string|null=null,published=false;try{if(file)stored=await uploadDrive(await validateImage(file),'announcement-'+crypto.randomUUID());const row=await query(db.from('web_announcements').insert({title,body,show_on_entry:input.show_on_entry===true,drive_file_id:stored,created_by:profile.id}).select('id').single());published=true;await query(db.from('audit').insert({actor:profile.name,action:'สร้างประกาศในเว็บ '+title}));return json({id:row.id});}catch(e){if(stored&&!published)await deleteDrive(stored);throw e}}
+   case 'edit-announcement':{
+    requireAdmin();
+    const id=text(input.id,36),title=text(input.title,120),body=String(input.body||'').trim();
+    if(body.length>2000)throw Error('ข้อความประกาศต้องไม่เกิน 2,000 ตัวอักษร');
+    const current=await query(db.from('web_announcements').select('id,drive_file_id').eq('id',id).maybeSingle());
+    if(!current)throw Error('ไม่พบประกาศนี้แล้ว กรุณาโหลดข้อมูลใหม่');
+    if(!body&&!file&&!current.drive_file_id)throw Error('ระบุข้อความหรือแนบรูปประกาศ');
+    let stored:string|null=null,updated=false;
+    try{
+     if(file)stored=await uploadDrive(await validateImage(file),'announcement-edit-'+crypto.randomUUID());
+     const patch:any={title,body,show_on_entry:input.show_on_entry===true};
+     if(stored)patch.drive_file_id=stored;
+     await query(db.from('web_announcements').update(patch).eq('id',id).select('id').single());
+     updated=true;
+    }catch(e){if(stored&&!updated)await deleteDrive(stored);throw e}
+    await query(db.from('audit').insert({actor:profile.name,action:'แก้ไขประกาศในเว็บ '+title,details:{announcement_id:id}}));
+    return json({ok:true});
+   }
    case 'announcement-entry-setting':{requireAdmin();if(typeof input.show_on_entry!=='boolean')throw Error('ข้อมูลไม่ถูกต้อง');await query(db.from('web_announcements').update({show_on_entry:input.show_on_entry}).eq('id',text(input.id,36)));return json({ok:true});}
    case 'dismiss-announcement':{await query(db.from('web_announcement_recipients').upsert({announcement_id:text(input.id,36),profile_id:profile.id,dismissed_at:new Date().toISOString()},{onConflict:'announcement_id,profile_id'}));return json({ok:true});}
    case 'delete-announcement':{requireAdmin();await query(db.from('web_announcements').delete().eq('id',text(input.id,36)));return json({ok:true});}

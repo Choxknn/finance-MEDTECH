@@ -311,6 +311,12 @@ html body .topbar .mp-profile-text {
 }
 
 
+@media (min-width: 721px) {
+  html body .workspace > .topbar .topbar-back {
+    display: none !important;
+  }
+}
+
 /* Desktop and iPad header: no centered brand; keep admin search centered
    between the back control and the right-side notification/profile group. */
 @media (min-width: 721px) {

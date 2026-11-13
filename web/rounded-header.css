@@ -36,6 +36,20 @@ html body .topbar .topbar-back[hidden] {
   display: none !important;
 }
 
+/* On main-menu views, keep the bell and profile controls grouped at the right. */
+html body .workspace > .topbar[data-back-hidden="true"] {
+  justify-content: flex-end !important;
+}
+
+html body .workspace > .topbar[data-back-hidden="true"] .clay-notifications {
+  margin-left: auto !important;
+  margin-right: 9px !important;
+}
+
+html body .workspace > .topbar[data-back-hidden="true"] .user {
+  margin-left: 0 !important;
+}
+
 html body .topbar .topbar-back {
   display: grid !important;
   flex: 0 0 42px;

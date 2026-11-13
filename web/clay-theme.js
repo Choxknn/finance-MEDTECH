@@ -18,33 +18,16 @@ function clayLoginPresentation() {
 }
 const clayLogin = login;
 login = function () { clayLogin(); clayLoginPresentation(); };
-// Keep an in-app view history so the iOS-style back button never exits the website.
-const clayViewHistory = [];
-let clayGoingBack = false;
-const clayOriginalNav = nav;
-nav = function (nextView) {
-  if (!clayGoingBack && user && view && nextView && nextView !== view) {
-    clayViewHistory.push(view);
-    if (clayViewHistory.length > 30) clayViewHistory.shift();
-  }
-  return clayOriginalNav(nextView);
-};
-const clayOriginalPerformLogoutSession = performLogoutSession;
-performLogoutSession = async function (...args) {
-  clayViewHistory.length = 0;
-  return clayOriginalPerformLogoutSession(...args);
-};
-const clayOriginalDemoLogin = demoLogin;
-demoLogin = function (role) {
-  clayViewHistory.length = 0;
-  return clayOriginalDemoLogin(role);
-};
+// The back control is shown only on views outside the main navigation bar.
+function clayIsMainMenuView() {
+  const menuViews = user?.role === 'admin'
+    ? ['dashboard', 'rounds', 'review', 'fund']
+    : ['dashboard', 'bills', 'history', 'fund'];
+  return menuViews.includes(view);
+}
 function clayNavigateBack() {
-  const previous = clayViewHistory.pop() || 'dashboard';
-  if (previous === view) return;
-  clayGoingBack = true;
-  try { clayOriginalNav(previous); }
-  finally { clayGoingBack = false; }
+  // No navigation history: return to the app's main page.
+  nav('dashboard');
 }
 document.addEventListener('click', event => {
   const button = event.target.closest('[data-topbar-back]');
@@ -75,8 +58,9 @@ function applyClayPresentation() {
     backButton.dataset.topbarBack = 'true';
     backButton.setAttribute('aria-label', 'ย้อนกลับ');
     backButton.title = 'ย้อนกลับ';
-    backButton.hidden = clayViewHistory.length === 0;
+    backButton.hidden = clayIsMainMenuView();
     backButton.setAttribute('aria-hidden', String(backButton.hidden));
+    topbar.dataset.backHidden = String(backButton.hidden);
     backButton.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>';
   }
   const homeBrand = topbar.querySelector('.mobile-brand');

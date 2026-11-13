@@ -675,3 +675,11 @@ html body .topbar .mp-profile-text {
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Bring the dashboard content closer to the fixed top search bar on desktop and iPad. */
+@media (min-width: 721px) {
+  html body .workspace > main {
+    padding-top: 52px !important;
+  }
+}

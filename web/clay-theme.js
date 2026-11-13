@@ -18,6 +18,42 @@ function clayLoginPresentation() {
 }
 const clayLogin = login;
 login = function () { clayLogin(); clayLoginPresentation(); };
+// Keep an in-app view history so the iOS-style back button never exits the website.
+const clayViewHistory = [];
+let clayGoingBack = false;
+const clayOriginalNav = nav;
+nav = function (nextView) {
+  if (!clayGoingBack && user && view && nextView && nextView !== view) {
+    clayViewHistory.push(view);
+    if (clayViewHistory.length > 30) clayViewHistory.shift();
+  }
+  return clayOriginalNav(nextView);
+};
+const clayOriginalPerformLogoutSession = performLogoutSession;
+performLogoutSession = async function (...args) {
+  clayViewHistory.length = 0;
+  return clayOriginalPerformLogoutSession(...args);
+};
+const clayOriginalDemoLogin = demoLogin;
+demoLogin = function (role) {
+  clayViewHistory.length = 0;
+  return clayOriginalDemoLogin(role);
+};
+function clayNavigateBack() {
+  const previous = clayViewHistory.pop() || 'dashboard';
+  if (previous === view) return;
+  clayGoingBack = true;
+  try { clayOriginalNav(previous); }
+  finally { clayGoingBack = false; }
+}
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-topbar-back]');
+  if (!button) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  clayNavigateBack();
+}, true);
+
 function applyClayPresentation() {
   if (!user) { clayLoginPresentation(); return; }
   const layout = document.querySelector('.layout');
@@ -31,7 +67,25 @@ function applyClayPresentation() {
   const title = layout.querySelector('.topbar-title');
   if (title) title.textContent = 'Finance · MEDTECH';
   const topbar = layout.querySelector('.topbar');
-  if (!topbar.querySelector('.clay-notifications')) topbar.querySelector('.user').insertAdjacentHTML('beforebegin', `<button class="secondary clay-notifications" data-view="notifications" aria-label="เปิดข้อความและการแจ้งเตือน" title="ข้อความและการแจ้งเตือน">${icon('bell')}</button>`);
+  const backButton = topbar.querySelector('.menu-toggle');
+  if (backButton) {
+    backButton.classList.remove('secondary', 'menu-toggle');
+    backButton.classList.add('topbar-back');
+    backButton.removeAttribute('data-action');
+    backButton.dataset.topbarBack = 'true';
+    backButton.setAttribute('aria-label', 'ย้อนกลับ');
+    backButton.title = 'ย้อนกลับ';
+    backButton.hidden = clayViewHistory.length === 0;
+    backButton.setAttribute('aria-hidden', String(backButton.hidden));
+    backButton.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>';
+  }
+  const homeBrand = topbar.querySelector('.mobile-brand');
+  if (homeBrand) {
+    homeBrand.classList.add('topbar-brand');
+    homeBrand.innerHTML = `<img src="./medtech-mark-20261011.png" alt="MEDTECH logo">`;
+  }
+  // Keep the hidden title node because the material layout updates it on every render.
+  if (!topbar.querySelector('.clay-notifications')) topbar.querySelector('.user').insertAdjacentHTML('beforebegin', `<button class="clay-notifications" data-view="notifications" aria-label="การแจ้งเตือน" title="การแจ้งเตือน">${icon('bell')}</button>`);
   if (view === 'dashboard') {
     const stats = layout.querySelector('.stats');
     if (stats) {

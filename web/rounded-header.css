@@ -1,0 +1,371 @@
+/* iOS-style fixed Finance MEDTECH header. */
+html body .workspace > .topbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 244px !important;
+  right: 0 !important;
+  z-index: 150 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: auto !important;
+  height: calc(76px + env(safe-area-inset-top, 0px)) !important;
+  min-height: calc(76px + env(safe-area-inset-top, 0px)) !important;
+  margin: 0 !important;
+  padding: calc(env(safe-area-inset-top, 0px) + 9px) 22px 9px !important;
+  box-sizing: border-box !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  pointer-events: none !important;
+}
+
+html body .workspace > main {
+  padding-top: 100px !important;
+}
+
+html body .workspace > .topbar > * {
+  pointer-events: auto !important;
+}
+
+html body .topbar .topbar-back[hidden] {
+  display: none !important;
+}
+
+html body .topbar .topbar-back {
+  display: grid !important;
+  flex: 0 0 42px;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, .78) !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, .54) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.55);
+  backdrop-filter: blur(18px) saturate(1.55);
+  color: #5b5360 !important;
+  box-shadow: 0 5px 17px rgba(63, 45, 62, .11), inset 0 1px 0 rgba(255,255,255,.82) !important;
+  transition: background .18s ease, transform .18s ease !important;
+}
+
+html body .topbar .topbar-back:hover {
+  background: rgba(255, 255, 255, .78) !important;
+  box-shadow: 0 6px 18px rgba(63, 45, 62, .14) !important;
+  transform: translateX(-2px) !important;
+}
+
+html body .topbar .topbar-back:active {
+  transform: scale(.94) !important;
+}
+
+html body .topbar .topbar-back svg {
+  display: block;
+  width: 23px;
+  height: 23px;
+}
+
+html body .topbar .topbar-title {
+  display: none !important;
+}
+
+html body .topbar .topbar-brand {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + env(safe-area-inset-top, 0px) / 2);
+  transform: translate(-50%, -50%);
+  display: flex !important;
+  flex: 0 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: max-content !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-width: min(46%, 250px);
+  min-width: 0;
+  margin: 0;
+  padding: 0 8px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  color: #302936 !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+html body .topbar .topbar-brand:hover,
+html body .topbar .topbar-brand:active {
+  transform: translate(-50%, -50%) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+html body .topbar .topbar-brand img {
+  display: block;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+html body .topbar-brand-copy {
+  display: none !important;
+}
+
+html body .topbar .clay-notifications {
+  position: relative;
+  display: grid !important;
+  flex: 0 0 42px;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  margin: 0 9px 0 auto !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 1px solid #eee6ed !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,.56) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.55);
+  backdrop-filter: blur(18px) saturate(1.55);
+  color: #5d5361 !important;
+  box-shadow: 0 5px 17px rgba(75, 52, 73, .11), inset 0 1px 0 rgba(255,255,255,.86) !important;
+  transition: background .18s ease, transform .18s ease !important;
+}
+
+html body .topbar .clay-notifications:hover {
+  background: rgba(255,255,255,.82) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 7px 20px rgba(75, 52, 73, .14) !important;
+}
+
+html body .topbar .clay-notifications svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+html body .topbar .clay-notifications .unread-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  width: 21px;
+  min-width: 21px;
+  height: 21px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #e53950;
+  color: #fff;
+  box-shadow: 0 2px 7px rgba(190, 32, 60, .25);
+  font-size: 9px;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -.04em;
+  white-space: nowrap;
+}
+
+/* The profile trigger remains wired to the existing profile menu. */
+html body .topbar .user {
+  display: inline-flex !important;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body .topbar .user::after {
+  display: none !important;
+}
+
+html body .topbar .mp-profile-trigger {
+  display: inline-flex !important;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 76px;
+  min-height: 42px;
+  margin: 0 !important;
+  padding: 4px 12px 4px 9px !important;
+  border: 1px solid #e8dff0 !important;
+  border-radius: 24px !important;
+  background: rgba(238, 233, 255, .62) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  color: #6c5a9b !important;
+  box-shadow: 0 5px 17px rgba(98, 78, 131, .11), inset 0 1px 0 rgba(255,255,255,.86) !important;
+  transition: background .18s ease, transform .18s ease !important;
+}
+
+html body .topbar .mp-profile-trigger:hover,
+html body .topbar .mp-profile-trigger[aria-expanded="true"] {
+  background: rgba(233, 225, 251, .86) !important;
+  box-shadow: 0 7px 20px rgba(98, 78, 131, .14) !important;
+  transform: translateY(-1px);
+}
+
+html body .topbar .mp-profile-trigger .avatar {
+  display: grid !important;
+  flex: 0 0 28px;
+  place-items: center;
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: #6b5798 !important;
+  box-shadow: none !important;
+  font-size: 15px !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+}
+
+html body .topbar .mp-profile-trigger .mp-chevron {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  color: #5e4f79;
+  font-size: 0;
+}
+
+html body .topbar .mp-profile-trigger .mp-chevron svg {
+  display: block;
+  width: 15px;
+  height: 15px;
+}
+
+html body .topbar .mp-profile-text {
+  display: none !important;
+}
+
+@media (max-width: 1100px) and (min-width: 721px) {
+  html body .workspace > .topbar {
+    left: 210px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  html body .workspace > .topbar {
+    left: 0 !important;
+    right: 0 !important;
+    height: calc(68px + env(safe-area-inset-top, 0px)) !important;
+    min-height: calc(68px + env(safe-area-inset-top, 0px)) !important;
+    padding: calc(env(safe-area-inset-top, 0px) + 7px) 13px 7px !important;
+    gap: 8px !important;
+  }
+
+  html body .workspace > main {
+    padding-top: 90px !important;
+  }
+
+  html body .topbar .topbar-back {
+    flex-basis: 39px;
+    width: 39px;
+    min-width: 39px;
+    height: 39px;
+  }
+
+  html body .topbar .topbar-brand {
+    max-width: 40%;
+    gap: 0;
+    padding: 0 3px !important;
+  }
+
+  html body .topbar .topbar-brand img {
+    width: 46px;
+    height: 46px;
+  }
+
+  html body .topbar-brand-copy strong {
+    font-size: 10px;
+  }
+
+  html body .topbar-brand-copy span {
+    font-size: 9px;
+  }
+
+  html body .topbar .clay-notifications {
+    flex-basis: 39px;
+    width: 39px;
+    min-width: 39px;
+    height: 39px;
+    margin-right: 2px !important;
+  }
+
+  html body .topbar .clay-notifications svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  html body .topbar .clay-notifications .unread-count {
+    width: 21px;
+    min-width: 21px;
+    height: 21px;
+    font-size: 9px;
+  }
+
+  html body .topbar .mp-profile-trigger {
+    min-width: 64px;
+    min-height: 39px;
+    gap: 4px;
+    padding: 4px 8px 4px 6px !important;
+  }
+
+  html body .topbar .mp-profile-trigger .avatar {
+    flex-basis: 25px;
+    width: 25px !important;
+    min-width: 25px !important;
+    height: 25px !important;
+    font-size: 14px !important;
+  }
+
+  html body .topbar .mp-profile-trigger .mp-chevron,
+  html body .topbar .mp-profile-trigger .mp-chevron svg {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  html body .topbar .topbar-brand {
+    max-width: 42%;
+  }
+
+  html body .topbar .topbar-brand img {
+    width: 42px;
+    height: 42px;
+  }
+
+  html body .topbar .mp-profile-trigger {
+    min-width: 58px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .topbar,
+  html body .topbar * {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}

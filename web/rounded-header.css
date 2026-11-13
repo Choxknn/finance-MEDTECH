@@ -43,12 +43,19 @@ html body .workspace > .topbar[data-back-hidden="true"] {
 }
 
 html body .workspace > .topbar .clay-notifications {
-  margin-left: auto !important;
-  margin-right: 8px !important;
+  position: absolute !important;
+  top: calc(50% + env(safe-area-inset-top, 0px) / 2) !important;
+  right: 106px !important;
+  margin: 0 !important;
+  transform: translateY(-50%);
 }
 
 html body .workspace > .topbar .user {
-  margin-left: 0 !important;
+  position: absolute !important;
+  top: calc(50% + env(safe-area-inset-top, 0px) / 2) !important;
+  right: 22px !important;
+  margin: 0 !important;
+  transform: translateY(-50%);
 }
 
 html body .topbar .topbar-back {
@@ -337,12 +344,16 @@ html body .topbar .mp-profile-text {
     font-size: 9px;
   }
 
-  html body .topbar .clay-notifications {
+  html body .workspace > .topbar .clay-notifications {
+    right: 85px !important;
     flex-basis: 39px;
     width: 39px;
     min-width: 39px;
     height: 39px;
-    margin-right: 2px !important;
+  }
+
+  html body .workspace > .topbar .user {
+    right: 13px !important;
   }
 
   html body .topbar .clay-notifications svg {
@@ -380,6 +391,10 @@ html body .topbar .mp-profile-text {
 }
 
 @media (max-width: 360px) {
+  html body .workspace > .topbar .clay-notifications {
+    right: 79px !important;
+  }
+
   html body .topbar .topbar-brand {
     flex-basis: 64px !important;
     width: 64px !important;

@@ -542,6 +542,109 @@ html body .topbar .mp-profile-text {
   }
 }
 
+
+/* Match the admin search and camera control to the notification glass button. */
+@media (min-width: 721px) {
+  html body .workspace > .topbar.has-admin-search .admin-search-field {
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    width: 100% !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    padding: 3px 4px 3px 16px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    border: 1px solid #eee6ed !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, .56) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(1.55) !important;
+    backdrop-filter: blur(18px) saturate(1.55) !important;
+    box-shadow: 0 5px 17px rgba(75, 52, 73, .11), inset 0 1px 0 rgba(255,255,255,.86) !important;
+    transition: background .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field:hover,
+  html body .workspace > .topbar.has-admin-search .admin-search-field:focus-within {
+    border-color: #ffffff !important;
+    background: rgba(255, 255, 255, .88) !important;
+    box-shadow: 0 5px 17px rgba(75, 52, 73, .11), inset 0 1px 0 rgba(255,255,255,.86) !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field > svg {
+    display: block !important;
+    flex: 0 0 19px !important;
+    width: 19px !important;
+    height: 19px !important;
+    color: #5d5361 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field input {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    margin: 0 !important;
+    padding: 0 2px !important;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #5d5361 !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field input::placeholder {
+    color: #9b8d99 !important;
+    opacity: 1 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button {
+    display: grid !important;
+    flex: 0 0 42px !important;
+    place-items: center !important;
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid #eee6ed !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, .56) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(1.55) !important;
+    backdrop-filter: blur(18px) saturate(1.55) !important;
+    color: #5d5361 !important;
+    box-shadow: 0 5px 17px rgba(75, 52, 73, .11), inset 0 1px 0 rgba(255,255,255,.86) !important;
+    cursor: pointer !important;
+    transition: background .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button:hover,
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button:active,
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button:focus {
+    transform: none !important;
+    border-color: #ffffff !important;
+    background: rgba(255, 255, 255, .88) !important;
+    color: #5d5361 !important;
+    box-shadow: 0 5px 17px rgba(75, 52, 73, .11), inset 0 1px 0 rgba(255,255,255,.86) !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button:focus-visible {
+    outline: 2px solid rgba(108, 90, 155, .55) !important;
+    outline-offset: 2px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button svg {
+    display: block !important;
+    width: 19px !important;
+    height: 19px !important;
+    margin: 0 !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html body .topbar,
   html body .topbar * {

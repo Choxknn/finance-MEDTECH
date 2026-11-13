@@ -36,18 +36,21 @@ html body .topbar .topbar-back[hidden] {
   display: none !important;
 }
 
-/* Keep notification and profile controls anchored as one right-side group,
-   regardless of whether the back button is visible. */
+/* The notification button is a flex sibling of the profile trigger
+   inside .user, so the two controls move and stay aligned as one group. */
 html body .workspace > .topbar[data-back-hidden="true"] {
   justify-content: space-between !important;
 }
 
 html body .workspace > .topbar .clay-notifications {
-  position: absolute !important;
-  top: calc(50% + env(safe-area-inset-top, 0px) / 2) !important;
-  right: 106px !important;
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
   margin: 0 !important;
-  transform: translateY(-50%);
+  transform: none !important;
 }
 
 html body .workspace > .topbar .user {
@@ -171,13 +174,21 @@ html body .topbar .clay-notifications {
   backdrop-filter: blur(18px) saturate(1.55);
   color: #5d5361 !important;
   box-shadow: 0 5px 17px rgba(75, 52, 73, .11), inset 0 1px 0 rgba(255,255,255,.86) !important;
-  transition: background .18s ease, transform .18s ease !important;
+  transition: background .18s ease, box-shadow .18s ease, border-color .18s ease !important;
 }
 
-html body .topbar .clay-notifications:hover {
-  background: rgba(255,255,255,.82) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 7px 20px rgba(75, 52, 73, .14) !important;
+html body .topbar .clay-notifications:hover,
+html body .topbar .clay-notifications:active,
+html body .topbar .clay-notifications:focus {
+  transform: none !important;
+  border-color: #ffffff !important;
+  background: rgba(255,255,255,.88) !important;
+  box-shadow: 0 5px 17px rgba(75, 52, 73, .11), inset 0 1px 0 rgba(255,255,255,.86) !important;
+}
+
+html body .topbar .clay-notifications:focus-visible {
+  outline: 2px solid rgba(108, 90, 155, .55);
+  outline-offset: 2px;
 }
 
 html body .topbar .clay-notifications svg {
@@ -215,6 +226,7 @@ html body .topbar .user {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
+  gap: 7px !important;
   min-height: 44px;
   margin: 0 !important;
   padding: 0 !important;
@@ -344,9 +356,12 @@ html body .topbar .mp-profile-text {
     font-size: 9px;
   }
 
+  html body .workspace > .topbar .user {
+    gap: 6px !important;
+  }
+
   html body .workspace > .topbar .clay-notifications {
-    right: 85px !important;
-    flex-basis: 39px;
+    flex: 0 0 39px;
     width: 39px;
     min-width: 39px;
     height: 39px;
@@ -391,8 +406,8 @@ html body .topbar .mp-profile-text {
 }
 
 @media (max-width: 360px) {
-  html body .workspace > .topbar .clay-notifications {
-    right: 79px !important;
+  html body .workspace > .topbar .user {
+    gap: 5px !important;
   }
 
   html body .topbar .topbar-brand {

@@ -36,18 +36,18 @@ html body .topbar .topbar-back[hidden] {
   display: none !important;
 }
 
-/* On main-menu views, keep the bell and profile controls grouped at the right. */
+/* Keep notification and profile controls anchored as one right-side group,
+   regardless of whether the back button is visible. */
 html body .workspace > .topbar[data-back-hidden="true"] {
-  justify-content: flex-end !important;
-  column-gap: 10px !important;
+  justify-content: space-between !important;
 }
 
-html body .workspace > .topbar[data-back-hidden="true"] .clay-notifications {
+html body .workspace > .topbar .clay-notifications {
   margin-left: auto !important;
-  margin-right: 9px !important;
+  margin-right: 8px !important;
 }
 
-html body .workspace > .topbar[data-back-hidden="true"] .user {
+html body .workspace > .topbar .user {
   margin-left: 0 !important;
 }
 
@@ -154,7 +154,7 @@ html body .topbar .clay-notifications {
   width: 42px;
   min-width: 42px;
   height: 42px;
-  margin: 0 9px 0 auto !important;
+  margin: 0 8px 0 auto !important;
   padding: 0 !important;
   overflow: visible !important;
   border: 1px solid #eee6ed !important;

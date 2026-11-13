@@ -310,6 +310,118 @@ html body .topbar .mp-profile-text {
   }
 }
 
+
+/* Desktop and iPad header: no centered brand; keep admin search centered
+   between the back control and the right-side notification/profile group. */
+@media (min-width: 721px) {
+  html body .workspace > .topbar .topbar-brand {
+    display: none !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search {
+    display: grid !important;
+    grid-template-columns: minmax(42px, 1fr) minmax(220px, min(44vw, 500px)) minmax(132px, 1fr) !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    gap: 12px !important;
+    overflow: visible !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .topbar-back {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: start !important;
+    align-self: center !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .admin-search {
+    position: relative !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-self: center !important;
+    align-self: center !important;
+    width: 100% !important;
+    max-width: 500px !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .user {
+    position: relative !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    gap: 6px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-height: 42px !important;
+    padding: 0 15px !important;
+    box-sizing: border-box !important;
+    border: 1px solid rgba(221, 211, 225, .9) !important;
+    border-radius: 15px !important;
+    background: rgba(255, 255, 255, .82) !important;
+    box-shadow: 0 4px 14px rgba(74, 52, 78, .06), inset 0 1px 0 rgba(255,255,255,.9) !important;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field:focus-within {
+    border-color: rgba(151, 126, 184, .72) !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 3px rgba(151, 126, 184, .12), 0 5px 16px rgba(74, 52, 78, .08) !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field > svg {
+    flex: 0 0 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field input {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 40px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1000px) {
+  html body .workspace > .topbar.has-admin-search {
+    grid-template-columns: minmax(42px, .8fr) minmax(210px, 1.8fr) minmax(126px, .9fr) !important;
+    gap: 8px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .admin-search {
+    max-width: 420px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field {
+    min-height: 40px !important;
+    padding: 0 12px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field input {
+    height: 38px !important;
+  }
+}
+
 @media (max-width: 720px) {
   html body .workspace > .topbar {
     left: 0 !important;

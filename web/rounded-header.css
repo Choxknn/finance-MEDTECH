@@ -691,3 +691,28 @@ html body .topbar .mp-profile-text {
     padding-top: calc(68px + env(safe-area-inset-top, 0px) + 4px) !important;
   }
 }
+
+
+/* Remove the extra top inset on the workspace itself so content starts
+   immediately below the fixed top bar on every screen size. */
+html body .material-shell > .workspace {
+  padding-top: 0 !important;
+}
+html body .material-shell > .workspace > main {
+  margin-top: 0 !important;
+}
+html body .material-shell > .workspace > main > .meddy-hero {
+  margin-top: 0 !important;
+}
+
+@media (min-width: 721px) {
+  html body .material-shell > .workspace > main {
+    padding-top: calc(76px + env(safe-area-inset-top, 0px) + 2px) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  html body .material-shell > .workspace > main {
+    padding-top: calc(68px + env(safe-area-inset-top, 0px) + 2px) !important;
+  }
+}

@@ -683,3 +683,11 @@ html body .topbar .mp-profile-text {
     padding-top: 52px !important;
   }
 }
+
+
+/* Keep mobile page content close beneath the fixed top bar as well. */
+@media (max-width: 720px) {
+  html body .workspace > main {
+    padding-top: calc(68px + env(safe-area-inset-top, 0px) + 4px) !important;
+  }
+}

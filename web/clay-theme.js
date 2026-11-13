@@ -18,12 +18,11 @@ function clayLoginPresentation() {
 }
 const clayLogin = login;
 login = function () { clayLogin(); clayLoginPresentation(); };
-// The back control is shown only on views outside the main navigation bar.
-function clayIsMainMenuView() {
-  const menuViews = user?.role === 'admin'
-    ? ['dashboard', 'rounds', 'review', 'fund']
-    : ['dashboard', 'bills', 'history', 'fund'];
-  return menuViews.includes(view);
+// Use the actual quick-navigation buttons as the source of truth.
+function clayIsMainMenuView(layout) {
+  const dock = layout?.querySelector('.clay-dock');
+  return Boolean(dock && [...dock.querySelectorAll('button[data-view]')]
+    .some(button => button.dataset.view === view));
 }
 function clayNavigateBack() {
   // No navigation history: return to the app's main page.
@@ -50,7 +49,7 @@ function applyClayPresentation() {
   const title = layout.querySelector('.topbar-title');
   if (title) title.textContent = 'Finance · MEDTECH';
   const topbar = layout.querySelector('.topbar');
-  const backButton = topbar.querySelector('.menu-toggle');
+  const backButton = topbar.querySelector('.menu-toggle, .topbar-back, [data-topbar-back]');
   if (backButton) {
     backButton.classList.remove('secondary', 'menu-toggle');
     backButton.classList.add('topbar-back');
@@ -58,9 +57,6 @@ function applyClayPresentation() {
     backButton.dataset.topbarBack = 'true';
     backButton.setAttribute('aria-label', 'ย้อนกลับ');
     backButton.title = 'ย้อนกลับ';
-    backButton.hidden = clayIsMainMenuView();
-    backButton.setAttribute('aria-hidden', String(backButton.hidden));
-    topbar.dataset.backHidden = String(backButton.hidden);
     backButton.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>';
   }
   const homeBrand = topbar.querySelector('.mobile-brand');
@@ -97,6 +93,12 @@ function applyClayPresentation() {
       ? [['dashboard','home','ภาพรวม'],['rounds','wallet','รายการบิล'],['review','check','ตรวจสอบ'],['fund','wallet','กองกลาง']]
       : [['dashboard','home','หน้าหลัก'],['bills','wallet','รายการบิล'],['history','history','ประวัติ'],['fund','wallet','กองกลาง']];
     layout.insertAdjacentHTML('beforeend', `<nav class="clay-dock" aria-label="เมนูด่วน">${items.map(([v,i,label])=>`<button type="button" data-view="${v}" class="${view===v?'active':''}" ${view===v?'aria-current="page"':''}>${icon(i)}<span>${label}</span></button>`).join('')}<button type="button" data-action="menu" aria-label="เปิดเมนูทั้งหมด">${icon('menu')}<span>เมนู</span></button></nav>`);
+  }
+  // Re-evaluate after the dock exists; this also runs on every later render.
+  if (backButton) {
+    backButton.hidden = clayIsMainMenuView(layout);
+    backButton.setAttribute('aria-hidden', String(backButton.hidden));
+    topbar.dataset.backHidden = String(backButton.hidden);
   }
   layout.querySelector('.workspace').insertAdjacentHTML('beforeend', '<footer class="clay-footer">Finance · MEDTECH <span>การเงิน</span></footer>');
 }

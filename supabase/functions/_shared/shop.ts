@@ -45,7 +45,7 @@ export async function shopAction(db:any,profile:any,input:any,file:File|null){
   const record={sale_starts_at,sale_ends_at,option_groups,title,price:Math.round(price*100)/100,stock,description,active:input.active===true};
   return {product:await query(input.id?db.from('shop_products').update(record).eq('id',input.id).is('deleted_at',null).select().single():db.from('shop_products').insert(record).select().single())};
  }
- if(action==='shop-delete'){const p=await query(db.from('shop_products').select('images').eq('id',input.id).single());await query(db.from('shop_products').update({deleted_at:new Date().toISOString(),active:false}).eq('id',input.id));if(p.images.length){await query(db.storage.from('shop-products').remove(p.images));await query(db.from('shop_products').update({images:[]}).eq('id',input.id))}return {ok:true}}
+ if(action==='shop-delete'){const deleted=await query(db.from('shop_products').update({deleted_at:new Date().toISOString(),active:false}).eq('id',input.id).is('deleted_at',null).select('id').maybeSingle());if(!deleted)throw Error('ไม่พบสินค้าที่สามารถลบได้');return {ok:true}}
  if(action==='shop-status'){await query(db.rpc('bulk_shop_status',{p_ids:[input.id],p_status:input.status,p_actor:profile.id}));return {ok:true}}
  if(action==='shop-status-bulk'){if(!Array.isArray(input.ids)||!input.ids.length||input.ids.length>1000)throw Error('เลือก 1–1000 รายการ');return {count:await query(db.rpc('bulk_shop_status',{p_ids:input.ids,p_status:input.status,p_actor:profile.id}))}}
  if(action==='shop-order-edit'||action==='shop-order-delete'){await query(db.rpc('manage_shop_order',{p_id:input.id,p_patch:input.patch||{},p_delete:action==='shop-order-delete',p_expected:input.expected,p_actor:profile.id}));return {ok:true}}

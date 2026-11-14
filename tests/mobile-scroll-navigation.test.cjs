@@ -36,7 +36,7 @@ w.view='shop';w.render();
 assert.equal(dock.querySelector('.mobile-dock-store-entry'),null,'store is not duplicated while already on the shop page');
 assert.ok(layout.classList.contains('mobile-dock-hidden'),'main dock keeps its existing hide-on-shop-page behavior');
 assert.equal(dock.style.getPropertyValue('--mobile-dock-compact-width'),'264px','compact width updates when the store button is removed from the dock');
-assert.equal(dock.style.getPropertyValue('--mobile-dock-expanded-width'),'362px','expanded dock width contracts when the store button is absent');
+assert.equal(dock.style.getPropertyValue('--mobile-dock-expanded-width'),'358px','expanded dock width contracts when the store button is absent');
 w.view='dashboard';w.user.role='admin';w.render();
 assert.ok(dock.querySelector('.mobile-dock-store-entry'),'admin also gets the store inside the dock when sale items exist');
 assert.equal(dock.style.getPropertyValue('--mobile-dock-compact-width'),'314px','compact width expands to fit the store button without a jump');

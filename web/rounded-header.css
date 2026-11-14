@@ -1321,3 +1321,17 @@ html body .workspace > .topbar .admin-search-field:hover {
     left: 222px !important;
   }
 }
+
+
+/* Final alignment fix: on iPad the expanded sidebar is 222px,
+   but the compact sidebar is only 88px. Keep the blur edge in sync
+   with the actual workspace edge in both states. */
+@media (min-width: 721px) and (max-width: 1200px) {
+  html body::before {
+    left: 222px !important;
+  }
+
+  html body:has(.layout.sidebar-compact)::before {
+    left: 88px !important;
+  }
+}

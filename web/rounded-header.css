@@ -1143,3 +1143,34 @@ html body .material-shell > .workspace > main > .meddy-hero {
     display: none !important;
   }
 }
+
+
+/* Soft grey frosted layer, clipped to the exact top-bar height. */
+html body .workspace > .topbar {
+  isolation: isolate !important;
+}
+html body .workspace > .topbar::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -1 !important;
+  display: block !important;
+  border-radius: inherit !important;
+  background: linear-gradient(
+    180deg,
+    rgba(238, 239, 242, .84) 0%,
+    rgba(229, 230, 233, .66) 58%,
+    rgba(218, 220, 224, .38) 100%
+  ) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.12) !important;
+  backdrop-filter: blur(22px) saturate(1.12) !important;
+  pointer-events: none !important;
+}
+@media (max-width: 720px) {
+  html body .workspace > .topbar.has-admin-search::before {
+    display: none !important;
+    content: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

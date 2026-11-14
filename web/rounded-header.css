@@ -1580,3 +1580,50 @@ html body .workspace > .topbar .material-profile-menu .material-profile-logout:h
     z-index:170 !important;
   }
 }
+
+
+/* Stronger frosted-glass treatment inside the controls on the top bar. */
+html body .workspace > .topbar > .topbar-back,
+html body .workspace > .topbar > .topbar-brand,
+html body .workspace > .topbar > .mobile-topbar-menu,
+html body .workspace > .topbar .clay-notifications,
+html body .workspace > .topbar .mp-profile-trigger,
+html body .workspace > .topbar .admin-search-field .admin-camera-button {
+  -webkit-backdrop-filter:blur(28px) saturate(1.7) !important;
+  backdrop-filter:blur(28px) saturate(1.7) !important;
+}
+
+html body .workspace > .topbar > .topbar-back {
+  background:rgba(255,255,255,.46) !important;
+}
+html body .workspace > .topbar > .topbar-brand {
+  background:rgba(255,255,255,.66) !important;
+}
+html body .workspace > .topbar > .mobile-topbar-menu {
+  background:rgba(255,255,255,.50) !important;
+}
+html body .workspace > .topbar .clay-notifications {
+  background:rgba(255,255,255,.55) !important;
+}
+html body .workspace > .topbar .mp-profile-trigger {
+  background:rgba(238,233,255,.56) !important;
+}
+html body .workspace > .topbar .admin-search-field .admin-camera-button {
+  background:rgba(255,255,255,.64) !important;
+}
+
+html body .workspace > .topbar > .topbar-back:hover,
+html body .workspace > .topbar > .topbar-back:focus-visible,
+html body .workspace > .topbar > .topbar-brand:hover,
+html body .workspace > .topbar > .topbar-brand:focus-visible,
+html body .workspace > .topbar > .mobile-topbar-menu:hover,
+html body .workspace > .topbar > .mobile-topbar-menu:focus-visible,
+html body .workspace > .topbar .clay-notifications:hover,
+html body .workspace > .topbar .clay-notifications:focus-visible,
+html body .workspace > .topbar .mp-profile-trigger:hover,
+html body .workspace > .topbar .mp-profile-trigger[aria-expanded="true"],
+html body .workspace > .topbar .admin-search-field .admin-camera-button:hover,
+html body .workspace > .topbar .admin-search-field .admin-camera-button:focus-visible {
+  -webkit-backdrop-filter:blur(30px) saturate(1.8) !important;
+  backdrop-filter:blur(30px) saturate(1.8) !important;
+}

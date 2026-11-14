@@ -11,7 +11,7 @@ w.user={id:'member-1',role:'member'};w.view='dashboard';w.db={notifications:[]};
 w.shopLoaded=true;w.shopOwner='member-1';w.shopData={products:[{id:'for-sale'}]};w.shopSaleState=()=> 'open';
 w.icon=()=>'<svg></svg>';w.esc=x=>String(x);w.noticeRow=()=>'';
 let resetScrollOnRender=false;
-w.render=()=>{if(resetScrollOnRender){y=0;w.document.scrollingElement.scrollTop=0;resetScrollOnRender=false;}const compact=app.classList.contains('mobile-dock-compact');app.innerHTML=layoutMarkup;getLayout().dataset.compactAtInsertion=compact?'yes':'no';getLayout().dataset.routeLockAtInsertion=app.classList.contains('mobile-dock-route-change')?'yes':'no';};
+w.render=()=>{if(resetScrollOnRender){y=0;w.document.scrollingElement.scrollTop=0;resetScrollOnRender=false;w.dispatchEvent(new w.Event('scroll'));}const compact=app.classList.contains('mobile-dock-compact');app.innerHTML=layoutMarkup;getLayout().dataset.compactAtInsertion=compact?'yes':'no';getLayout().dataset.routeLockAtInsertion=app.classList.contains('mobile-dock-route-change')?'yes':'no';};
 w.api=async()=>({});
 w.document.scrollingElement.scrollTop=0;
 const setScroll=value=>{y=value;w.document.scrollingElement.scrollTop=value;w.dispatchEvent(new w.Event('scroll'));};

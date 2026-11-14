@@ -21,7 +21,8 @@
   if(mobile){
    const app=document.querySelector('#app');
    if(user.role==='admin'){
-    app?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-menu-entry" data-action="menu" aria-label="เปิดเมนูทั้งหมด" title="เมนู">${icon('menu')}</button>`);
+    const topbar=document.querySelector('.workspace > .topbar');
+    topbar?.insertAdjacentHTML('afterbegin',`<button type="button" class="mobile-topbar-menu" data-action="menu" aria-label="เปิดเมนูทั้งหมด" title="เมนู">${icon('menu')}</button>`);
    }else if(hasShopItems&&!view.startsWith('shop')&&view!=='profile'&&view!=='fund-category'){
     app?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-store-entry" data-store-entry data-view="shop" aria-label="เปิดร้านค้า" title="ร้านค้า">${storeIcon}</button>`);
    }

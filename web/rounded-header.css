@@ -2176,3 +2176,28 @@ html body .workspace > .topbar .admin-search-field .admin-camera-button:focus-vi
     z-index:180 !important;
   }
 }
+
+
+/* While mobile admin search is open, hide the entire notification/profile
+   group and let the search capsule occupy its reserved grid track. */
+@media (max-width:720px) {
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search:has(> .admin-search:focus-within) > .user {
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search[data-back-hidden="false"]:has(> .admin-search:focus-within) > .admin-search {
+    grid-column:3 / -1 !important;
+    width:100% !important;
+    max-width:none !important;
+    justify-self:stretch !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search[data-back-hidden="true"]:has(> .admin-search:focus-within) > .admin-search {
+    grid-column:2 / -1 !important;
+    width:100% !important;
+    max-width:none !important;
+    justify-self:stretch !important;
+  }
+}

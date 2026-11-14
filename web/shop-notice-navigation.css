@@ -784,3 +784,28 @@
     mask-image:none !important;
   }
 }
+
+/* Final mobile dock finish: crisp white surface, top-bar-like shadow,
+   and no backdrop blur layer behind the navigation. */
+@media (max-width:720px) {
+  html body::after {
+    content:none !important;
+    display:none !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+    -webkit-mask-image:none !important;
+    mask-image:none !important;
+  }
+
+  html body .layout .clay-dock {
+    background:rgba(255,255,255,.97) !important;
+    border:1px solid rgba(255,255,255,.98) !important;
+    box-shadow:
+      0 4px 12px rgba(35,29,42,.18),
+      0 1px 3px rgba(35,29,42,.14),
+      inset 0 1px 0 rgba(255,255,255,.96) !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+    isolation:auto !important;
+  }
+}

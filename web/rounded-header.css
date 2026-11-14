@@ -1685,3 +1685,48 @@ html body .workspace > .topbar .admin-search-field .admin-camera-button:hover,
 html body .workspace > .topbar .admin-search-field .admin-camera-button:focus-visible {
   background:rgba(255,255,255,.99) !important;
 }
+
+
+/* Admin mobile menu: fixed to the far-left of the top bar in the red accent style. */
+@media (max-width:720px) {
+  html body .layout[data-clay-role="admin"] .workspace > .topbar > .mobile-topbar-menu {
+    display:grid !important;
+    position:absolute !important;
+    left:10px !important;
+    right:auto !important;
+    top:50% !important;
+    bottom:auto !important;
+    transform:translateY(-50%) !important;
+    z-index:30 !important;
+    width:36px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+    max-height:36px !important;
+    padding:0 !important;
+    margin:0 !important;
+    place-items:center !important;
+    border:1px solid rgba(255,255,255,.48) !important;
+    border-radius:13px !important;
+    background:linear-gradient(145deg,#ef4058 0%,#c9153d 100%) !important;
+    color:#fff !important;
+    box-shadow:0 4px 12px rgba(190,20,57,.28),inset 0 1px 0 rgba(255,255,255,.22) !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+  html body .layout[data-clay-role="admin"] .workspace > .topbar > .mobile-topbar-menu svg {
+    display:block !important;
+    width:20px !important;
+    height:20px !important;
+    color:#fff !important;
+  }
+  html body .layout[data-clay-role="admin"] .workspace > .topbar {
+    padding-left:54px !important;
+  }
+}
+@media (min-width:721px) {
+  html body .layout[data-clay-role="admin"] .workspace > .topbar > .mobile-topbar-menu {
+    display:none !important;
+  }
+}

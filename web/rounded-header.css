@@ -716,3 +716,223 @@ html body .material-shell > .workspace > main > .meddy-hero {
     padding-top: calc(68px + env(safe-area-inset-top, 0px) + 2px) !important;
   }
 }
+
+
+/* Admin mobile header: compact identity/actions row with a dedicated search row. */
+@media (max-width: 720px) {
+  html body .workspace > .topbar.has-admin-search {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 150 !important;
+    display: grid !important;
+    grid-template-columns: minmax(48px, 1fr) auto !important;
+    grid-template-rows: 42px 46px !important;
+    align-content: start !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    gap: 8px 10px !important;
+    width: 100% !important;
+    height: calc(114px + env(safe-area-inset-top, 0px)) !important;
+    min-height: calc(114px + env(safe-area-inset-top, 0px)) !important;
+    margin: 0 !important;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 14px 10px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(232, 222, 233, .82) !important;
+    border-radius: 0 0 20px 20px !important;
+    background: rgba(255, 253, 255, .92) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.55) !important;
+    backdrop-filter: blur(22px) saturate(1.55) !important;
+    box-shadow: 0 7px 24px rgba(74, 48, 78, .075) !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .topbar-brand {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: start !important;
+    align-self: center !important;
+    display: flex !important;
+    flex: 0 0 52px !important;
+    width: 52px !important;
+    min-width: 52px !important;
+    max-width: 52px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    padding: 1px 5px !important;
+    box-sizing: border-box !important;
+    transform: none !important;
+    border: 1px solid rgba(233, 224, 236, .86) !important;
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, .88) !important;
+    box-shadow: 0 3px 11px rgba(83, 62, 87, .07), inset 0 1px 0 #fff !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .topbar-brand img {
+    width: 40px !important;
+    height: 40px !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .user {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 7px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .user .clay-notifications {
+    flex: 0 0 39px !important;
+    width: 39px !important;
+    min-width: 39px !important;
+    height: 39px !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, .9) !important;
+    box-shadow: 0 3px 11px rgba(83, 62, 87, .07), inset 0 1px 0 #fff !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .user .mp-profile-trigger {
+    min-width: 60px !important;
+    min-height: 39px !important;
+    padding: 3px 8px 3px 5px !important;
+    border: 1px solid rgba(226, 216, 236, .9) !important;
+    border-radius: 22px !important;
+    background: rgba(241, 236, 252, .82) !important;
+    box-shadow: 0 3px 11px rgba(83, 62, 87, .07), inset 0 1px 0 #fff !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .admin-search {
+    position: relative !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    justify-self: stretch !important;
+    align-self: stretch !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    z-index: 151 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    padding: 4px 5px 4px 10px !important;
+    box-sizing: border-box !important;
+    border: 1px solid rgba(228, 219, 234, .94) !important;
+    border-radius: 999px !important;
+    background: linear-gradient(135deg, rgba(255,255,255,.98), rgba(247,243,251,.94)) !important;
+    box-shadow: 0 4px 14px rgba(77, 54, 84, .075), inset 0 1px 0 #fff !important;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field:focus-within {
+    border-color: rgba(174, 153, 197, .88) !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 3px rgba(151, 126, 184, .11), 0 5px 16px rgba(77, 54, 84, .09) !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field > svg {
+    display: block !important;
+    flex: 0 0 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 7px !important;
+    box-sizing: border-box !important;
+    border-radius: 50% !important;
+    background: rgba(237, 231, 246, .9) !important;
+    color: #76658f !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search,
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search:hover,
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search:focus,
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search:focus-visible,
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search:active {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 36px !important;
+    margin: 0 !important;
+    padding: 0 2px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    color: #5d5361 !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search::placeholder {
+    color: #9b8fa0 !important;
+    opacity: 1 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button {
+    display: grid !important;
+    flex: 0 0 36px !important;
+    place-items: center !important;
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid rgba(229, 222, 235, .92) !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, .96) !important;
+    color: #62586b !important;
+    box-shadow: 0 2px 8px rgba(75, 52, 73, .075), inset 0 1px 0 #fff !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button svg {
+    width: 17px !important;
+    height: 17px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-results {
+    top: calc(100% + 7px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: min(55vh, 420px) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 32px rgba(73, 54, 83, .16) !important;
+  }
+
+  html body .material-shell > .workspace > main {
+    padding-top: calc(114px + env(safe-area-inset-top, 0px) + 2px) !important;
+  }
+}

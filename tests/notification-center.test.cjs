@@ -13,7 +13,7 @@ const run=s=>vm.runInContext(s,ctx),tick=()=>new Promise(resolve=>setImmediate(r
  const observer=w.noticeObservers.at(-1);assert.ok(observer,'notification list installs an IntersectionObserver');
  assert.ok(cards.every(card=>observer.targets.has(card)),'unread cards are observed');
  observer.trigger(cards[0],.2);await tick();
- assert.equal(run("db.notifications.find(n=>n.id===' "+noticeId+"'.trim()).seen_at"),null,'a barely visible item is not marked read');
+ assert.equal(run("db.notifications.find(n=>n.id==='"+noticeId+"').seen_at"),null,'a barely visible item is not marked read');
  observer.trigger(cards[0],.35);await tick();
  assert.ok(run("db.notifications.find(n=>n.id==='"+noticeId+"').seen_at"),'scrolling an unread notification into view marks it read');
  assert.ok(!cards[0].classList.contains('is-unread'),'read notification loses unread styling without redrawing the page');

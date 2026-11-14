@@ -80,10 +80,25 @@
  }
  const oldRow=noticeRow;noticeRow=function(n){const html=oldRow(n);return n.id&&n.profile_id===user?.id?html.replace('<article ',`<article data-notice-id="${esc(n.id)}" `):html};
  let mobileLastScrollY=null,mobileDownDistance=0,mobileUpDistance=0;
- let mobileLastRenderedView=null,mobileDockCompactByNavigation=false,mobileRenderUnlock=0;
+ let mobileLastRenderedView=null,mobileDockCompactByNavigation=false,mobileRenderUnlock=0,mobileTopExpandTimer=null;
  function setMobileDockCompact(layout,compact){
   layout?.classList.toggle('mobile-page-scrolled',compact);
   document.getElementById('app')?.classList.toggle('mobile-dock-compact',compact);
+ }
+ function queueMobileDockTopExpand(){
+  clearTimeout(mobileTopExpandTimer);
+  mobileTopExpandTimer=setTimeout(()=>{
+   mobileTopExpandTimer=null;
+   const currentLayout=document.querySelector('.layout');
+   const root=document.scrollingElement||document.documentElement;
+   const currentY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+   if(currentY<=4&&!mobileDockCompactByNavigation){
+    currentLayout?.classList.remove('mobile-header-hidden');
+    setMobileDockCompact(currentLayout,false);
+    mobileDownDistance=0;mobileUpDistance=0;
+    updateMobileDockVisibility();
+   }
+  },140);
  }
  const oldRender=render;render=function(){
   const app=document.getElementById('app');
@@ -168,7 +183,7 @@
  function updateMobileHeaderScroll(reset=false){
   const layout=document.querySelector('.layout');if(!layout)return;
   const small=window.matchMedia('(max-width:720px)').matches;
-  if(!small){setMobileDockCompact(layout,false);layout.classList.remove('mobile-dock-hidden','mobile-has-fab','mobile-header-hidden');mobileDockCompactByNavigation=false;mobileLastScrollY=null;mobileDownDistance=0;mobileUpDistance=0;return}
+  if(!small){clearTimeout(mobileTopExpandTimer);mobileTopExpandTimer=null;setMobileDockCompact(layout,false);layout.classList.remove('mobile-dock-hidden','mobile-has-fab','mobile-header-hidden');mobileDockCompactByNavigation=false;mobileLastScrollY=null;mobileDownDistance=0;mobileUpDistance=0;return}
   // Read the actual page scroll position (not a stale workspace scrollTop).
   const root=document.scrollingElement||document.documentElement;
   const y=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
@@ -179,9 +194,6 @@
    if(mobileDockCompactByNavigation){
     // A route redraw's scroll reset is synthetic, not a user upward scroll.
     // Leave the compact dock untouched until the scheduled route expansion.
-    mobileDownDistance=0;mobileUpDistance=0;
-   }else if(y<=14){
-    layout.classList.remove('mobile-header-hidden');setMobileDockCompact(layout,false);
     mobileDownDistance=0;mobileUpDistance=0;
    }else if(layout.classList.contains('menu-open')||searchFocused){
     layout.classList.remove('mobile-header-hidden');
@@ -194,17 +206,19 @@
     }
    }else if(delta<0){
     mobileUpDistance+=-delta;mobileDownDistance=0;
-    if(mobileUpDistance>=7){
+    // Require a deliberate, sustained upward gesture. Tiny iOS scroll
+    // rebounds used to expand the dock for a frame, then fold it again.
+    if(mobileUpDistance>=32){
      layout.classList.remove('mobile-header-hidden');
      setMobileDockCompact(layout,false);mobileDockCompactByNavigation=false;
      mobileUpDistance=0;
     }
    }
   }
-  if(y<=14&&!mobileDockCompactByNavigation){
-   layout.classList.remove('mobile-header-hidden');setMobileDockCompact(layout,false);
-   mobileDownDistance=0;mobileUpDistance=0;
-  }
+  // Only expand at the very top after the scroll position has settled.
+  // This ignores brief rubber-band/overscroll frames near the top edge.
+  if(y<=4&&!mobileDockCompactByNavigation)queueMobileDockTopExpand();
+  else {clearTimeout(mobileTopExpandTimer);mobileTopExpandTimer=null;}
   updateMobileDockVisibility();
  }
  window.addEventListener('scroll',()=>updateMobileHeaderScroll(),{passive:true});

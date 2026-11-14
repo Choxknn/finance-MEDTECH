@@ -72,6 +72,8 @@
   const app=document.getElementById('app');
   const previousLayout=document.querySelector('.layout');
   const firstRender=mobileLastRenderedView===null;
+  const viewChanged=mobileLastRenderedView!==null&&mobileLastRenderedView!==view;
+  const expandAfterNavigation=viewChanged&&wasDockCompact;
   const wasDockCompact=!!(previousLayout?.classList.contains('mobile-page-scrolled')||app?.classList.contains('mobile-dock-compact'));
   const small=window.matchMedia('(max-width:720px)').matches;
   const beforeRoot=document.scrollingElement||document.documentElement;
@@ -92,7 +94,7 @@
   if(small&&layout){
    if(wasDockCompact){
     setMobileDockCompact(layout,true);
-    mobileDockCompactByNavigation=true;
+    mobileDockCompactByNavigation=!expandAfterNavigation;
     const root=document.scrollingElement||document.documentElement;
     mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
     mobileDownDistance=0;mobileUpDistance=0;
@@ -113,7 +115,18 @@
    updateMobileHeaderScroll(true);updateMobileDockVisibility();
   }
   window.requestAnimationFrame(()=>{
-   if(renderUnlock===mobileRenderUnlock)app?.classList.remove('mobile-dock-route-change');
+   if(renderUnlock!==mobileRenderUnlock)return;
+   app?.classList.remove('mobile-dock-route-change');
+   if(expandAfterNavigation){
+    // A route change always returns the dock to its expanded capsule.
+    // Start from the compact first frame, then let the normal smooth transition
+    // expand it after the replacement DOM has settled.
+    mobileDockCompactByNavigation=false;
+    setMobileDockCompact(document.querySelector('.layout'),false);
+    const root=document.scrollingElement||document.documentElement;
+    mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+    mobileDownDistance=0;mobileUpDistance=0;
+   }
   });
  };
  function updateMobileHeaderScroll(reset=false){

@@ -4,8 +4,14 @@ function renderInBackground(){
  const positions=[...document.querySelectorAll('#app *')].filter(el=>el.scrollTop||el.scrollLeft).map(el=>({id:el.id,cls:el.className,top:el.scrollTop,left:el.scrollLeft}));
  const details=[...document.querySelectorAll('#app details')].map(el=>({text:el.querySelector('summary')?.textContent,open:el.open}));
  const stage=document.querySelector('.meddy-stage');
+ const announcementSection=document.querySelector('.dashboard-announcements');
+ const announcementMarkup=announcementSection?.outerHTML||null;
  render();
  const nextStage=document.querySelector('.meddy-stage');if(stage&&nextStage)nextStage.replaceWith(stage);
+ // Keep the existing announcement carousel when its content has not changed.
+ // This prevents background data syncs from restarting its timer or reloading banner images.
+ const nextAnnouncementSection=document.querySelector('.dashboard-announcements');
+ if(announcementSection&&nextAnnouncementSection&&announcementMarkup===nextAnnouncementSection.outerHTML)nextAnnouncementSection.replaceWith(announcementSection);
  document.querySelectorAll('#app details').forEach(el=>{const saved=details.find(d=>d.text===el.querySelector('summary')?.textContent);if(saved)el.open=saved.open});
  // Finish only finite entry animations. Keep mascot, overdue pulses and festival loops.
  document.querySelectorAll('#app *').forEach(el=>{if(!el.getAnimations)return;for(const animation of el.getAnimations()){if(animation.effect?.getTiming().iterations!==Infinity){try{animation.finish()}catch{}}}});

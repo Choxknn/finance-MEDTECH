@@ -16,7 +16,7 @@ function queueFinanceLive(message){
  if(message&&financeLiveIsShopResource(message))return;
  const resource=financeLiveResource(message);
  if(!resource){financeLivePending=true;financeAnnouncementPending=true}
- else if(resource==='web_announcements')financeAnnouncementPending=true;
+ else if(resource==='web_announcements'||resource==='web_announcement_recipients')financeAnnouncementPending=true;
  else financeLivePending=true;
  scheduleFinanceLiveFlush();
 }

@@ -40,6 +40,10 @@ async function cleanupDriveFiles(db:any){
  const jobs=await query(db.from('trash_cleanup_queue').select('*').eq('kind','drive').order('created_at').limit(3));
  await Promise.all(jobs.map(async(job:any)=>{try{await deleteDrive(job.target,true);await query(db.from('trash_cleanup_queue').delete().eq('id',job.id))}catch{/* Keep failed file jobs for retry, independently of Auth. */}}));
 }
+async function cleanupShopProductFiles(db:any){
+ const jobs=await query(db.from('trash_cleanup_queue').select('id,target').eq('kind','shop-product').order('created_at').limit(100));
+ for(const job of jobs){try{await query(db.storage.from('shop-products').remove([job.target]));await query(db.from('trash_cleanup_queue').delete().eq('id',job.id))}catch{/* Retain failed shop image jobs for the next maintenance pass. */}}
+}
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'',allowed=(Deno.env.get('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim());
  const cors={'Access-Control-Allow-Origin':allowed.includes(origin)?origin:'null','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,GET,OPTIONS','Vary':'Origin','Cache-Control':'no-store'};
@@ -206,7 +210,7 @@ Deno.serve(async req=>{
     const onlineUsers=isAdmin?await query(db.from('profiles').select('id,student_id,name,last_seen_at').eq('active',true).is('deleted_at',null).gte('last_seen_at',new Date(Date.now()-90000).toISOString()).order('last_seen_at',{ascending:false})):[];
     const recentLogins=isAdmin?await query(db.from('profiles').select('id,student_id,name,last_login_at').eq('active',true).is('deleted_at',null).not('last_login_at','is',null).order('last_login_at',{ascending:false}).limit(10)):[];
     await query(db.rpc('purge_trash',{p_all:false,p_actor:null}));
-    const cleanupTask=Promise.allSettled([cleanupAuthAccounts(db,100),cleanupDriveFiles(db)]);
+    const cleanupTask=Promise.allSettled([cleanupAuthAccounts(db,100),cleanupDriveFiles(db),cleanupShopProductFiles(db)]);
     const runtime=(globalThis as any).EdgeRuntime;if(runtime?.waitUntil)runtime.waitUntil(cleanupTask);else await cleanupTask;
 
     const rounds=await query(db.from('rounds').select('*').order('created_at'));
@@ -262,7 +266,8 @@ Deno.serve(async req=>{
     const visiblePayments=(isAdmin?allPayments:allPayments.filter((p:any)=>p.profile_id===profile.id));
     const activeRounds=rounds.filter((r:any)=>!r.deleted_at),activeProfiles=profiles.filter((p:any)=>!p.deleted_at);
     const activeCharges=charges.filter((c:any)=>!c.deleted_at&&activeRounds.some((r:any)=>r.id===c.round_id)&&activeProfiles.some((p:any)=>p.id===c.profile_id));
-    const trash=isAdmin?{member:profiles.filter((p:any)=>p.deleted_at),round:rounds.filter((r:any)=>r.deleted_at),charge:charges.filter((c:any)=>c.deleted_at),payment:allPayments.filter((p:any)=>p.deleted_at),income:allIncomes.filter((i:any)=>i.deleted_at),expense:allExpenses.filter((e:any)=>e.deleted_at)}:{};
+    const trashedShopProducts=isAdmin?await query(db.from('shop_products').select('*').not('deleted_at','is',null).order('deleted_at',{ascending:false}).limit(500)):[];
+    const trash=isAdmin?{member:profiles.filter((p:any)=>p.deleted_at),round:rounds.filter((r:any)=>r.deleted_at),charge:charges.filter((c:any)=>c.deleted_at),payment:allPayments.filter((p:any)=>p.deleted_at),income:allIncomes.filter((i:any)=>i.deleted_at),expense:allExpenses.filter((e:any)=>e.deleted_at),shop_product:trashedShopProducts}:{};
     const refCharges=[...charges,...(isAdmin?allPayments:visiblePayments).filter((p:any)=>!p.charge_id&&p.charge_snapshot).map((p:any)=>p.charge_snapshot)].map((c:any)=>({...c,round_id:c.round_id||c.round_snapshot?.id,profile_id:c.profile_id||c.profile_snapshot?.id}));
     const refRounds=[...rounds,...refCharges.filter((c:any)=>c.round_snapshot&&!rounds.some((r:any)=>r.id===c.round_snapshot.id)).map((c:any)=>c.round_snapshot)];
     const refProfiles=[...profiles,...refCharges.map((c:any)=>c.profile_snapshot).filter(Boolean),...(isAdmin?allPayments:visiblePayments).map((p:any)=>p.member_snapshot).filter(Boolean)];
@@ -309,12 +314,18 @@ Deno.serve(async req=>{
     const uploaded:string[]=[];try{if(file){patch.drive_file_id=await uploadDrive(await validateImage(file),`income-${crypto.randomUUID()}`);uploaded.push(patch.drive_file_id)}if(receiptFile){patch.receipt_file_id=await uploadDrive(await validateReceipt(receiptFile),`income-receipt-${crypto.randomUUID()}`);uploaded.push(patch.receipt_file_id)}await query(db.rpc('save_manual_income',{p_id:input.id||null,p_patch:patch,p_actor:profile.id}))}catch(e){for(const id of uploaded)await deleteDrive(id);throw e}return json({ok:true});
    }
    case 'purge-trash':{
-    requireAdmin();if(input.confirmation!=='ลบถาวร')throw new Error('ยืนยันลบถาวรก่อนดำเนินการ');const count=await query(db.rpc('purge_trash',{p_all:true,p_actor:profile.id}));const authCleanup=await cleanupAuthAccounts(db);await maintainEvidence(db);await cleanupDriveFiles(db);if(authCleanup.pending)throw Error('ลบข้อมูลในถังขยะแล้ว แต่ยังลบบัญชีเข้าสู่ระบบไม่ครบ กรุณากดล้างถังขยะซ้ำเพื่อลองอีกครั้ง');return json({ok:true,count,authCleanup});
+    requireAdmin();if(input.confirmation!=='ลบถาวร')throw new Error('ยืนยันลบถาวรก่อนดำเนินการ');const count=await query(db.rpc('purge_trash',{p_all:true,p_actor:profile.id}));const authCleanup=await cleanupAuthAccounts(db);await maintainEvidence(db);await cleanupDriveFiles(db);await cleanupShopProductFiles(db);if(authCleanup.pending)throw Error('ลบข้อมูลในถังขยะแล้ว แต่ยังลบบัญชีเข้าสู่ระบบไม่ครบ กรุณากดล้างถังขยะซ้ำเพื่อลองอีกครั้ง');return json({ok:true,count,authCleanup});
    }
    case 'delete-records':{
-    requireAdmin();const entity=text(input.entity,20);if(!['member','round','charge','payment','expense','income'].includes(entity)||!Array.isArray(input.ids)||!input.ids.length||input.ids.length>500||typeof input.deleted!=='boolean')throw new Error('ข้อมูลรายการไม่ถูกต้อง');
+    requireAdmin();const entity=text(input.entity,20);if(!['member','round','charge','payment','expense','income','shop_product'].includes(entity)||!Array.isArray(input.ids)||!input.ids.length||input.ids.length>500||typeof input.deleted!=='boolean')throw new Error('ข้อมูลรายการไม่ถูกต้อง');
     const ids=input.ids.map((id:unknown)=>{const s=text(id,36);if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s))throw new Error('รหัสรายการไม่ถูกต้อง');return s});
-    await query(db.rpc('delete_records',{p_entity:entity,p_ids:ids,p_deleted:input.deleted,p_reason:text(input.reason,500),p_actor:profile.id}));return json({ok:true});
+    const reason=text(input.reason,500);
+    if(entity==='shop_product'){
+     if(input.deleted!==false)throw Error('สินค้าสามารถลบได้จากหน้าจัดการสินค้าเท่านั้น');
+     for(const id of ids){const restored=await query(db.from('shop_products').update({deleted_at:null,active:false}).eq('id',id).not('deleted_at','is',null).select('id').maybeSingle());if(!restored)throw Error('ไม่พบสินค้าที่อยู่ในถังขยะแล้ว');await query(db.from('audit').insert({actor:profile.name,action:'กู้คืนสินค้า '+id,details:{reason}}))}
+     return json({ok:true});
+    }
+    await query(db.rpc('delete_records',{p_entity:entity,p_ids:ids,p_deleted:input.deleted,p_reason:reason,p_actor:profile.id}));return json({ok:true});
    }
    case 'edit-self':return json({error:'ข้อมูลโปรไฟล์แก้ไขได้โดยแอดมินเท่านั้น'},403);
    case 'add-fund-category':{requireAdmin();const result=await query(db.rpc('add_fund_category',{p_name:text(input.name,100),p_actor:profile.id}));return json({ok:true,result});}

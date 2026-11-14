@@ -119,19 +119,27 @@
   // and expand exactly once when changing pages.
   window.requestAnimationFrame(()=>{
    if(renderUnlock!==mobileRenderUnlock)return;
-   app?.classList.remove('mobile-dock-route-change');
+   const finalLayout=document.querySelector('.layout');
    if(small&&expandAfterNavigation){
-    const finalLayout=document.querySelector('.layout');
+    // Recalculate the new page's dock width while it is still compact.
+    // The route lock is then released for one painted frame before expansion.
     updateMobileDockVisibility();
     finalLayout?.classList.remove('mobile-header-hidden');
-    const dock=finalLayout?.querySelector('.clay-dock');
-    // Force the browser to commit the measured compact width before expanding.
-    dock?.getBoundingClientRect();
-    mobileDockCompactByNavigation=false;
-    setMobileDockCompact(finalLayout,false);
-    const root=document.scrollingElement||document.documentElement;
-    mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-    mobileDownDistance=0;mobileUpDistance=0;
+    finalLayout?.querySelector('.clay-dock')?.getBoundingClientRect();
+   }
+   app?.classList.remove('mobile-dock-route-change');
+   if(small&&expandAfterNavigation){
+    // A nested animation frame guarantees the compact state is actually
+    // painted first. Only then do we animate to the expanded state.
+    window.requestAnimationFrame(()=>{
+     if(renderUnlock!==mobileRenderUnlock)return;
+     const settledLayout=document.querySelector('.layout');
+     mobileDockCompactByNavigation=false;
+     setMobileDockCompact(settledLayout,false);
+     const root=document.scrollingElement||document.documentElement;
+     mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+     mobileDownDistance=0;mobileUpDistance=0;
+    });
    }
   });
  };

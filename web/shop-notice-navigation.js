@@ -34,6 +34,8 @@
   if(!window.matchMedia('(max-width:720px)').matches){
    layout.classList.remove('mobile-dock-hidden');
    dock.style.removeProperty('--mobile-dock-compact-width');
+   dock.style.removeProperty('--mobile-dock-compact-item-width');
+   ['--mobile-dock-compact-left','--mobile-dock-expanded-left','--mobile-dock-compact-fab-left','--mobile-dock-expanded-fab-left'].forEach(name=>document.getElementById('app')?.style.removeProperty(name));
    return;
   }
   // Use an explicit numeric target width so the browser can interpolate the
@@ -46,9 +48,24 @@
   const itemWidth=Math.max(32,Math.min(preferredItemWidth,Math.floor((viewportLimit-compactPadding-Math.max(0,itemCount-1)*compactGap)/Math.max(1,itemCount))));
   const compactWidth=itemCount*itemWidth+Math.max(0,itemCount-1)*compactGap+compactPadding;
   const expandedWidth=itemCount*62+Math.max(0,itemCount-1)*6+24;
+  const compactWidthPx=Math.min(compactWidth,viewportLimit);
+  const expandedWidthPx=Math.min(expandedWidth,viewportLimit);
   dock.style.setProperty('--mobile-dock-compact-item-width',`${itemWidth}px`);
-  dock.style.setProperty('--mobile-dock-compact-width',`${Math.min(compactWidth,viewportLimit)}px`);
-  dock.style.setProperty('--mobile-dock-expanded-width',`${Math.min(expandedWidth,viewportLimit)}px`);
+  dock.style.setProperty('--mobile-dock-compact-width',`${compactWidthPx}px`);
+  dock.style.setProperty('--mobile-dock-expanded-width',`${expandedWidthPx}px`);
+  const app=document.getElementById('app');
+  if(hasFab&&app){
+   // Center the dock and its detached shop/menu action as one balanced group.
+   const fabWidth=54,groupGap=10,viewportWidth=window.innerWidth;
+   const compactLeft=Math.max(8,(viewportWidth-(compactWidthPx+groupGap+fabWidth))/2);
+   const expandedLeft=Math.max(8,(viewportWidth-(expandedWidthPx+groupGap+fabWidth))/2);
+   app.style.setProperty('--mobile-dock-compact-left',String(compactLeft)+'px');
+   app.style.setProperty('--mobile-dock-expanded-left',String(expandedLeft)+'px');
+   app.style.setProperty('--mobile-dock-compact-fab-left',String(compactLeft+compactWidthPx+groupGap)+'px');
+   app.style.setProperty('--mobile-dock-expanded-fab-left',String(expandedLeft+expandedWidthPx+groupGap)+'px');
+  }else if(app){
+   ['--mobile-dock-compact-left','--mobile-dock-expanded-left','--mobile-dock-compact-fab-left','--mobile-dock-expanded-fab-left'].forEach(name=>app.style.removeProperty(name));
+  }
   const hasCurrentMainItem=[...dock.querySelectorAll(':scope > button[data-view]:not([data-store-entry])')].some(button=>button.dataset.view===view);
   layout.classList.toggle('mobile-dock-hidden',!hasCurrentMainItem);
  } function checkStore(){if(!scope()||!user)return;if(shopLoaded&&shopOwner===user.id)products=shopData.products||[];paintStore()}

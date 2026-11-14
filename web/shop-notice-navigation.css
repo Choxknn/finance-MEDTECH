@@ -127,3 +127,72 @@
   .clay-dock { left: 9px !important; right: 78px !important; }
   .clay-dock button { max-width: 50px !important; }
 }
+
+
+/* Final mobile navigation refinements: real top state, circular active item,
+   full-width capsule without the detached action, and slide-away on subpages. */
+@media (max-width:720px) {
+  .workspace > .topbar .topbar-title,
+  .material-shell .workspace > .topbar .topbar-title {
+    display: flex !important;
+    flex: 0 1 auto !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    max-width: min(40vw, 160px) !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    margin-right: auto !important;
+    transition: max-width .22s ease, opacity .18s ease, transform .22s ease, margin .22s ease !important;
+  }
+
+  .layout.mobile-page-scrolled .workspace > .topbar .topbar-title {
+    max-width: 0 !important;
+    margin-right: 0 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-5px) !important;
+    pointer-events: none !important;
+  }
+
+  .clay-dock {
+    right: 12px !important;
+    transform: translate3d(0,0,0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transition: right .24s ease, transform .28s cubic-bezier(.2,.75,.25,1), opacity .2s ease, visibility .2s ease !important;
+  }
+
+  .layout.mobile-has-fab .clay-dock {
+    right: 82px !important;
+  }
+
+  .clay-dock button.active {
+    flex: 0 0 48px !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    border-radius: 50% !important;
+    background: #f3eaf0 !important;
+    color: #a92e50 !important;
+    box-shadow:
+      0 3px 9px rgba(83, 45, 66, .12),
+      inset 0 1px 3px rgba(83, 45, 66, .08),
+      inset 0 -1px 2px rgba(255,255,255,.95) !important;
+  }
+
+  .layout.mobile-dock-hidden .clay-dock {
+    transform: translate3d(0, calc(100% + 28px), 0) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
+@media (max-width:360px) {
+  .workspace > .topbar .topbar-title { max-width: min(36vw, 132px) !important; }
+}

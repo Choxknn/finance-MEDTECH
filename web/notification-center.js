@@ -96,12 +96,12 @@
   if(!user||view!=='notifications'||typeof IntersectionObserver==='undefined')return;
   noticeObserver=new IntersectionObserver(entries=>{
    for(const entry of entries){
-    if(!entry.isIntersecting||entry.intersectionRatio<.25)continue;
+    if(!entry.isIntersecting)continue;
     const card=entry.target,kind=card.dataset.noticeKind,id=card.dataset.noticeIdValue;
     if(!card.classList.contains('is-unread')||!uuid.test(id||''))continue;
     void changeState(kind,id,'read');
    }
-  },{root:null,threshold:[0,.25]});
+  },{root:null,threshold:0});
   document.querySelectorAll('.notification-center-card.is-unread').forEach(card=>noticeObserver.observe(card));
  }
  async function markAllNoticesRead(button){

@@ -438,3 +438,51 @@
     font-size: 8px !important;
   }
 }
+
+
+/* Keep the mobile dock width stable at the top and while scrolling.
+   Only the detached action button determines the available right inset. */
+@media (max-width:720px) {
+  html body .layout .clay-dock,
+  html body .layout.mobile-page-scrolled .clay-dock {
+    width:auto !important;
+    max-width:none !important;
+    box-sizing:border-box !important;
+    left:12px !important;
+    right:12px !important;
+    transition:left .24s ease,right .24s ease,transform .28s cubic-bezier(.2,.75,.25,1),opacity .2s ease,visibility .2s ease !important;
+  }
+
+  html body .layout.mobile-has-fab .clay-dock,
+  html body .layout.mobile-has-fab.mobile-page-scrolled .clay-dock {
+    left:12px !important;
+    right:82px !important;
+  }
+
+  html body .layout .clay-dock button.active {
+    position:relative !important;
+    isolation:isolate !important;
+    border:1px solid rgba(174,54,91,.14) !important;
+    border-radius:999px !important;
+    background:linear-gradient(155deg,#fff 0%,#fff7fa 42%,#f4e6ed 100%) !important;
+    color:#a52c51 !important;
+    box-shadow:
+      0 4px 12px rgba(102,43,70,.14),
+      0 1px 3px rgba(102,43,70,.08),
+      inset 0 1px 0 rgba(255,255,255,.98),
+      inset 0 -1px 2px rgba(151,79,111,.07) !important;
+    transform:translateY(-1px) !important;
+    transition:background .2s ease,box-shadow .2s ease,transform .2s ease !important;
+  }
+
+  html body .layout .clay-dock button.active > span {
+    color:#9f294d !important;
+    font-weight:650 !important;
+    letter-spacing:.01em !important;
+  }
+
+  html body .layout .clay-dock button.active svg {
+    color:#a52c51 !important;
+    filter:drop-shadow(0 1px 1px rgba(115,38,69,.12)) !important;
+  }
+}

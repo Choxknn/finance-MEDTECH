@@ -67,7 +67,6 @@
  const oldRender=render;render=function(){
   const previousLayout=document.querySelector('.layout');
   const wasDockCompact=!!previousLayout?.classList.contains('mobile-page-scrolled');
-  const routeChanged=mobileLastRenderedView!==null&&mobileLastRenderedView!==view;
   const firstRender=mobileLastRenderedView===null;
   oldRender();
   mobileLastRenderedView=view;

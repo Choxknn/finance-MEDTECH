@@ -91,7 +91,9 @@
   if(small&&layout){
    if(wasDockCompact){
     setMobileDockCompact(layout,true);
-    mobileDockCompactByNavigation=true;
+    // Keep the compact appearance during DOM replacement only. The final
+    // state is recalculated from the new page's real scroll position below.
+    mobileDockCompactByNavigation=false;
     const root=document.scrollingElement||document.documentElement;
     mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
     mobileDownDistance=0;mobileUpDistance=0;
@@ -111,10 +113,25 @@
   }else{
    updateMobileHeaderScroll(true);updateMobileDockVisibility();
   }
-  window.requestAnimationFrame(()=>{
+  // Wait until the replacement layout and browser scroll restoration settle.
+  // Keep transitions disabled while applying the final state, so the dock never
+  // flashes wide and then animates back to compact.
+  window.requestAnimationFrame(()=>window.requestAnimationFrame(()=>{
    if(renderUnlock!==mobileRenderUnlock)return;
+   const finalLayout=document.querySelector('.layout');
+   if(small&&finalLayout){
+    const root=document.scrollingElement||document.documentElement;
+    const restoredY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+    const pageIsScrolled=restoredY>56;
+    mobileDockCompactByNavigation=false;
+    setMobileDockCompact(finalLayout,pageIsScrolled);
+    finalLayout.classList.toggle('mobile-header-hidden',pageIsScrolled);
+    mobileLastScrollY=restoredY;
+    mobileDownDistance=0;mobileUpDistance=0;
+    updateMobileDockVisibility();
+   }
    app?.classList.remove('mobile-dock-route-change');
-  });
+  }));
  };
  function updateMobileHeaderScroll(reset=false){
   const layout=document.querySelector('.layout');if(!layout)return;

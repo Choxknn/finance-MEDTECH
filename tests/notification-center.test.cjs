@@ -6,12 +6,12 @@ w.IntersectionObserver=class{constructor(callback,options){this.callback=callbac
 for(const name of ['app','management','records','fund','payment-qrs','session-history','bills','experience','operations','layout-polish','fund-evidence','flex-templates','flex-preview','line-messages','communications','notification-center'])vm.runInContext(fs.readFileSync(root+'/web/'+name+'.js','utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx),tick=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
- const noticeId='11111111-1111-4111-8111-111111111111',announcementId='22222222-2222-4222-8222-222222222222';
- run("demoLogin('member');db.charges=[];db.notifications=[{id:'"+noticeId+"',profile_id:user.id,title:'ข้อความแจ้งเตือน',body:'รายละเอียด',created_at:new Date().toISOString(),status:'in_app',seen_at:null}];db.announcements=[{id:'"+announcementId+"',title:'ประกาศในเว็บ',body:'รายละเอียดประกาศ',created_at:new Date().toISOString(),seen_at:null}];nav('notifications')");
+ const noticeId='11111111-1111-4111-8111-111111111111',announcementId='22222222-2222-4222-8222-222222222222',chargeId='33333333-3333-4333-8333-333333333333',roundId='44444444-4444-4444-8444-444444444444';
+ run("demoLogin('member');db.charges=[{id:'"+chargeId+"',profile_id:user.id,round_id:'"+roundId+"',amount:100,fee_amount:0}];db.rounds=[{id:'"+roundId+"',title:'บิลทดสอบ',due_date:'2026-12-01'}];db.charge_notice_states=[];db.notifications=[{id:'"+noticeId+"',profile_id:user.id,title:'ข้อความแจ้งเตือน',body:'รายละเอียด',created_at:new Date().toISOString(),status:'in_app',seen_at:null}];db.announcements=[{id:'"+announcementId+"',title:'ประกาศในเว็บ',body:'รายละเอียดประกาศ',created_at:new Date().toISOString(),seen_at:null}];nav('notifications')");
  const cards=[...w.document.querySelectorAll('.notification-center-card')];
- assert.equal(cards.length,2,'notification page shows both notification and announcement');
- const notificationCard=cards.find(card=>card.dataset.noticeIdValue===noticeId),announcementCard=cards.find(card=>card.dataset.noticeIdValue===announcementId);
- assert.ok(notificationCard&&announcementCard,'each notice type has its own rendered card');
+ assert.equal(cards.length,3,'notification page shows notifications, announcements and unpaid charge notices');
+ const notificationCard=cards.find(card=>card.dataset.noticeIdValue===noticeId),announcementCard=cards.find(card=>card.dataset.noticeIdValue===announcementId),chargeCard=cards.find(card=>card.dataset.noticeIdValue===chargeId);
+ assert.ok(notificationCard&&announcementCard&&chargeCard,'each notice type has its own rendered card');
  const observer=w.noticeObservers.at(-1);assert.ok(observer,'notification list installs an IntersectionObserver');
  assert.ok(cards.every(card=>observer.targets.has(card)),'unread cards are observed');
  observer.trigger(notificationCard,0);await tick();
@@ -23,6 +23,7 @@ const run=s=>vm.runInContext(s,ctx),tick=()=>new Promise(resolve=>setImmediate(r
  const allButton=w.document.querySelector('[data-mark-all-notices]');assert.ok(allButton,'notifications page has a mark-all button');
  allButton.click();await tick();
  assert.ok(run("db.announcements.find(n=>n.id==='"+announcementId+"').seen_at"),'mark all marks announcements as read');
+ assert.ok(run("db.charge_notice_states.find(n=>n.charge_id==='"+chargeId+"').seen_at"),'mark all marks unpaid charge notices as read');
  assert.equal(run('noticeList().filter(n=>!n.seen_at).length'),0,'mark all clears the unread count for all notice types');
  assert.equal(allButton.disabled,true,'mark-all button is disabled when nothing remains unread');
  console.log('Notification auto-read visibility and mark-all-read behavior passed');

@@ -1,7 +1,15 @@
 'use strict';
-let financeLiveClient=null,financeLiveScope='',financeLiveToken='',financeLiveTimer=null,financeLiveBusy=false,financeLivePending=false,financeAnnouncementPending=false,financeLiveShopPending=false,financeLiveShopChannel=null;
+let financeLiveClient=null,financeLiveScope='',financeLiveToken='',financeLiveTimer=null,financeAnnouncementUrlTimer=null,financeLiveBusy=false,financeLivePending=false,financeAnnouncementPending=false,financeLiveShopPending=false,financeLiveShopChannel=null;
 function financeLiveBlocked(){return document.hidden||document.querySelector('dialog[open],.finance-picker-popup')||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]')||document.querySelector('#material-profile-menu:not([hidden])')}
 function scheduleFinanceLiveFlush(){if(!financeLiveTimer)financeLiveTimer=setTimeout(flushFinanceLive,350)}
+function scheduleFinanceAnnouncementUrlRefresh(){
+ clearTimeout(financeAnnouncementUrlTimer);financeAnnouncementUrlTimer=null;
+ if(!user||cfg.mode!=='live')return;
+ const expiries=(db.announcements||[]).map(item=>Date.parse(item.image_url_expires_at||'')).filter(value=>Number.isFinite(value));
+ if(!expiries.length)return;
+ const wait=Math.max(1000,Math.min(...expiries)-Date.now()-5*60*1000);
+ financeAnnouncementUrlTimer=setTimeout(()=>{financeAnnouncementPending=true;scheduleFinanceLiveFlush()},wait);
+}
 function financeLiveResource(message){return message?.payload?.resource||message?.resource||''}
 function financeLiveIsShopResource(message){return ['shop_products','shop_orders','shop_payments'].includes(financeLiveResource(message))}
 function queueFinanceLive(message){
@@ -53,6 +61,7 @@ async function flushFinanceLive(){
    const nextAnnouncements=reuseCachedAnnouncementImages(announcements.announcements||[],db.announcements||[]);
    if(stable(db.announcements||[])!==stable(nextAnnouncements))changed=true;
    db.announcements=nextAnnouncements;
+   scheduleFinanceAnnouncementUrlRefresh();
   }
   if(shop){
    if(!shopLoaded||shopOwner!==owner||stable(shopData)!==stable(shop))changed=true;
@@ -74,7 +83,7 @@ function stopFinanceLive(){
  if(financeLiveClient){financeLiveClient.removeAllChannels();financeLiveClient.realtime.disconnect()}
  financeLiveClient=null;financeLiveScope='';financeLiveToken='';financeLiveShopChannel=null;
  window.financeShopRealtimeReady=false;
- clearTimeout(financeLiveTimer);financeLiveTimer=null;
+ clearTimeout(financeLiveTimer);financeLiveTimer=null;clearTimeout(financeAnnouncementUrlTimer);financeAnnouncementUrlTimer=null;
  financeLivePending=false;financeAnnouncementPending=false;financeLiveShopPending=false;
 }
 function syncFinanceShopChannel(client){

@@ -144,7 +144,7 @@
  render=function(){previousRender();updateBadge();observeVisibleNotices()};
  if(typeof renderInBackground==='function'){
   const previousBackground=renderInBackground;
-  renderInBackground=function(){previousBackground();updateBadge()};
+  renderInBackground=function(){previousBackground();updateBadge();observeVisibleNotices()};
  }
  if(user)render();
 })();

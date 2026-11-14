@@ -72,9 +72,9 @@
   const app=document.getElementById('app');
   const previousLayout=document.querySelector('.layout');
   const firstRender=mobileLastRenderedView===null;
+  const wasDockCompact=!!(previousLayout?.classList.contains('mobile-page-scrolled')||app?.classList.contains('mobile-dock-compact'));
   const viewChanged=mobileLastRenderedView!==null&&mobileLastRenderedView!==view;
   const expandAfterNavigation=viewChanged&&wasDockCompact;
-  const wasDockCompact=!!(previousLayout?.classList.contains('mobile-page-scrolled')||app?.classList.contains('mobile-dock-compact'));
   const small=window.matchMedia('(max-width:720px)').matches;
   const beforeRoot=document.scrollingElement||document.documentElement;
   const beforeY=Math.max(Number(window.scrollY)||0,Number(beforeRoot?.scrollTop)||0);

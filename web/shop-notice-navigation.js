@@ -47,7 +47,7 @@
   const itemWidth=window.matchMedia('(max-width:360px)').matches?44:48;
   const viewportLimit=Math.max(0,window.innerWidth-24);
   const compactWidth=itemCount*itemWidth+Math.max(0,itemCount-1)*2+16;
-  const expandedWidth=itemCount*52+Math.max(0,itemCount-1)*3+16;
+  const expandedWidth=itemCount*62+Math.max(0,itemCount-1)*6+24;
   dock.style.setProperty('--mobile-dock-compact-width',`${Math.min(compactWidth,viewportLimit)}px`);
   dock.style.setProperty('--mobile-dock-expanded-width',`${Math.min(expandedWidth,viewportLimit)}px`);
   const hasCurrentMainItem=[...dock.querySelectorAll(':scope > button[data-view]:not([data-store-entry])')].some(button=>button.dataset.view===view);

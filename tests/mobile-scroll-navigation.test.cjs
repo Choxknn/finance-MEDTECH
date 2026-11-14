@@ -14,6 +14,7 @@ const setScroll=value=>{y=value;w.document.scrollingElement.scrollTop=value;w.di
 vm.runInContext(fs.readFileSync(root+'/web/shop-notice-navigation.js','utf8'),ctx);
 const dock=w.document.querySelector('.clay-dock');
 assert.ok(dock.querySelector('.mobile-dock-store-entry'),'store appears inside the mobile bottom dock');
+assert.equal(dock.style.getPropertyValue('--mobile-dock-compact-width'),'314px','compact width is calculated for all six dock buttons including the store');
 assert.equal(w.document.querySelector('#app > .mobile-store-entry'),null,'no separate floating store button remains');
 assert.equal(layout.classList.contains('mobile-header-hidden'),false,'header starts visible');
 setScroll(90);
@@ -33,8 +34,10 @@ assert.ok(!layout.classList.contains('mobile-page-scrolled'),'dock returns to it
 w.view='shop';w.render();
 assert.equal(dock.querySelector('.mobile-dock-store-entry'),null,'store is not duplicated while already on the shop page');
 assert.ok(layout.classList.contains('mobile-dock-hidden'),'main dock keeps its existing hide-on-shop-page behavior');
+assert.equal(dock.style.getPropertyValue('--mobile-dock-compact-width'),'264px','compact width updates when the store button is removed from the dock');
 w.view='dashboard';w.user.role='admin';w.render();
 assert.ok(dock.querySelector('.mobile-dock-store-entry'),'admin also gets the store inside the dock when sale items exist');
+assert.equal(dock.style.getPropertyValue('--mobile-dock-compact-width'),'314px','compact width expands to fit the store button without a jump');
 assert.ok(w.document.querySelector('.mobile-topbar-menu'),'admin mobile menu remains available in the header');
 setScroll(90);
 assert.ok(layout.classList.contains('mobile-page-scrolled'),'dock is compact before changing page');
@@ -49,7 +52,11 @@ assert.match(css,/mobile-dock-store-entry/,'the store button has compact-dock st
 assert.match(css,/mobile-page-scrolled \\.clay-dock > button > span[\\s\\S]*?visibility:hidden/s,'all labels including the store label disappear when the dock is folded');
 assert.match(css,/transition:transform \\.58s cubic-bezier/,'mobile header slide animation is slower');
 assert.match(css,/transform \\.58s cubic-bezier/,'mobile dock fold animation is slower');
-assert.match(css,/flex-grow \\.52s cubic-bezier/,'dock items smoothly grow back when expanding');
+const stableDock=css.slice(css.lastIndexOf('/* Stable, non-bouncing mobile dock collapse.'));
+assert.match(stableDock,/width:calc\\(100vw - 24px\\)/,'expanded dock has an explicit interpolable width');
+assert.match(stableDock,/width:var\\(--mobile-dock-compact-width/,'compact dock uses a measured numeric target width');
+assert.match(stableDock,/transform:translate3d\\(-50%,0,0\\)/,'dock stays centered without scale bounce');
+assert.doesNotMatch(stableDock,/width:max-content|scale\\(\\.96\\)|flex-grow/,'compact dock has no intrinsic-width jump, scale bounce, or flex-grow rebound');
 console.log('Mobile header direction, upward dock expansion, route-change animation, and store behavior passed');
 w.close();
 })().catch(error=>{console.error(error);process.exitCode=1});

@@ -1190,3 +1190,63 @@
     animation:none !important;
   }
 }
+
+
+/* Route changes: make expansion visibly gradual for both dock variants. */
+@media (max-width:720px) {
+  html body #app .layout .clay-dock,
+  html body #app.mobile-dock-compact .layout .clay-dock,
+  html body #app .layout.mobile-has-fab .clay-dock,
+  html body #app.mobile-dock-compact .layout.mobile-has-fab .clay-dock {
+    transition:
+      left .84s cubic-bezier(.22,.72,.22,1),
+      right .84s cubic-bezier(.22,.72,.22,1),
+      width .88s cubic-bezier(.22,.72,.22,1),
+      height .82s cubic-bezier(.22,.72,.22,1),
+      padding .82s cubic-bezier(.22,.72,.22,1),
+      opacity .22s ease,
+      visibility .22s ease !important;
+  }
+
+  html body #app .layout .clay-dock > button,
+  html body #app.mobile-dock-compact .layout .clay-dock > button {
+    transition:
+      flex-basis .80s cubic-bezier(.22,.72,.22,1),
+      width .80s cubic-bezier(.22,.72,.22,1),
+      min-width .80s cubic-bezier(.22,.72,.22,1),
+      max-width .80s cubic-bezier(.22,.72,.22,1),
+      height .80s cubic-bezier(.22,.72,.22,1),
+      padding .80s cubic-bezier(.22,.72,.22,1),
+      gap .80s cubic-bezier(.22,.72,.22,1),
+      background-color .24s ease !important;
+  }
+
+  html body #app .layout .clay-dock > button > svg {
+    transition:
+      width .76s cubic-bezier(.22,.72,.22,1),
+      height .76s cubic-bezier(.22,.72,.22,1),
+      flex-basis .76s cubic-bezier(.22,.72,.22,1),
+      padding .76s cubic-bezier(.22,.72,.22,1) !important;
+  }
+
+  html body #app .layout .clay-dock > button > span {
+    transition:
+      width .76s cubic-bezier(.22,.72,.22,1),
+      max-width .76s cubic-bezier(.22,.72,.22,1),
+      max-height .76s cubic-bezier(.22,.72,.22,1),
+      opacity .44s ease,
+      transform .76s cubic-bezier(.22,.72,.22,1),
+      visibility 0s linear 0s !important;
+  }
+
+  /* The compact redraw frame is a deliberate hold, not part of the animation. */
+  html body #app.mobile-dock-route-change .layout .clay-dock,
+  html body #app.mobile-dock-route-change .layout .clay-dock > button,
+  html body #app.mobile-dock-route-change .layout .clay-dock > button > svg,
+  html body #app.mobile-dock-route-change .layout .clay-dock > button > span,
+  html body #app.mobile-dock-route-change > .mobile-menu-entry,
+  html body #app.mobile-dock-route-change > .mobile-store-entry {
+    transition:none !important;
+    animation:none !important;
+  }
+}

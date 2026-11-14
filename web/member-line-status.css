@@ -24,3 +24,19 @@
  .member-status--error{border-color:#e9ca91}
  .member-status--pending,.member-status--muted{border-color:#d4dbe1}
 }
+
+/* Member identity: keep the name and student ID on distinct, readable rows. */
+.member-name-row{display:flex;align-items:flex-start;gap:7px;min-width:0;width:100%}
+.member-name-row .member-meta-icon{margin-top:2px;color:#8c7181}
+.member-name{min-width:0;flex:1;white-space:normal;overflow-wrap:anywhere;word-break:normal}
+.member-student-id{white-space:nowrap}
+.member-line-status-wrap{display:block}
+@media(max-width:760px){
+ .member-identity{width:100%;min-width:0;align-items:stretch;gap:8px}
+ .member-name-row{align-items:flex-start;gap:8px}
+ .member-name-row .member-meta-icon{width:17px;height:17px;flex-basis:17px;margin-top:3px}
+ .member-name{font-size:.9rem;line-height:1.55}
+ .member-identity-meta{width:100%;padding-left:25px;gap:0}
+ .member-student-id{font-size:.8rem;line-height:1.5}
+ .member-line-status-wrap{display:none!important}
+}

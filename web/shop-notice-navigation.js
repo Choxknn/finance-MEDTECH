@@ -124,7 +124,8 @@
     layout.classList.remove('mobile-header-hidden');setMobileDockCompact(layout,false);
     mobileDownDistance=0;mobileUpDistance=0;
    }else if(layout.classList.contains('menu-open')||searchFocused){
-    layout.classList.remove('mobile-header-hidden','mobile-page-scrolled');
+    layout.classList.remove('mobile-header-hidden');
+    setMobileDockCompact(layout,false);mobileDockCompactByNavigation=false;
     mobileDownDistance=0;mobileUpDistance=0;
    }else if(delta>0){
     mobileDownDistance+=delta;mobileUpDistance=0;
@@ -134,13 +135,14 @@
    }else if(delta<0){
     mobileUpDistance+=-delta;mobileDownDistance=0;
     if(mobileUpDistance>=7){
-     layout.classList.remove('mobile-header-hidden','mobile-page-scrolled');
+     layout.classList.remove('mobile-header-hidden');
+     setMobileDockCompact(layout,false);mobileDockCompactByNavigation=false;
      mobileUpDistance=0;
     }
    }
   }
-  if(y<=14){
-   layout.classList.remove('mobile-header-hidden','mobile-page-scrolled');
+  if(y<=14&&!mobileDockCompactByNavigation){
+   layout.classList.remove('mobile-header-hidden');setMobileDockCompact(layout,false);
    mobileDownDistance=0;mobileUpDistance=0;
   }
   updateMobileDockVisibility();

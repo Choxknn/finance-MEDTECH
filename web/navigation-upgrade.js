@@ -57,8 +57,116 @@ function updateAdminSearch(fetchExtras=true){
  list.hidden=false;input.setAttribute('aria-expanded','true');
  if(fetchExtras){clearTimeout(adminSearchTimer);adminSearchTimer=setTimeout(()=>loadAdminSearchExtras(),250)}
 }
+
+let adminSearchCameraStream=null,adminSearchCameraFrame=0,adminSearchCameraGeneration=0;
+function adminSearchStopCamera(){
+ adminSearchCameraGeneration++;
+ if(adminSearchCameraFrame)cancelAnimationFrame(adminSearchCameraFrame);
+ adminSearchCameraFrame=0;
+ if(adminSearchCameraStream)adminSearchCameraStream.getTracks().forEach(track=>track.stop());
+ adminSearchCameraStream=null;
+ const video=document.getElementById('admin-search-camera-video');
+ if(video)video.srcObject=null;
+}
+function adminSearchUseQrValue(value){
+ const input=document.getElementById('admin-global-search');
+ const query=String(value||'').trim();
+ if(!input||!query)return;
+ input.value=query;
+ input.focus({preventScroll:true});
+ updateAdminSearch(true);
+ const dialog=document.getElementById('dialog');
+ if(dialog?.open)dialog.close();
+ toast('อ่าน QR แล้ว');
+}
+async function adminSearchDecodeImage(file){
+ if(!file)return;
+ const status=document.getElementById('admin-search-camera-status');
+ try{
+  if(file.size>10*1024*1024)throw Error('รูป QR ต้องไม่เกิน 10 MB');
+  if(typeof window.jsQR!=='function')throw Error('ระบบอ่าน QR ยังโหลดไม่ครบ กรุณารีเฟรช');
+  const image=new Image(),url=URL.createObjectURL(file);
+  try{
+   image.src=url;await image.decode();
+   const scale=Math.min(1,1600/Math.max(image.width,image.height));
+   const canvas=document.createElement('canvas');
+   canvas.width=Math.max(1,Math.round(image.width*scale));
+   canvas.height=Math.max(1,Math.round(image.height*scale));
+   const ctx=canvas.getContext('2d',{willReadFrequently:true});
+   ctx.drawImage(image,0,0,canvas.width,canvas.height);
+   const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
+   const result=window.jsQR(pixels.data,pixels.width,pixels.height,{inversionAttempts:'attemptBoth'});
+   if(!result)throw Error('ไม่พบ QR ในภาพ กรุณาเลือกรูปที่ชัดเจน');
+   adminSearchUseQrValue(result.data);
+  }finally{URL.revokeObjectURL(url)}
+ }catch(error){if(status)status.textContent=error.message||'อ่าน QR ไม่สำเร็จ'}
+}
+async function adminSearchStartCamera(){
+ const generation=++adminSearchCameraGeneration;
+ const status=document.getElementById('admin-search-camera-status');
+ const video=document.getElementById('admin-search-camera-video');
+ try{
+  if(!navigator.mediaDevices?.getUserMedia)throw Error('เบราว์เซอร์นี้เปิดกล้องไม่ได้ กรุณาเลือกรูป QR แทน');
+  if(typeof window.jsQR!=='function')throw Error('ระบบอ่าน QR ยังโหลดไม่ครบ กรุณารีเฟรช');
+  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+  if(generation!==adminSearchCameraGeneration||!document.getElementById('dialog')?.open){
+   stream.getTracks().forEach(track=>track.stop());return;
+  }
+  adminSearchCameraStream=stream;
+  video.srcObject=stream;
+  await video.play();
+  if(status)status.textContent='เล็งกล้องไปที่ QR เพื่อค้นหารายการ';
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  let lastScan=0;
+  const frame=time=>{
+   if(generation!==adminSearchCameraGeneration||!document.getElementById('dialog')?.open){
+    adminSearchStopCamera();return;
+   }
+   if(video.readyState>=2&&time-lastScan>180){
+    lastScan=time;
+    const width=Math.min(900,video.videoWidth||0);
+    if(width){
+     canvas.width=width;
+     canvas.height=Math.max(1,Math.round((video.videoHeight||1)*width/(video.videoWidth||1)));
+     ctx.drawImage(video,0,0,canvas.width,canvas.height);
+     const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
+     const result=window.jsQR(pixels.data,pixels.width,pixels.height,{inversionAttempts:'attemptBoth'});
+     if(result){adminSearchUseQrValue(result.data);adminSearchStopCamera();return;}
+    }
+   }
+   adminSearchCameraFrame=requestAnimationFrame(frame);
+  };
+  adminSearchCameraFrame=requestAnimationFrame(frame);
+ }catch(error){
+  adminSearchStopCamera();
+  const current=document.getElementById('admin-search-camera-status');
+  if(current)current.textContent=error.name==='NotAllowedError'?'กรุณาอนุญาตให้เว็บไซต์ใช้กล้อง หรือเลือกรูป QR แทน':error.message||'เปิดกล้องไม่สำเร็จ';
+ }
+}
+function adminSearchOpenCamera(){
+ if(user?.role!=='admin')return;
+ adminSearchStopCamera();
+ modal('สแกน QR เพื่อค้นหา',`<section class="admin-search-camera-panel"><video id="admin-search-camera-video" autoplay muted playsinline></video><p id="admin-search-camera-status" class="help" role="status">กำลังเปิดกล้อง…</p><label class="secondary small admin-search-camera-file">เลือกรูป QR<input id="admin-search-camera-file" type="file" accept="image/*" capture="environment"></label><div class="actions"><button type="button" class="secondary" data-action="close">ปิด</button></div></section>`);
+ const dialog=document.getElementById('dialog');
+ dialog.addEventListener('close',adminSearchStopCamera,{once:true});
+ void adminSearchStartCamera();
+}
+document.addEventListener('click',e=>{
+ const button=e.target.closest('.admin-camera-button');
+ if(!button||user?.role!=='admin')return;
+ e.preventDefault();e.stopPropagation();
+ adminSearchOpenCamera();
+},true);
+document.addEventListener('change',e=>{
+ if(e.target.id==='admin-search-camera-file'&&e.target.files?.length){
+  void adminSearchDecodeImage(e.target.files[0]);
+  e.target.value='';
+ }
+});
+
 function installNavigationUpgrade(){adminSearchScope();if(!user)return;const shell=document.querySelector('.material-shell'),top=shell?.querySelector('.topbar');if(!top)return;const profileGroup=top.querySelector('.user'),bell=top.querySelector('.clay-notifications');if(profileGroup&&bell)profileGroup.prepend(bell);
- if(user.role==='admin'){top.classList.add('has-admin-search');const searchPlaceholder='ค้นหา';top.insertAdjacentHTML('beforeend',`<div class="admin-search"><label for="admin-global-search" class="sr-only">ค้นหาทุกอย่าง</label><div class="admin-search-field">${icon('search')}<input id="admin-global-search" type="search" placeholder="${searchPlaceholder}" autocomplete="off" aria-controls="admin-search-results" aria-expanded="false"></div><div id="admin-search-results" class="admin-search-results" hidden></div></div>`)}
+ if(user.role==='admin'){top.classList.add('has-admin-search');const searchPlaceholder='ค้นหา';top.insertAdjacentHTML('beforeend',`<div class="admin-search"><label for="admin-global-search" class="sr-only">ค้นหาทุกอย่าง</label><div class="admin-search-field">${icon('search')}<input id="admin-global-search" type="search" placeholder="${searchPlaceholder}" autocomplete="off" aria-controls="admin-search-results" aria-expanded="false"><button type="button" class="admin-camera-button" aria-label="สแกน QR ด้วยกล้อง" title="สแกน QR ด้วยกล้อง">${icon('camera')}</button></div><div id="admin-search-results" class="admin-search-results" hidden></div></div>`)}
  if(user.role!=='admin'){const overdue=materialBillState().overdue.some(c=>c.profile_id===user.id),correction=(db.charges||[]).some(c=>{const r=round(c.round_id);return c.profile_id===user.id&&!c.deleted_at&&!r.deleted_at&&!r.archived&&balance(c)>0&&!hasPending(c)&&(db.payments||[]).filter(p=>p.charge_id===c.id&&!p.deleted_at).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)))[0]?.status==='rejected'});if(overdue||correction)top.insertAdjacentHTML('beforebegin',`<div class="overdue-page-banner" role="status">${icon('bell')}<strong>${[overdue?'บิลเกินกำหนด กรุณาเร่งการชำระ':'',correction?'มีบิลต้องแก้ไข กรุณาตรวจสอบและแนบสลิปใหม่':''].filter(Boolean).join(' · ')}</strong></div>`)}
 }
 const upgradeRender=render;render=function(){const active=document.activeElement?.id==='admin-global-search',value=document.getElementById('admin-global-search')?.value||'';upgradeRender();installNavigationUpgrade();const input=document.getElementById('admin-global-search');if(input&&value){input.value=value;updateAdminSearch();if(active)input.focus()}};

@@ -718,3 +718,15 @@
     z-index:50 !important;
   }
 }
+
+/* Frosted glass treatment for the mobile bottom navigation, matching the top bar. */
+@media (max-width:720px) {
+  html body .layout > .clay-dock,
+  html body .layout .clay-dock {
+    background:rgba(255,253,255,.92) !important;
+    border:1px solid rgba(255,255,255,.96) !important;
+    -webkit-backdrop-filter:blur(24px) saturate(1.45) !important;
+    backdrop-filter:blur(24px) saturate(1.45) !important;
+    isolation:isolate !important;
+  }
+}

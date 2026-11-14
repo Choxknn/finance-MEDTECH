@@ -1291,3 +1291,78 @@
     transition:none !important;
   }
 }
+
+
+/* iOS-style selected tab: a slim grey capsule in both expanded and compact dock states. */
+@media (max-width:720px) {
+  html body .layout .clay-dock > button,
+  html body .layout.mobile-page-scrolled .clay-dock > button {
+    position:relative !important;
+    isolation:isolate !important;
+    border-radius:999px !important;
+    overflow:visible !important;
+  }
+
+  html body .layout .clay-dock > button.active,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active {
+    background:transparent !important;
+    border:0 !important;
+    outline:0 !important;
+    border-radius:999px !important;
+    box-shadow:none !important;
+    filter:none !important;
+    color:#c62848 !important;
+    transform:none !important;
+  }
+
+  html body .layout .clay-dock > button.active::before,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active::before {
+    content:"" !important;
+    position:absolute !important;
+    z-index:0 !important;
+    left:50% !important;
+    top:50% !important;
+    width:min(58px,calc(100% - 8px)) !important;
+    height:42px !important;
+    padding:0 !important;
+    border:0 !important;
+    border-radius:999px !important;
+    background:#e7e7e9 !important;
+    opacity:1 !important;
+    transform:translate3d(-50%,-50%,0) !important;
+    pointer-events:none !important;
+    transition:
+      width .48s cubic-bezier(.22,.72,.22,1),
+      height .48s cubic-bezier(.22,.72,.22,1),
+      background-color .24s ease !important;
+  }
+
+  html body .layout .clay-dock > button.active > svg,
+  html body .layout .clay-dock > button.active > span,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active > svg,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active > span {
+    position:relative !important;
+    z-index:1 !important;
+    color:#c62848 !important;
+  }
+
+  /* Compact state keeps the highlight pill-shaped instead of turning into a tile. */
+  html body .layout.mobile-page-scrolled .clay-dock > button.active::before {
+    width:min(44px,calc(100% - 4px)) !important;
+    height:36px !important;
+    border-radius:999px !important;
+  }
+}
+
+@media (max-width:360px) {
+  html body .layout.mobile-page-scrolled .clay-dock > button.active::before {
+    width:min(40px,calc(100% - 4px)) !important;
+    height:34px !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  html body .layout .clay-dock > button.active::before {
+    transition:none !important;
+  }
+}

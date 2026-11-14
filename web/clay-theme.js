@@ -58,7 +58,7 @@ function applyClayPresentation() {
     backButton.dataset.topbarBack = 'true';
     const isFinanceCategory = view === 'fund-category';
     const isMobileBack = window.matchMedia('(max-width: 720px)').matches;
-    const showHomeIcon = isMobileBack && !isFinanceCategory;
+    const showHomeIcon = false;
     backButton.setAttribute('aria-label', isFinanceCategory ? 'กลับหน้าการเงิน' : 'กลับหน้าหลัก');
     backButton.title = isFinanceCategory ? 'กลับหน้าการเงิน' : 'กลับหน้าหลัก';
     backButton.innerHTML = showHomeIcon

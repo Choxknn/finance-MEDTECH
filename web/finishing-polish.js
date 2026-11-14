@@ -3,7 +3,13 @@ const meddySpeechFrames=new WeakMap();
 function animateMeddyWords(bubble,force=false){
  if(!bubble)return;const target=bubble.querySelector('.meddy-speech-text')||bubble,text=target.textContent,key=(user?.id||'')+'|'+text;
  const previous=meddySpeechFrames.get(bubble);if(previous)cancelAnimationFrame(previous);
- if(!force&&key===meddySpokenKey)return;meddySpokenKey=key;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ if(!force&&key===meddySpokenKey)return;meddySpokenKey=key;
+ // Drop the previous message's reserved height, then measure this complete message
+ // before revealing it character by character. This prevents the dashboard jumping.
+ bubble.style.minHeight='';
+ if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ const reservedHeight=Math.ceil(bubble.getBoundingClientRect().height);
+ if(reservedHeight>0)bubble.style.minHeight=reservedHeight+'px';
  const action=bubble.querySelector('[data-meddy-go]');if(action){action.hidden=true;action.classList.remove('meddy-action-ready')}
  const parts=typeof Intl.Segmenter==='function'?[...new Intl.Segmenter('th',{granularity:'grapheme'}).segment(text)].map(x=>x.segment):Array.from(text);
  const accessible=document.createElement('span');accessible.className='sr-only';accessible.textContent=text;

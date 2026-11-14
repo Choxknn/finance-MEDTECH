@@ -114,16 +114,6 @@
   window.requestAnimationFrame(()=>{
    if(renderUnlock!==mobileRenderUnlock)return;
    app?.classList.remove('mobile-dock-route-change');
-   if(expandAfterNavigation){
-    // A route change always returns the dock to its expanded capsule.
-    // Start from the compact first frame, then let the normal smooth transition
-    // expand it after the replacement DOM has settled.
-    mobileDockCompactByNavigation=false;
-    setMobileDockCompact(document.querySelector('.layout'),false);
-    const root=document.scrollingElement||document.documentElement;
-    mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-    mobileDownDistance=0;mobileUpDistance=0;
-   }
   });
  };
  function updateMobileHeaderScroll(reset=false){

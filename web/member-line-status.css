@@ -61,3 +61,10 @@
  .record-expanded .member-record-summary .member-student-id,.record-expanded .member-record-summary .member-line-status-wrap{display:none!important}
  .member-record-disclosure>svg{margin-top:4px;flex:0 0 18px}
 }
+
+/* Keep the two LINE status chips on one horizontal row in each member card. */
+@media(max-width:760px){
+ .member-record-summary .member-line-status-wrap{display:block!important;width:100%;min-width:0}
+ .member-record-summary .member-line-state{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center;gap:6px;width:max-content;max-width:100%}
+ .member-record-summary .member-line-linked,.member-record-summary .member-status{display:inline-flex!important;flex:0 0 auto;align-items:center;white-space:nowrap!important;min-height:27px;padding:4px 8px;font-size:.69rem}
+}

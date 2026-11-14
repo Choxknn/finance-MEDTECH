@@ -16,11 +16,15 @@ async function refreshInBackground(){
  if(backgroundRefreshRunning||cfg.mode!=='live'||!user||document.hidden||document.querySelector('dialog[open],.finance-picker-popup')||busyJobs.size)return;
  backgroundRefreshRunning=true;const scope=user.id+'|'+user.role,screen=view;
  try{
-  const result=await api('bootstrap');
+  const result=await api('bootstrap',{skip_announcements:true});
   if(!user||scope!==user.id+'|'+user.role||view!==screen||document.hidden||document.querySelector('dialog[open],.finance-picker-popup')||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]'))return;
-  const stable=value=>JSON.stringify(value,(key,v)=>key==='last_seen_at'?undefined:v);const changed=stable(db)!==stable(result.data)||stable(user)!==stable(result.profile);
+  const stable=value=>JSON.stringify(value,(key,v)=>key==='last_seen_at'?undefined:v);
+  const stableWithoutAnnouncements=value=>{const copy={...value};delete copy.announcements;return stable(copy)};
+  const changed=stableWithoutAnnouncements(db)!==stableWithoutAnnouncements(result.data)||stable(user)!==stable(result.profile);
   if(!changed)return;
-  db=result.data;user=result.profile;for(const key of settingKeys)if(typeof db.settings?.[key]==='string')cfg[key]=db.settings[key];
+  const cachedAnnouncements=db.announcements||[];
+  db=result.data;db.announcements=cachedAnnouncements;user=result.profile;
+  for(const key of settingKeys)if(typeof db.settings?.[key]==='string')cfg[key]=db.settings[key];
   renderInBackground();
  }catch{/* Background sync retries on the next interval; user actions still report errors. */}
  finally{backgroundRefreshRunning=false}

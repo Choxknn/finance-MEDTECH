@@ -1259,3 +1259,43 @@ html body .workspace > .topbar::before {
     display: none !important;
   }
 }
+
+
+/* White frosted fade and stronger button-edge depth on the top bar. */
+html body .workspace > .topbar::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, .94) 0%,
+    rgba(255, 255, 255, .62) 52%,
+    rgba(255, 255, 255, 0) 100%
+  ) !important;
+}
+
+@media (min-width: 721px) {
+  html body::before {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, .94) 0%,
+      rgba(255, 255, 255, .62) 52%,
+      rgba(255, 255, 255, 0) 100%
+    ) !important;
+  }
+}
+
+html body .workspace > .topbar button,
+html body .workspace > .topbar a,
+html body .workspace > .topbar .admin-search-field {
+  box-shadow:
+    0 4px 12px rgba(35, 29, 42, .18),
+    0 1px 3px rgba(35, 29, 42, .14),
+    inset 0 1px 0 rgba(255, 255, 255, .92) !important;
+}
+
+html body .workspace > .topbar button:hover,
+html body .workspace > .topbar a:hover,
+html body .workspace > .topbar .admin-search-field:hover {
+  box-shadow:
+    0 6px 16px rgba(35, 29, 42, .23),
+    0 2px 5px rgba(35, 29, 42, .16),
+    inset 0 1px 0 rgba(255, 255, 255, .96) !important;
+}

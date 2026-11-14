@@ -1445,3 +1445,19 @@
   }
 }
 
+/* During a page redraw, keep the recreated dock at its measured target geometry.
+   Scroll gestures still use the normal smooth transitions after the redraw frame. */
+@media (max-width:720px) {
+  #app.mobile-dock-route-change .layout .clay-dock,
+  #app.mobile-dock-route-change .layout .clay-dock *,
+  #app.mobile-dock-route-change .layout .clay-dock *::before,
+  #app.mobile-dock-route-change .layout .clay-dock *::after {
+    transition:none !important;
+    animation:none !important;
+    scroll-behavior:auto !important;
+  }
+  #app.mobile-dock-route-change .layout .clay-dock {
+    will-change:auto !important;
+  }
+}
+

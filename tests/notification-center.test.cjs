@@ -1,0 +1,27 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom');
+const root=require('node:path').resolve(__dirname,'..'),dom=new JSDOM('<div id="app"></div><dialog id="dialog"></dialog><div id="toast"></div>',{url:'https://example.test',runScripts:'outside-only'}),w=dom.window,ctx=dom.getInternalVMContext();
+w.FINANCE_CONFIG={mode:'demo'};w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};
+w.noticeObservers=[];
+w.IntersectionObserver=class{constructor(callback,options){this.callback=callback;this.options=options;this.targets=new Set();w.noticeObservers.push(this)}observe(target){this.targets.add(target)}unobserve(target){this.targets.delete(target)}disconnect(){this.targets.clear()}trigger(target,ratio=.3){this.callback([{target,isIntersecting:ratio>0,intersectionRatio:ratio}],this)}};
+for(const name of ['app','management','records','fund','payment-qrs','session-history','bills','experience','operations','layout-polish','fund-evidence','flex-templates','flex-preview','line-messages','communications','notification-center'])vm.runInContext(fs.readFileSync(root+'/web/'+name+'.js','utf8'),ctx);
+const run=s=>vm.runInContext(s,ctx),tick=()=>new Promise(resolve=>setImmediate(resolve));
+(async()=>{
+ const noticeId='11111111-1111-4111-8111-111111111111',announcementId='22222222-2222-4222-8222-222222222222';
+ run("demoLogin('member');db.charges=[];db.notifications=[{id:'"+noticeId+"',profile_id:user.id,title:'ข้อความแจ้งเตือน',body:'รายละเอียด',created_at:new Date().toISOString(),status:'in_app',seen_at:null}];db.announcements=[{id:'"+announcementId+"',title:'ประกาศในเว็บ',body:'รายละเอียดประกาศ',created_at:new Date().toISOString(),seen_at:null}];nav('notifications')");
+ const cards=[...w.document.querySelectorAll('.notification-center-card')];
+ assert.equal(cards.length,2,'notification page shows both notification and announcement');
+ const observer=w.noticeObservers.at(-1);assert.ok(observer,'notification list installs an IntersectionObserver');
+ assert.ok(cards.every(card=>observer.targets.has(card)),'unread cards are observed');
+ observer.trigger(cards[0],.2);await tick();
+ assert.equal(run("db.notifications.find(n=>n.id===' "+noticeId+"'.trim()).seen_at"),null,'a barely visible item is not marked read');
+ observer.trigger(cards[0],.35);await tick();
+ assert.ok(run("db.notifications.find(n=>n.id==='"+noticeId+"').seen_at"),'scrolling an unread notification into view marks it read');
+ assert.ok(!cards[0].classList.contains('is-unread'),'read notification loses unread styling without redrawing the page');
+ assert.equal(run("db.announcements.find(n=>n.id==='"+announcementId+"').seen_at"),null,'an item outside the visible threshold stays unread');
+ const allButton=w.document.querySelector('[data-mark-all-notices]');assert.ok(allButton,'notifications page has a mark-all button');
+ allButton.click();await tick();
+ assert.ok(run("db.announcements.find(n=>n.id==='"+announcementId+"').seen_at"),'mark all marks announcements as read');
+ assert.equal(run('noticeList().filter(n=>!n.seen_at).length'),0,'mark all clears the unread count for all notice types');
+ assert.equal(allButton.disabled,true,'mark-all button is disabled when nothing remains unread');
+ console.log('Notification auto-read visibility and mark-all-read behavior passed');
+})().catch(error=>{console.error(error);process.exitCode=1}).finally(()=>setImmediate(()=>w.close()));

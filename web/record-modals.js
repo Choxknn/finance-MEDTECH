@@ -21,17 +21,26 @@ function recordReadingRow(label,value,name=detailIcon(label)){
 }
 function showRecordWindow(button){
  const row=button.closest('tr');if(!row)return;
+ const memberIdentity=row.querySelector('.member-list-identity');
+ const memberName=memberIdentity?.querySelector('.member-name')?.textContent.trim()||'';
+ const memberStudentId=memberIdentity?.querySelector('.member-student-id')?.textContent.trim()||'';
+ const windowTitle=memberIdentity?[memberName,memberStudentId].filter(Boolean).join(' · '):button.querySelector('span')?.textContent||'รายละเอียดรายการ';
  const actions=[];
  const cells=[...row.cells].map(cell=>{
   const copy=cell.cloneNode(true);copy.querySelectorAll('.record-disclosure,.detail-cell-label').forEach(el=>el.remove());
   copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
   copy.querySelectorAll('.record-original-content,.record-original-title').forEach(el=>el.replaceWith(...el.childNodes));
+  const memberCopy=copy.querySelector('.member-list-identity');
+  if(memberCopy){
+   memberCopy.querySelectorAll('.member-name-row>.member-meta-icon,.member-student-id>.member-meta-icon').forEach(el=>el.remove());
+   memberCopy.classList.add('member-window-identity');
+  }
   if(!copy.textContent.trim()&&!copy.querySelector('button,img'))return '';
   const label=cell.dataset.label||'รายละเอียด';
   if(/จัดการ/.test(label)&&!copy.querySelector('img,[data-proof-id]')){actions.push(copy.innerHTML);return '';}
   return recordReadingRow(label,copy.innerHTML);
  }).join('');
- modal(button.querySelector('span')?.textContent||'รายละเอียดรายการ',`<section class="reading-record admin-record"><dl class="reading-list">${cells}</dl>${actions.length?`<div class="reading-actions">${actions.join('')}</div>`:''}</section>`);
+ modal(windowTitle,`<section class="reading-record admin-record"><dl class="reading-list">${cells}</dl>${actions.length?`<div class="reading-actions">${actions.join('')}</div>`:''}</section>`);
  if(typeof watchProofs==='function')watchProofs();
 }
 function showAdminBillWindow(card){

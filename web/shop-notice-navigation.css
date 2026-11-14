@@ -1070,3 +1070,37 @@
     transition:none !important;
   }
 }
+
+
+/* Compact dock: keep it snug against the detached red action button.
+   Anchor both compact and expanded states to the same right edge, with a
+   smaller icon footprint so the compact capsule does not consume the viewport. */
+@media (max-width:720px) {
+  html body #app .layout.mobile-has-fab .clay-dock,
+  html body #app.mobile-dock-compact .layout.mobile-has-fab .clay-dock {
+    left:auto !important;
+    right:82px !important;
+    transform:translate3d(0,0,0) !important;
+  }
+
+  html body #app.mobile-dock-compact .layout .clay-dock > button,
+  html body #app.mobile-dock-compact .layout .clay-dock > button.active {
+    flex:0 0 var(--mobile-dock-compact-item-width,40px) !important;
+    width:var(--mobile-dock-compact-item-width,40px) !important;
+    min-width:var(--mobile-dock-compact-item-width,40px) !important;
+    max-width:var(--mobile-dock-compact-item-width,40px) !important;
+    height:44px !important;
+    min-height:44px !important;
+    max-height:44px !important;
+    padding:0 !important;
+    gap:0 !important;
+    border-radius:999px !important;
+  }
+
+  html body #app.mobile-dock-compact .layout .clay-dock > button > svg {
+    flex:0 0 22px !important;
+    width:22px !important;
+    height:22px !important;
+    padding:1px !important;
+  }
+}

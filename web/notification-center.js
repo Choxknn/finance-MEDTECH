@@ -43,29 +43,90 @@
    button.setAttribute('aria-label',count?`การแจ้งเตือน ยังไม่อ่าน ${count} รายการ`:'การแจ้งเตือน');
    if(count)button.insertAdjacentHTML('beforeend',`<span class="unread-count" aria-hidden="true">${count>99?'99+':count}</span>`);
   });
+  const markAll=document.querySelector('[data-mark-all-notices]');
+  if(markAll)markAll.disabled=count===0;
  }
- async function changeState(kind,id,state,button){
+ const stateRequests=new Set();
+ function applyLocalState(kind,id,state,owner){
+  const at=stamp();
+  if(kind==='notification'){
+   const n=(db.notifications||[]).find(n=>n.id===id&&n.profile_id===owner);if(n){if(state==='read')n.seen_at=at;else n.dismissed_at=at}
+  }else if(kind==='announcement'){
+   const n=(db.announcements||[]).find(n=>n.id===id);if(n){if(state==='read')n.seen_at=at;else n.dismissed_at=at}
+  }else{
+   db.charge_notice_states??=[];
+   let saved=db.charge_notice_states.find(s=>s.charge_id===id&&s.profile_id===owner);
+   if(!saved){saved={profile_id:owner,charge_id:id,seen_at:null,dismissed_at:null};db.charge_notice_states.push(saved)}
+   if(state==='read')saved.seen_at=at;else saved.dismissed_at=at;
+  }
+ }
+ function updateReadCard(kind,id){
+  document.querySelectorAll('.notification-center-card').forEach(card=>{
+   if(card.dataset.noticeKind!==kind||card.dataset.noticeIdValue!==id)return;
+   card.classList.remove('is-unread');
+   card.querySelector('.notice-unread-dot')?.remove();
+   card.querySelector('[data-read-notice]')?.setAttribute('aria-label','อ่านข้อความที่อ่านแล้ว');
+   noticeObserver?.unobserve(card);
+  });
+ }
+ async function persistNoticeState(kind,id,state,owner){
+  if(cfg.mode==='live')await api('notice-state',{kind,id,state});
+  applyLocalState(kind,id,state,owner);
+  if(state==='read')updateReadCard(kind,id);
+ }
+ async function changeState(kind,id,state,button=null){
   if(!user||!uuid.test(id)||!['notification','announcement','charge'].includes(kind))return;
   const owner=user.id,record=composeNotices().find(n=>n.notice_kind===kind&&n.id===id);
-  if(!record)return;
-  button.disabled=true;
+  if(!record||state==='read'&&record.seen_at)return;
+  const key=owner+'|'+kind+'|'+id+'|'+state;
+  if(stateRequests.has(key))return;
+  stateRequests.add(key);
+  if(button)button.disabled=true;
   try{
-   if(cfg.mode==='live')await api('notice-state',{kind,id,state});
-   const at=stamp();
-   if(kind==='notification'){
-    const n=(db.notifications||[]).find(n=>n.id===id&&n.profile_id===owner);if(n){if(state==='read')n.seen_at=at;else n.dismissed_at=at}
-   }else if(kind==='announcement'){
-    const n=(db.announcements||[]).find(n=>n.id===id);if(n){if(state==='read')n.seen_at=at;else n.dismissed_at=at}
-   }else{
-    db.charge_notice_states??=[];
-    let saved=db.charge_notice_states.find(s=>s.charge_id===id&&s.profile_id===owner);
-    if(!saved){saved={profile_id:owner,charge_id:id,seen_at:null,dismissed_at:null};db.charge_notice_states.push(saved)}
-    if(state==='read')saved.seen_at=at;else saved.dismissed_at=at;
+   await persistNoticeState(kind,id,state,owner);
+   if(state==='read')updateBadge();else render();
+  }catch(err){
+   toast(err.message||'บันทึกการแจ้งเตือนไม่สำเร็จ');
+   if(button)button.disabled=false;
+  }finally{stateRequests.delete(key)}
+ }
+ let noticeObserver=null;
+ function observeVisibleNotices(){
+  noticeObserver?.disconnect();noticeObserver=null;
+  if(!user||view!=='notifications'||typeof IntersectionObserver==='undefined')return;
+  noticeObserver=new IntersectionObserver(entries=>{
+   for(const entry of entries){
+    if(!entry.isIntersecting||entry.intersectionRatio<.25)continue;
+    const card=entry.target,kind=card.dataset.noticeKind,id=card.dataset.noticeIdValue;
+    if(!card.classList.contains('is-unread')||!uuid.test(id||''))continue;
+    void changeState(kind,id,'read');
    }
-   render();
-  }catch(err){toast(err.message||'บันทึกการแจ้งเตือนไม่สำเร็จ');button.disabled=false}
+  },{root:null,threshold:[0,.25]});
+  document.querySelectorAll('.notification-center-card.is-unread').forEach(card=>noticeObserver.observe(card));
+ }
+ async function markAllNoticesRead(button){
+  if(!user)return;
+  const owner=user.id,unread=composeNotices().filter(n=>!n.seen_at&&uuid.test(String(n.id||'')));
+  if(!unread.length){updateBadge();return}
+  if(button)button.disabled=true;
+  let failed=0;
+  for(const n of unread){
+   if(user?.id!==owner)break;
+   const key=owner+'|'+n.notice_kind+'|'+n.id+'|read';
+   if(stateRequests.has(key))continue;
+   stateRequests.add(key);
+   try{await persistNoticeState(n.notice_kind,n.id,'read',owner)}
+   catch(err){failed++;toast(err.message||'มีบางรายการอ่านไม่สำเร็จ')}
+   finally{stateRequests.delete(key)}
+  }
+  updateBadge();
+  observeVisibleNotices();
+  if(button)button.disabled=composeNotices().every(n=>!!n.seen_at);
+  if(!failed&&user?.id===owner)toast('อ่านการแจ้งเตือนทั้งหมดแล้ว');
  }
  document.addEventListener('click',e=>{
+  const markAll=e.target.closest('[data-mark-all-notices]');
+  if(markAll){e.preventDefault();e.stopImmediatePropagation();void markAllNoticesRead(markAll);return}
   const remove=e.target.closest('[data-dismiss-notice]');
   if(remove){e.preventDefault();e.stopImmediatePropagation();void changeState(remove.dataset.kind,remove.dataset.dismissNotice,'dismiss',remove);return}
   const read=e.target.closest('[data-read-notice]');
@@ -80,7 +141,7 @@
   showPaymentSuccess=function(...args){const result=previousPaymentSuccess(...args);updateBadge();return result};
  }
  const previousRender=render;
- render=function(){previousRender();updateBadge()};
+ render=function(){previousRender();updateBadge();observeVisibleNotices()};
  if(typeof renderInBackground==='function'){
   const previousBackground=renderInBackground;
   renderInBackground=function(){previousBackground();updateBadge()};

@@ -55,11 +55,10 @@ assert.ok(app.classList.contains('mobile-dock-compact'),'persistent app root ret
 assert.ok(getLayout().classList.contains('mobile-page-scrolled'),'new page keeps the dock compact during navigation even if scrollTop resets');
 await new Promise(resolve=>w.requestAnimationFrame(resolve));
 assert.ok(!app.classList.contains('mobile-dock-route-change'),'dock transition lock is released after the render frame');
-setScroll(10);
-assert.ok(getLayout().classList.contains('mobile-page-scrolled'),'small downward movement after navigation does not expand the dock');
-setScroll(0);
-assert.ok(!getLayout().classList.contains('mobile-page-scrolled'),'dock expands only after a genuine upward scroll');
-assert.ok(!app.classList.contains('mobile-dock-compact'),'persistent marker clears when the user expands the dock');
+assert.ok(!getLayout().classList.contains('mobile-page-scrolled'),'changing page smoothly returns the dock to expanded state');
+assert.ok(!app.classList.contains('mobile-dock-compact'),'persistent compact marker clears after page navigation');
+setScroll(90);
+assert.ok(getLayout().classList.contains('mobile-page-scrolled'),'dock can fold again after the user scrolls down on the new page');
 const css=fs.readFileSync(root+'/web/shop-notice-navigation.css','utf8');
 assert.match(css,/mobile-header-hidden[^}]*topbar/s,'mobile header has an animated hidden state');
 assert.match(css,/mobile-page-scrolled \.clay-dock[\s\S]*?left:50%[\s\S]*?translate3d\(-50%,0,0\)/,'scrolled dock folds into the center');

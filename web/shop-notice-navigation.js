@@ -7,7 +7,7 @@
  function unread(){return (db.notifications||[]).filter(n=>n.id&&n.profile_id===user?.id&&!n.seen_at&&!readLocally.has(n.id))}
  function paintBadges(){const count=unread().length;document.querySelectorAll('.clay-notifications').forEach(b=>{b.querySelector('.unread-count')?.remove();b.setAttribute('aria-label',count?`ข้อความและการแจ้งเตือน ยังไม่อ่าน ${count} ข้อความ`:'ข้อความและการแจ้งเตือน');if(count)b.insertAdjacentHTML('beforeend',`<span class="unread-count" aria-hidden="true">${count>99?'99+':count}</span>`)})}
  function paintStore(){
-  document.querySelectorAll('[data-store-entry],.mobile-menu-entry').forEach(el=>el.remove());
+  document.querySelectorAll('[data-store-entry],.mobile-menu-entry,.mobile-topbar-menu').forEach(el=>el.remove());
   const layout=document.querySelector('.layout');
   if(!user){layout?.classList.remove('mobile-has-fab');return}
   const hasShopItems=shopLoaded&&shopOwner===user.id&&products.some(p=>!p.deleted_at&&['open','scheduled'].includes(shopSaleState(p)));
@@ -19,12 +19,18 @@
   if(window.matchMedia('(max-width:720px)').matches){
    const app=document.querySelector('#app');
    if(user.role==='admin'){
-    app?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-menu-entry" data-action="menu" aria-label="เปิดเมนูทั้งหมด" title="เมนู">${icon('menu')}</button>`);
+    const topbar=layout?.querySelector('.workspace > .topbar');
+    const menuButton=`<button type="button" class="mobile-topbar-menu" data-action="menu" aria-label="เปิดเมนูทั้งหมด" title="เมนู">${icon('menu')}</button>`;
+    const back=topbar?.querySelector('.topbar-back');
+    if(topbar){
+     if(back)back.insertAdjacentHTML('beforebegin',menuButton);
+     else topbar.insertAdjacentHTML('afterbegin',menuButton);
+    }
    }else if(hasShopItems&&!view.startsWith('shop')&&view!=='profile'&&view!=='fund-category'){
     app?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-store-entry" data-store-entry data-view="shop" aria-label="เปิดร้านค้า" title="ร้านค้า">${storeIcon}</button>`);
    }
   }
-  layout?.classList.toggle('mobile-has-fab',!!document.querySelector('.mobile-menu-entry,.mobile-store-entry'));
+  layout?.classList.toggle('mobile-has-fab',!!document.querySelector('.mobile-store-entry'));
  }
  function updateMobileDockVisibility(){
   const layout=document.querySelector('.layout'),dock=layout?.querySelector('.clay-dock');

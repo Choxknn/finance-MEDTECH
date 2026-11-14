@@ -1199,3 +1199,30 @@ html body .workspace > .topbar::before {
     mask-image: none !important;
   }
 }
+
+
+/* Keep the desktop/iPad glass fade aligned with the responsive sidebar.
+   The header and its clipped blur move with the sidebar's expanded/compact state. */
+@media (min-width: 721px) {
+  html body .workspace > .topbar {
+    right: 0 !important;
+    width: auto !important;
+    transition: left .26s ease !important;
+  }
+
+  html body .layout.sidebar-compact > .workspace > .topbar {
+    left: 88px !important;
+  }
+}
+
+@media (min-width: 1201px) {
+  html body .layout:not(.sidebar-compact) > .workspace > .topbar {
+    left: 244px !important;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1200px) {
+  html body .layout:not(.sidebar-compact) > .workspace > .topbar {
+    left: 222px !important;
+  }
+}

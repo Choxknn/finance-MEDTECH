@@ -7,14 +7,24 @@
  function unread(){return (db.notifications||[]).filter(n=>n.id&&n.profile_id===user?.id&&!n.seen_at&&!readLocally.has(n.id))}
  function paintBadges(){const count=unread().length;document.querySelectorAll('.clay-notifications').forEach(b=>{b.querySelector('.unread-count')?.remove();b.setAttribute('aria-label',count?`ข้อความและการแจ้งเตือน ยังไม่อ่าน ${count} ข้อความ`:'ข้อความและการแจ้งเตือน');if(count)b.insertAdjacentHTML('beforeend',`<span class="unread-count" aria-hidden="true">${count>99?'99+':count}</span>`)})}
  function paintStore(){
-  document.querySelectorAll('[data-store-entry]').forEach(el=>el.remove());
-  if(!user||!shopLoaded||shopOwner!==user.id||!products.some(p=>!p.deleted_at&&['open','scheduled'].includes(shopSaleState(p))))return;
+  document.querySelectorAll('[data-store-entry],.mobile-menu-entry').forEach(el=>el.remove());
+  if(!user)return;
+  const hasShopItems=shopLoaded&&shopOwner===user.id&&products.some(p=>!p.deleted_at&&['open','scheduled'].includes(shopSaleState(p)));
   const sidebar=document.querySelector('.sidebar .nav');
-  if(sidebar&&!sidebar.querySelector('[data-view="shop"]'))sidebar.insertAdjacentHTML('beforeend',`<button data-store-entry data-view="shop" class="${view==='shop'?'active':''}">${storeIcon}<span class="nav-label">ร้านค้า</span></button>`);
-  if(view.startsWith('shop'))return;
+  if(hasShopItems&&sidebar&&!sidebar.querySelector('[data-view="shop"]'))sidebar.insertAdjacentHTML('beforeend',`<button data-store-entry data-view="shop" class="${view==='shop'?'active':''}">${storeIcon}<span class="nav-label">ร้านค้า</span></button>`);
   const dock=document.querySelector('.clay-dock');
-  if(dock&&!dock.querySelector('[data-view="shop"]'))dock.insertAdjacentHTML('beforeend',`<button class="tablet-store-entry ${view==='shop'?'active':''}" data-store-entry data-view="shop">${storeIcon}<span>ร้านค้า</span></button>`);
-  document.querySelector('#app')?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-store-entry" data-store-entry data-view="shop" aria-label="เปิดร้านค้า" title="ร้านค้า">${storeIcon}</button>`);
+  if(hasShopItems&&!view.startsWith('shop')&&dock&&!dock.querySelector('[data-view="shop"]'))dock.insertAdjacentHTML('beforeend',`<button class="tablet-store-entry ${view==='shop'?'active':''}" data-store-entry data-view="shop">${storeIcon}<span>ร้านค้า</span></button>`);
+
+  // On phones the separate circular action uses the shop for members,
+  // and opens the navigation drawer for administrators.
+  if(window.matchMedia('(max-width:720px)').matches){
+   const app=document.querySelector('#app');
+   if(user.role==='admin'){
+    app?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-menu-entry" data-action="menu" aria-label="เปิดเมนูทั้งหมด" title="เมนู">${icon('menu')}</button>`);
+   }else if(hasShopItems&&!view.startsWith('shop')){
+    app?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-store-entry" data-store-entry data-view="shop" aria-label="เปิดร้านค้า" title="ร้านค้า">${storeIcon}</button>`);
+   }
+  }
  }
  function checkStore(){if(!scope()||!user)return;if(shopLoaded&&shopOwner===user.id)products=shopData.products||[];paintStore()}
  function watchRead(){
@@ -26,6 +36,19 @@
   readObserver=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){readObserver.unobserve(e.target);void mark(e.target)}}),{threshold:.5});rows.forEach(el=>readObserver.observe(el));
  }
  const oldRow=noticeRow;noticeRow=function(n){const html=oldRow(n);return n.id&&n.profile_id===user?.id?html.replace('<article ',`<article data-notice-id="${esc(n.id)}" `):html};
- const oldRender=render;render=function(){oldRender();scope();if(!user){readObserver?.disconnect();return}checkStore();paintBadges();watchRead()};
+ const oldRender=render;render=function(){oldRender();scope();if(!user){readObserver?.disconnect();return}checkStore();paintBadges();watchRead();updateMobileHeaderScroll()};
+ function updateMobileHeaderScroll(event){
+  const layout=document.querySelector('.layout');if(!layout)return;
+  const small=window.matchMedia('(max-width:720px)').matches;
+  if(!small){layout.classList.remove('mobile-page-scrolled');return}
+  const workspace=layout.querySelector('.workspace'),main=workspace?.querySelector('main');
+  let y=Math.max(window.scrollY||0,document.documentElement.scrollTop||0,document.body.scrollTop||0,document.scrollingElement?.scrollTop||0,workspace?.scrollTop||0,main?.scrollTop||0);
+  const target=event?.target;
+  if(target&&target!==document&&target!==window&&typeof target.scrollTop==='number'&&(target===workspace||target===main||target===document.scrollingElement||target===document.body||target===document.documentElement))y=Math.max(y,target.scrollTop);
+  layout.classList.toggle('mobile-page-scrolled',y>14);
+ }
+ window.addEventListener('scroll',updateMobileHeaderScroll,{passive:true});
+ document.addEventListener('scroll',updateMobileHeaderScroll,{capture:true,passive:true});
+ window.addEventListener('resize',updateMobileHeaderScroll,{passive:true});
  if(user)render();
 })();

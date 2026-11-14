@@ -1555,3 +1555,28 @@ html body .workspace > .topbar .material-profile-menu .material-profile-logout:h
     grid-row:1 !important;
   }
 }
+
+/* When the admin drawer is open on mobile, place the drawer and scrim
+   above the fixed top bar so the header cannot cover the navigation. */
+@media (max-width:720px) {
+  html body .layout.menu-open > .workspace {
+    position:relative !important;
+    z-index:20 !important;
+  }
+
+  html body .layout.menu-open > .workspace > .topbar {
+    z-index:20 !important;
+  }
+
+  html body .layout.menu-open > .mobile-scrim {
+    position:fixed !important;
+    inset:0 !important;
+    z-index:160 !important;
+  }
+
+  html body .layout.menu-open > .sidebar,
+  html body .material-shell.layout.menu-open > .sidebar {
+    position:fixed !important;
+    z-index:170 !important;
+  }
+}

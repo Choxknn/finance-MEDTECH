@@ -161,12 +161,15 @@ function adminSearchOpenCamera(button){
  },{once:true});
  void adminSearchStartCamera();
 }
-document.addEventListener('click',e=>{
+document.addEventListener('pointerdown',e=>{
  const button=e.target.closest('.admin-camera-button');
  if(!button||user?.role!=='admin')return;
  e.preventDefault();
  e.stopImmediatePropagation();
  adminSearchOpenCamera(button);
+},true);
+document.addEventListener('click',e=>{
+ if(e.target.closest('.admin-camera-button')){e.preventDefault();e.stopImmediatePropagation()}
 },true);
 document.addEventListener('change',e=>{
  if(e.target.id==='admin-search-camera-file'&&e.target.files?.length){
@@ -178,6 +181,14 @@ document.addEventListener('change',e=>{
 function installNavigationUpgrade(){adminSearchScope();if(!user)return;const shell=document.querySelector('.material-shell'),top=shell?.querySelector('.topbar');if(!top)return;const profileGroup=top.querySelector('.user'),bell=top.querySelector('.clay-notifications');if(profileGroup&&bell)profileGroup.prepend(bell);
  if(user.role==='admin'){
   top.classList.add('has-admin-search');
+  const searchRoot=top.querySelector(':scope > .admin-search');
+  if(searchRoot){
+   const cameraButtons=[...searchRoot.querySelectorAll('.admin-camera-button')];
+   cameraButtons.slice(1).forEach(button=>button.remove());
+   top.querySelectorAll('.admin-camera-button').forEach(button=>{
+    if(!searchRoot.contains(button))button.remove();
+   });
+  }
   // Avoid duplicate search/camera controls if the header installer is invoked twice.
   if(!top.querySelector(':scope > .admin-search')){
    const searchPlaceholder='ค้นหา';

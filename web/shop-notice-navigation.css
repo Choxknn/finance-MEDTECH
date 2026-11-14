@@ -1104,3 +1104,16 @@
     padding:1px !important;
   }
 }
+
+
+/* During page replacement, hold the freshly inserted dock at its measured
+   compact size. Re-enable motion only after the new layout has been committed. */
+@media (max-width:720px) {
+  html body #app.mobile-dock-route-change .layout .clay-dock,
+  html body #app.mobile-dock-route-change .layout .clay-dock > button,
+  html body #app.mobile-dock-route-change .layout .clay-dock > button > svg,
+  html body #app.mobile-dock-route-change .layout .clay-dock > button > span {
+    transition:none !important;
+    animation:none !important;
+  }
+}

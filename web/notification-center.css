@@ -13,8 +13,6 @@
 .notification-center-card .message-content footer{margin-top:10px}
 @media(max-width:600px){.notification-center-card{padding-right:42px!important}.notification-center-card .message-symbol{width:32px;height:32px;flex-basis:32px}.notification-dismiss{right:4px;top:7px;width:28px;height:28px;min-width:28px}}
 
-/* Keep the read-all action at the upper-right beside the notification heading. */
-.page-head:has([data-mark-all-notices]){display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px}
-.page-head:has([data-mark-all-notices])>div:first-child{min-width:0;width:auto;flex:none}
-.page-head:has([data-mark-all-notices])>[data-mark-all-notices]{grid-column:2;grid-row:1;justify-self:end;align-self:start;margin:0;white-space:nowrap}
-@media(max-width:380px){.page-head:has([data-mark-all-notices]){column-gap:8px}.page-head:has([data-mark-all-notices])>[data-mark-all-notices]{padding:8px 10px;font-size:11px}}
+/* Keep read-all beside the notification panel title, visible at the upper-right. */
+.panel-head .notification-read-all{margin:0 0 0 auto;flex:0 0 auto;white-space:nowrap;align-self:center}
+@media(max-width:380px){.panel-head .notification-read-all{padding:8px 10px;font-size:11px}}

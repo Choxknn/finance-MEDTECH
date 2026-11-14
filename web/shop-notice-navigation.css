@@ -891,3 +891,190 @@
       inset 0 1px 2px rgba(35,29,42,.10) !important;
   }
 }
+
+
+/* Mobile scroll motion: the header follows the scroll direction and the dock
+   folds into a compact, centered capsule. The desktop and iPad layouts are untouched. */
+@media (max-width:720px) {
+  html body .layout > .workspace > .topbar {
+    transform:translate3d(0,0,0) !important;
+    opacity:1 !important;
+    will-change:transform,opacity !important;
+    transition:transform .32s cubic-bezier(.22,.72,.22,1),opacity .2s ease !important;
+  }
+
+  html body .layout.mobile-header-hidden > .workspace > .topbar {
+    transform:translate3d(0,calc(-100% - 12px),0) !important;
+    opacity:.98 !important;
+    pointer-events:none !important;
+  }
+
+  html body .layout.mobile-header-hidden > .workspace > .topbar > * {
+    pointer-events:none !important;
+  }
+
+  html body .layout .clay-dock,
+  html body .layout.mobile-page-scrolled .clay-dock {
+    left:12px !important;
+    right:12px !important;
+    width:auto !important;
+    max-width:none !important;
+    height:66px !important;
+    min-height:66px !important;
+    padding:5px 8px !important;
+    gap:5px !important;
+    justify-content:space-evenly !important;
+    transform:translate3d(0,0,0) scale(1) !important;
+    transform-origin:center bottom !important;
+    transition:left .3s cubic-bezier(.22,.72,.22,1),
+      right .3s cubic-bezier(.22,.72,.22,1),
+      width .3s cubic-bezier(.22,.72,.22,1),
+      height .3s cubic-bezier(.22,.72,.22,1),
+      padding .3s ease,gap .3s ease,
+      transform .32s cubic-bezier(.22,.72,.22,1),
+      opacity .2s ease,visibility .2s ease !important;
+    will-change:left,right,width,transform !important;
+  }
+
+  html body .layout .clay-dock > button,
+  html body .layout .clay-dock > button.active {
+    flex:1 1 0 !important;
+    width:auto !important;
+    min-width:0 !important;
+    max-width:76px !important;
+    height:54px !important;
+    min-height:54px !important;
+    max-height:54px !important;
+    margin:0 !important;
+    padding:3px 3px !important;
+    gap:2px !important;
+    border-radius:18px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    flex-direction:column !important;
+    font-size:9px !important;
+    line-height:1.15 !important;
+  }
+
+  html body .layout .clay-dock > button > svg {
+    flex:0 0 26px !important;
+    width:26px !important;
+    height:26px !important;
+    padding:3px !important;
+    margin:0 !important;
+  }
+
+  html body .layout .clay-dock > button > span {
+    display:block !important;
+    max-width:100% !important;
+    max-height:13px !important;
+    overflow:hidden !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    font-size:8px !important;
+    line-height:11px !important;
+    white-space:nowrap !important;
+    transform:none !important;
+    transition:font-size .22s ease,opacity .18s ease,max-height .22s ease !important;
+  }
+
+  html body .layout .clay-dock > button.active {
+    background:linear-gradient(180deg,#fff8fb 0%,#f5eaf0 100%) !important;
+    border:1px solid rgba(174,54,91,.14) !important;
+    color:#a92e50 !important;
+    box-shadow:0 3px 10px rgba(83,45,66,.12),inset 0 1px 0 rgba(255,255,255,.98) !important;
+  }
+
+  html body .layout .clay-dock > button.active > span {color:#a92e50 !important;font-weight:650 !important}
+
+  html body .layout .clay-dock > button.mobile-dock-store-entry {
+    display:flex !important;
+    flex:1 1 0 !important;
+    min-width:0 !important;
+    max-width:76px !important;
+    color:#a92e50 !important;
+  }
+
+  html body .layout .clay-dock > button.mobile-dock-store-entry > svg {
+    display:block !important;
+    color:inherit !important;
+  }
+
+  html body .layout.mobile-page-scrolled .clay-dock {
+    left:50% !important;
+    right:auto !important;
+    width:max-content !important;
+    max-width:calc(100vw - 24px) !important;
+    height:54px !important;
+    min-height:54px !important;
+    padding:4px 7px !important;
+    gap:2px !important;
+    justify-content:center !important;
+    transform:translate3d(-50%,0,0) scale(.96) !important;
+  }
+
+  html body .layout.mobile-page-scrolled .clay-dock > button,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active,
+  html body .layout.mobile-page-scrolled .clay-dock > button.mobile-dock-store-entry {
+    flex:0 0 48px !important;
+    width:48px !important;
+    min-width:48px !important;
+    max-width:48px !important;
+    height:46px !important;
+    min-height:46px !important;
+    max-height:46px !important;
+    padding:2px 2px !important;
+    gap:1px !important;
+    border-radius:15px !important;
+  }
+
+  html body .layout.mobile-page-scrolled .clay-dock > button > svg {
+    flex:0 0 22px !important;
+    width:22px !important;
+    height:22px !important;
+    padding:2px !important;
+  }
+
+  html body .layout.mobile-page-scrolled .clay-dock > button > span {
+    max-height:10px !important;
+    font-size:7px !important;
+    line-height:9px !important;
+  }
+
+  html body .layout.mobile-dock-hidden .clay-dock {
+    transform:translate3d(0,calc(100% + 28px),0) scale(.96) !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  html body .layout.mobile-dock-hidden.mobile-page-scrolled .clay-dock {
+    transform:translate3d(-50%,calc(100% + 28px),0) scale(.96) !important;
+  }
+
+  html body .layout.mobile-header-hidden .clay-dock {
+    pointer-events:auto !important;
+  }
+
+  html body #app > .mobile-store-entry {display:none !important}
+}
+
+@media (max-width:360px) {
+  html body .layout.mobile-page-scrolled .clay-dock > button,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active,
+  html body .layout.mobile-page-scrolled .clay-dock > button.mobile-dock-store-entry {
+    flex-basis:44px !important;
+    width:44px !important;
+    min-width:44px !important;
+    max-width:44px !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  html body .layout > .workspace > .topbar,
+  html body .layout .clay-dock,
+  html body .layout .clay-dock > button {
+    transition:none !important;
+  }
+}

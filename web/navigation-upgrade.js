@@ -144,19 +144,29 @@ async function adminSearchStartCamera(){
   if(current)current.textContent=error.name==='NotAllowedError'?'กรุณาอนุญาตให้เว็บไซต์ใช้กล้อง หรือเลือกรูป QR แทน':error.message||'เปิดกล้องไม่สำเร็จ';
  }
 }
-function adminSearchOpenCamera(){
- if(user?.role!=='admin')return;
+function adminSearchOpenCamera(button){
+ if(user?.role!=='admin'||!button)return;
+ const search=button.closest('.admin-search');
+ if(!search)return;
+ search.classList.add('camera-open');
  adminSearchStopCamera();
- modal('สแกน QR เพื่อค้นหา',`<section class="admin-search-camera-panel"><video id="admin-search-camera-video" autoplay muted playsinline></video><p id="admin-search-camera-status" class="help" role="status">กำลังเปิดกล้อง…</p><label class="secondary small admin-search-camera-file">เลือกรูป QR<input id="admin-search-camera-file" type="file" accept="image/*" capture="environment"></label><div class="actions"><button type="button" class="secondary" data-action="close">ปิด</button></div></section>`);
+ // Keep one camera trigger in the header. The dialog starts scanning
+ // immediately; image selection remains a plain text alternative.
+ modal('สแกน QR เพื่อค้นหา',`<section class="admin-search-camera-panel"><video id="admin-search-camera-video" autoplay muted playsinline></video><p id="admin-search-camera-status" class="help" role="status">กำลังเปิดกล้อง…</p><label class="admin-search-camera-file">หรือ <span>เลือกรูป QR</span><input id="admin-search-camera-file" type="file" accept="image/*"></label></section>`);
  const dialog=document.getElementById('dialog');
- dialog.addEventListener('close',adminSearchStopCamera,{once:true});
+ dialog.addEventListener('close',()=>{
+  adminSearchStopCamera();
+  search.classList.remove('camera-open');
+  if(button.isConnected)requestAnimationFrame(()=>button.focus({preventScroll:true}));
+ },{once:true});
  void adminSearchStartCamera();
 }
 document.addEventListener('click',e=>{
  const button=e.target.closest('.admin-camera-button');
  if(!button||user?.role!=='admin')return;
- e.preventDefault();e.stopPropagation();
- adminSearchOpenCamera();
+ e.preventDefault();
+ e.stopImmediatePropagation();
+ adminSearchOpenCamera(button);
 },true);
 document.addEventListener('change',e=>{
  if(e.target.id==='admin-search-camera-file'&&e.target.files?.length){
@@ -166,7 +176,14 @@ document.addEventListener('change',e=>{
 });
 
 function installNavigationUpgrade(){adminSearchScope();if(!user)return;const shell=document.querySelector('.material-shell'),top=shell?.querySelector('.topbar');if(!top)return;const profileGroup=top.querySelector('.user'),bell=top.querySelector('.clay-notifications');if(profileGroup&&bell)profileGroup.prepend(bell);
- if(user.role==='admin'){top.classList.add('has-admin-search');const searchPlaceholder='ค้นหา';top.insertAdjacentHTML('beforeend',`<div class="admin-search"><label for="admin-global-search" class="sr-only">ค้นหาทุกอย่าง</label><div class="admin-search-field">${icon('search')}<input id="admin-global-search" type="search" placeholder="${searchPlaceholder}" autocomplete="off" aria-controls="admin-search-results" aria-expanded="false"><button type="button" class="admin-camera-button" aria-label="สแกน QR ด้วยกล้อง" title="สแกน QR ด้วยกล้อง"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h-4l-2 3H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2-3Z"/><circle cx="12" cy="13" r="3.5"/></svg></button></div><div id="admin-search-results" class="admin-search-results" hidden></div></div>`)}
+ if(user.role==='admin'){
+  top.classList.add('has-admin-search');
+  // Avoid duplicate search/camera controls if the header installer is invoked twice.
+  if(!top.querySelector(':scope > .admin-search')){
+   const searchPlaceholder='ค้นหา';
+   top.insertAdjacentHTML('beforeend',`<div class="admin-search"><label for="admin-global-search" class="sr-only">ค้นหาทุกอย่าง</label><div class="admin-search-field">${icon('search')}<input id="admin-global-search" type="search" placeholder="${searchPlaceholder}" autocomplete="off" aria-controls="admin-search-results" aria-expanded="false"><button type="button" class="admin-camera-button" aria-label="สแกน QR ด้วยกล้อง" title="สแกน QR ด้วยกล้อง"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h-4l-2 3H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2-3Z"/><circle cx="12" cy="13" r="3.5"/></svg></button></div><div id="admin-search-results" class="admin-search-results" hidden></div></div>`);
+  }
+ }
  if(user.role!=='admin'){const overdue=materialBillState().overdue.some(c=>c.profile_id===user.id),correction=(db.charges||[]).some(c=>{const r=round(c.round_id);return c.profile_id===user.id&&!c.deleted_at&&!r.deleted_at&&!r.archived&&balance(c)>0&&!hasPending(c)&&(db.payments||[]).filter(p=>p.charge_id===c.id&&!p.deleted_at).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)))[0]?.status==='rejected'});if(overdue||correction)top.insertAdjacentHTML('beforebegin',`<div class="overdue-page-banner" role="status">${icon('bell')}<strong>${[overdue?'บิลเกินกำหนด กรุณาเร่งการชำระ':'',correction?'มีบิลต้องแก้ไข กรุณาตรวจสอบและแนบสลิปใหม่':''].filter(Boolean).join(' · ')}</strong></div>`)}
 }
 const upgradeRender=render;render=function(){const active=document.activeElement?.id==='admin-global-search',value=document.getElementById('admin-global-search')?.value||'';upgradeRender();installNavigationUpgrade();const input=document.getElementById('admin-global-search');if(input&&value){input.value=value;updateAdminSearch();if(active)input.focus()}};
@@ -183,8 +200,8 @@ document.addEventListener('click',e=>{
   return;
  }
  if(user?.role==='admin'&&window.matchMedia('(max-width:720px)').matches&&!e.target.closest('.admin-search')){
-  const input=document.getElementById('admin-global-search');
-  if(input&&document.activeElement===input)input.blur();
+  const focused=document.querySelector('.admin-search :focus');
+  focused?.blur();
  }
 });
 document.addEventListener('keydown',e=>{if(!e.target.closest('.admin-search'))return;const input=document.getElementById('admin-global-search'),list=document.getElementById('admin-search-results');if(e.key==='Escape'){list.hidden=true;input.setAttribute('aria-expanded','false');input.focus()}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(list.hidden)updateAdminSearch();const buttons=[...list.querySelectorAll('button')],i=buttons.indexOf(document.activeElement),next=e.key==='ArrowDown'?i+1:i-1;buttons[(next+buttons.length)%buttons.length]?.focus()}else if(e.key==='Enter'&&e.target===input&&!list.hidden){e.preventDefault();list.querySelector('button')?.click()}});

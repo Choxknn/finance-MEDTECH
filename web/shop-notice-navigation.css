@@ -1117,3 +1117,76 @@
     animation:none !important;
   }
 }
+
+
+/* Center the bottom dock together with its detached shop/menu action.
+   Keep the group centered in both compact and expanded layouts. */
+@media (max-width:720px) {
+  html body #app .layout.mobile-has-fab .clay-dock {
+    left:var(--mobile-dock-expanded-left,12px) !important;
+    right:auto !important;
+    transform:none !important;
+    transition:
+      left .72s cubic-bezier(.22,.72,.22,1),
+      width .82s cubic-bezier(.22,.72,.22,1),
+      height .72s cubic-bezier(.22,.72,.22,1),
+      padding .72s cubic-bezier(.22,.72,.22,1),
+      opacity .22s ease,
+      visibility .22s ease !important;
+  }
+
+  html body #app.mobile-dock-compact .layout.mobile-has-fab .clay-dock {
+    left:var(--mobile-dock-compact-left,12px) !important;
+    right:auto !important;
+    width:var(--mobile-dock-compact-width,224px) !important;
+    transform:none !important;
+  }
+
+  html body #app > .mobile-menu-entry,
+  html body #app > .mobile-store-entry {
+    left:var(--mobile-dock-expanded-fab-left,auto) !important;
+    right:auto !important;
+    transition:left .72s cubic-bezier(.22,.72,.22,1),
+      background .18s ease,box-shadow .18s ease,transform .18s ease !important;
+  }
+
+  html body #app.mobile-dock-compact > .mobile-menu-entry,
+  html body #app.mobile-dock-compact > .mobile-store-entry {
+    left:var(--mobile-dock-compact-fab-left,auto) !important;
+    right:auto !important;
+  }
+
+  html body #app .layout .clay-dock > button,
+  html body #app.mobile-dock-compact .layout .clay-dock > button {
+    transition:
+      flex-basis .74s cubic-bezier(.22,.72,.22,1),
+      width .74s cubic-bezier(.22,.72,.22,1),
+      min-width .74s cubic-bezier(.22,.72,.22,1),
+      max-width .74s cubic-bezier(.22,.72,.22,1),
+      height .74s cubic-bezier(.22,.72,.22,1),
+      padding .74s cubic-bezier(.22,.72,.22,1),
+      gap .74s cubic-bezier(.22,.72,.22,1),
+      background-color .24s ease !important;
+  }
+
+  html body #app .layout .clay-dock > button > span {
+    transition:
+      width .70s cubic-bezier(.22,.72,.22,1),
+      max-width .70s cubic-bezier(.22,.72,.22,1),
+      max-height .70s cubic-bezier(.22,.72,.22,1),
+      opacity .42s ease,
+      transform .70s cubic-bezier(.22,.72,.22,1),
+      visibility 0s linear 0s !important;
+  }
+
+  /* Keep the redraw lock stronger than the expanded-state transitions above. */
+  html body #app.mobile-dock-route-change .layout .clay-dock,
+  html body #app.mobile-dock-route-change .layout .clay-dock > button,
+  html body #app.mobile-dock-route-change .layout .clay-dock > button > svg,
+  html body #app.mobile-dock-route-change .layout .clay-dock > button > span,
+  html body #app.mobile-dock-route-change > .mobile-menu-entry,
+  html body #app.mobile-dock-route-change > .mobile-store-entry {
+    transition:none !important;
+    animation:none !important;
+  }
+}

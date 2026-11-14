@@ -2,10 +2,11 @@
 (()=>{
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  const stamp=()=>new Date().toISOString();
+ const announcementDismissedToday=stamp=>{if(!stamp)return false;const day=value=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value));return day(stamp)===day(Date.now())};
  function composeNotices(){
   if(!user||!db)return [];
   const notes=(db.notifications||[]).filter(n=>n.profile_id===user.id&&!n.dismissed_at).map(n=>({...n,notice_kind:'notification'}));
-  const announcements=(db.announcements||[]).filter(n=>!n.dismissed_at).map(n=>({...n,notice_kind:'announcement',status:'in_app'}));
+  const announcements=(db.announcements||[]).filter(n=>!announcementDismissedToday(n.dismissed_at)).map(n=>({...n,notice_kind:'announcement',status:'in_app'}));
   const charges=user.role==='admin'?[]:(db.charges||[]).filter(c=>c.profile_id===user.id&&!c.deleted_at&&balance(c)>0).map(c=>{
    const state=(db.charge_notice_states||[]).find(s=>s.charge_id===c.id);
    if(state?.dismissed_at)return null;

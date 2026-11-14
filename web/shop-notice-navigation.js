@@ -7,52 +7,16 @@
  function unread(){return (db.notifications||[]).filter(n=>n.id&&n.profile_id===user?.id&&!n.seen_at&&!readLocally.has(n.id))}
  function paintBadges(){const count=unread().length;document.querySelectorAll('.clay-notifications').forEach(b=>{b.querySelector('.unread-count')?.remove();b.setAttribute('aria-label',count?`ข้อความและการแจ้งเตือน ยังไม่อ่าน ${count} ข้อความ`:'ข้อความและการแจ้งเตือน');if(count)b.insertAdjacentHTML('beforeend',`<span class="unread-count" aria-hidden="true">${count>99?'99+':count}</span>`)})}
  function paintStore(){
-  document.querySelectorAll('[data-store-entry],.mobile-menu-entry,.mobile-topbar-menu').forEach(el=>el.remove());
-  const layout=document.querySelector('.layout');
-  if(!user){layout?.classList.remove('mobile-has-fab');return}
-  const hasShopItems=shopLoaded&&shopOwner===user.id&&products.some(p=>!p.deleted_at&&['open','scheduled'].includes(shopSaleState(p)));
+  document.querySelectorAll('[data-store-entry]').forEach(el=>el.remove());
+  if(!user||!shopLoaded||shopOwner!==user.id||!products.some(p=>!p.deleted_at&&['open','scheduled'].includes(shopSaleState(p))))return;
   const sidebar=document.querySelector('.sidebar .nav');
-  if(hasShopItems&&sidebar&&!sidebar.querySelector('[data-view="shop"]'))sidebar.insertAdjacentHTML('beforeend',`<button data-store-entry data-view="shop" class="${view==='shop'?'active':''}">${storeIcon}<span class="nav-label">ร้านค้า</span></button>`);
-  const dock=document.querySelector('.clay-dock'),mobile=window.matchMedia('(max-width:720px)').matches;
-  if(hasShopItems&&!view.startsWith('shop')&&dock&&!dock.querySelector('[data-view="shop"]')){
-   const entryClass=mobile?'mobile-dock-store-entry':'tablet-store-entry';
-   dock.insertAdjacentHTML('beforeend',`<button type="button" class="${entryClass}" data-store-entry data-view="shop" aria-label="เปิดร้านค้า" title="ร้านค้า">${storeIcon}<span>ร้านค้า</span></button>`);
-  }
-
-  if(mobile){
-   if(user.role==='admin'){
-    const topbar=layout?.querySelector('.workspace > .topbar');
-    const menuButton=`<button type="button" class="mobile-topbar-menu" data-action="menu" aria-label="เปิดเมนูทั้งหมด" title="เมนู">${icon('menu')}</button>`;
-    const back=topbar?.querySelector('.topbar-back');
-    if(topbar){
-     if(back)back.insertAdjacentHTML('beforebegin',menuButton);
-     else topbar.insertAdjacentHTML('afterbegin',menuButton);
-    }
-   }
-  }
-  // On phones, the store action lives inside the same dock as the other destinations.
-  layout?.classList.remove('mobile-has-fab');
+  if(sidebar&&!sidebar.querySelector('[data-view="shop"]'))sidebar.insertAdjacentHTML('beforeend',`<button data-store-entry data-view="shop" class="${view==='shop'?'active':''}">${storeIcon}<span class="nav-label">ร้านค้า</span></button>`);
+  if(view.startsWith('shop'))return;
+  const dock=document.querySelector('.clay-dock');
+  if(dock&&!dock.querySelector('[data-view="shop"]'))dock.insertAdjacentHTML('beforeend',`<button class="tablet-store-entry ${view==='shop'?'active':''}" data-store-entry data-view="shop">${storeIcon}<span>ร้านค้า</span></button>`);
+  document.querySelector('#app')?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-store-entry" data-store-entry data-view="shop" aria-label="เปิดร้านค้า" title="ร้านค้า">${storeIcon}</button>`);
  }
- function updateMobileDockVisibility(){
-  const layout=document.querySelector('.layout'),dock=layout?.querySelector('.clay-dock');
-  if(!layout||!dock)return;
-  if(!window.matchMedia('(max-width:720px)').matches){
-   layout.classList.remove('mobile-dock-hidden');
-   dock.style.removeProperty('--mobile-dock-compact-width');
-   return;
-  }
-  // Use an explicit numeric target width so the browser can interpolate the
-  // capsule width smoothly instead of jumping from auto to max-content.
-  const itemCount=dock.querySelectorAll(':scope > button').length;
-  const itemWidth=window.matchMedia('(max-width:360px)').matches?44:48;
-  const viewportLimit=Math.max(0,window.innerWidth-24);
-  const compactWidth=itemCount*itemWidth+Math.max(0,itemCount-1)*2+16;
-  const expandedWidth=itemCount*62+Math.max(0,itemCount-1)*6+24;
-  dock.style.setProperty('--mobile-dock-compact-width',`${Math.min(compactWidth,viewportLimit)}px`);
-  dock.style.setProperty('--mobile-dock-expanded-width',`${Math.min(expandedWidth,viewportLimit)}px`);
-  const hasCurrentMainItem=[...dock.querySelectorAll(':scope > button[data-view]:not([data-store-entry])')].some(button=>button.dataset.view===view);
-  layout.classList.toggle('mobile-dock-hidden',!hasCurrentMainItem);
- } function checkStore(){if(!scope()||!user)return;if(shopLoaded&&shopOwner===user.id)products=shopData.products||[];paintStore()}
+ function checkStore(){if(!scope()||!user)return;if(shopLoaded&&shopOwner===user.id)products=shopData.products||[];paintStore()}
  function watchRead(){
   readObserver?.disconnect();if(!user||view!=='notifications')return;
   const id=user.id;
@@ -62,113 +26,6 @@
   readObserver=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){readObserver.unobserve(e.target);void mark(e.target)}}),{threshold:.5});rows.forEach(el=>readObserver.observe(el));
  }
  const oldRow=noticeRow;noticeRow=function(n){const html=oldRow(n);return n.id&&n.profile_id===user?.id?html.replace('<article ',`<article data-notice-id="${esc(n.id)}" `):html};
- let mobileLastScrollY=null,mobileDownDistance=0,mobileUpDistance=0;
- let mobileLastRenderedView=null,mobileDockCompactByNavigation=false,mobileRenderUnlock=0;
- function setMobileDockCompact(layout,compact){
-  layout?.classList.toggle('mobile-page-scrolled',compact);
-  document.getElementById('app')?.classList.toggle('mobile-dock-compact',compact);
- }
- const oldRender=render;render=function(){
-  const app=document.getElementById('app');
-  const previousLayout=document.querySelector('.layout');
-  const firstRender=mobileLastRenderedView===null;
-  const wasDockCompact=!!(previousLayout?.classList.contains('mobile-page-scrolled')||app?.classList.contains('mobile-dock-compact'));
-  const viewChanged=mobileLastRenderedView!==null&&mobileLastRenderedView!==view;
-  const expandAfterNavigation=viewChanged&&wasDockCompact;
-  const small=window.matchMedia('(max-width:720px)').matches;
-  const beforeRoot=document.scrollingElement||document.documentElement;
-  const beforeY=Math.max(Number(window.scrollY)||0,Number(beforeRoot?.scrollTop)||0);
-  // The dock node is recreated by the page renderer. Disable dock transitions
-  // for that render frame so its measured width/position cannot animate sideways.
-  const renderUnlock=++mobileRenderUnlock;
-  app?.classList.add('mobile-dock-route-change');
-  // Seed the persistent #app marker before innerHTML is replaced, so the new dock
-  // is compact on its first painted frame instead of flashing at expanded width.
-  app?.classList.toggle('mobile-dock-compact',small&&(wasDockCompact||(firstRender&&beforeY>56)));
-  oldRender();
-  mobileLastRenderedView=view;
-  scope();
-  if(!user){readObserver?.disconnect();app?.classList.remove('mobile-dock-compact');mobileDockCompactByNavigation=false;return}
-  checkStore();paintBadges();watchRead();
-  const layout=document.querySelector('.layout');
-  if(small&&layout){
-   if(wasDockCompact){
-    setMobileDockCompact(layout,true);
-    mobileDockCompactByNavigation=!expandAfterNavigation;
-    const root=document.scrollingElement||document.documentElement;
-    mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-    mobileDownDistance=0;mobileUpDistance=0;
-   }else{
-    mobileDockCompactByNavigation=false;
-    if(firstRender&&beforeY>56)setMobileDockCompact(layout,true);
-   }
-  }else{
-   mobileDockCompactByNavigation=false;
-   app?.classList.remove('mobile-dock-compact');
-  }
-  // Some page renders reset scrollTop. Do not let that reset expand a dock
-  // that the user had already folded; only a genuine upward scroll expands it.
-  if(wasDockCompact&&small){
-   layout?.classList.remove('mobile-header-hidden');
-   updateMobileDockVisibility();
-  }else{
-   updateMobileHeaderScroll(true);updateMobileDockVisibility();
-  }
-  window.requestAnimationFrame(()=>{
-   if(renderUnlock!==mobileRenderUnlock)return;
-   app?.classList.remove('mobile-dock-route-change');
-   if(expandAfterNavigation){
-    // A route change always returns the dock to its expanded capsule.
-    // Start from the compact first frame, then let the normal smooth transition
-    // expand it after the replacement DOM has settled.
-    mobileDockCompactByNavigation=false;
-    setMobileDockCompact(document.querySelector('.layout'),false);
-    const root=document.scrollingElement||document.documentElement;
-    mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-    mobileDownDistance=0;mobileUpDistance=0;
-   }
-  });
- };
- function updateMobileHeaderScroll(reset=false){
-  const layout=document.querySelector('.layout');if(!layout)return;
-  const small=window.matchMedia('(max-width:720px)').matches;
-  if(!small){setMobileDockCompact(layout,false);layout.classList.remove('mobile-dock-hidden','mobile-has-fab','mobile-header-hidden');mobileDockCompactByNavigation=false;mobileLastScrollY=null;mobileDownDistance=0;mobileUpDistance=0;return}
-  // Read the actual page scroll position (not a stale workspace scrollTop).
-  const root=document.scrollingElement||document.documentElement;
-  const y=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-  const searchFocused=!!document.activeElement?.closest?.('.admin-search-field');
-  if(reset||mobileLastScrollY===null){mobileLastScrollY=y;mobileDownDistance=0;mobileUpDistance=0;}
-  else{
-   const delta=y-mobileLastScrollY;mobileLastScrollY=y;
-   if(y<=14&&!mobileDockCompactByNavigation){
-    layout.classList.remove('mobile-header-hidden');setMobileDockCompact(layout,false);
-    mobileDownDistance=0;mobileUpDistance=0;
-   }else if(layout.classList.contains('menu-open')||searchFocused){
-    layout.classList.remove('mobile-header-hidden');
-    setMobileDockCompact(layout,false);mobileDockCompactByNavigation=false;
-    mobileDownDistance=0;mobileUpDistance=0;
-   }else if(delta>0){
-    mobileDownDistance+=delta;mobileUpDistance=0;
-    if(y>56&&mobileDownDistance>=10){
-     layout.classList.add('mobile-header-hidden');setMobileDockCompact(layout,true);
-    }
-   }else if(delta<0){
-    mobileUpDistance+=-delta;mobileDownDistance=0;
-    if(mobileUpDistance>=7){
-     layout.classList.remove('mobile-header-hidden');
-     setMobileDockCompact(layout,false);mobileDockCompactByNavigation=false;
-     mobileUpDistance=0;
-    }
-   }
-  }
-  if(y<=14&&!mobileDockCompactByNavigation){
-   layout.classList.remove('mobile-header-hidden');setMobileDockCompact(layout,false);
-   mobileDownDistance=0;mobileUpDistance=0;
-  }
-  updateMobileDockVisibility();
- }
- window.addEventListener('scroll',()=>updateMobileHeaderScroll(),{passive:true});
- document.addEventListener('scroll',()=>updateMobileHeaderScroll(),{capture:true,passive:true});
- window.addEventListener('resize',()=>{updateMobileHeaderScroll(true);updateMobileDockVisibility()},{passive:true});
+ const oldRender=render;render=function(){oldRender();scope();if(!user){readObserver?.disconnect();return}checkStore();paintBadges();watchRead()};
  if(user)render();
 })();

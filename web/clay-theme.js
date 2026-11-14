@@ -58,7 +58,7 @@ function applyClayPresentation() {
     backButton.dataset.topbarBack = 'true';
     const isFinanceCategory = view === 'fund-category';
     const isMobileBack = window.matchMedia('(max-width: 720px)').matches;
-    const showHomeIcon = false;
+    const showHomeIcon = isMobileBack && !isFinanceCategory;
     backButton.setAttribute('aria-label', isFinanceCategory ? 'กลับหน้าการเงิน' : 'กลับหน้าหลัก');
     backButton.title = isFinanceCategory ? 'กลับหน้าการเงิน' : 'กลับหน้าหลัก';
     backButton.innerHTML = showHomeIcon
@@ -102,7 +102,8 @@ function applyClayPresentation() {
   }
   // Re-evaluate after the dock exists; this also runs on every later render.
   if (backButton) {
-    backButton.hidden = clayIsMainMenuView(layout);
+    const hideMobileAdminHomeAction = user.role === 'admin' && window.matchMedia('(max-width: 720px)').matches;
+    backButton.hidden = hideMobileAdminHomeAction || clayIsMainMenuView(layout);
     backButton.setAttribute('aria-hidden', String(backButton.hidden));
     topbar.dataset.backHidden = String(backButton.hidden);
   }

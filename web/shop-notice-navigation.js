@@ -72,7 +72,7 @@
   updateMobileDockVisibility();
  }
  window.addEventListener('scroll',()=>updateMobileHeaderScroll(),{passive:true});
- document.addEventListener('scroll',updateMobileHeaderScroll,{capture:true,passive:true});
+ document.addEventListener('scroll',()=>updateMobileHeaderScroll(),{capture:true,passive:true});
  window.addEventListener('resize',()=>updateMobileHeaderScroll(true),{passive:true});
  if(user)render();
 })();

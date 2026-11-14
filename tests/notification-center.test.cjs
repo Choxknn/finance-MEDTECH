@@ -14,9 +14,9 @@ const run=s=>vm.runInContext(s,ctx),tick=()=>new Promise(resolve=>setImmediate(r
  assert.ok(notificationCard&&announcementCard,'each notice type has its own rendered card');
  const observer=w.noticeObservers.at(-1);assert.ok(observer,'notification list installs an IntersectionObserver');
  assert.ok(cards.every(card=>observer.targets.has(card)),'unread cards are observed');
- observer.trigger(notificationCard,.2);await tick();
- assert.equal(run("db.notifications.find(n=>n.id==='"+noticeId+"').seen_at"),null,'a barely visible item is not marked read');
- observer.trigger(notificationCard,.35);await tick();
+ observer.trigger(notificationCard,0);await tick();
+ assert.equal(run("db.notifications.find(n=>n.id==='"+noticeId+"').seen_at"),null,'an item outside the viewport is not marked read');
+ observer.trigger(notificationCard,.01);await tick();
  assert.ok(run("db.notifications.find(n=>n.id==='"+noticeId+"').seen_at"),'scrolling an unread notification into view marks it read');
  assert.ok(!notificationCard.classList.contains('is-unread'),'read notification loses unread styling without redrawing the page');
  assert.equal(run("db.announcements.find(n=>n.id==='"+announcementId+"').seen_at"),null,'an item outside the visible threshold stays unread');

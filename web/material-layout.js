@@ -44,7 +44,7 @@ function mpProgress(charges){
  const billNames=[...new Set(charges.map(c=>round(c.round_id)?.title).filter(Boolean))];
  const billName=billNames.length===1?billNames[0]:billNames.length>1?'หลายบิล':'รายการบิล';
  const cardTitle=`ความคืบหน้าบิล · ${billName}`;
- const remaining=Math.max(0,total-complete),percent=Math.min(100,complete/total*100);
+ const percent=Math.min(100,complete/total*100);
  return mpCard(cardTitle,'',`<div class="mp-progress-top"><div class="mp-ring"><svg viewBox="0 0 82 82" aria-hidden="true"><circle cx="41" cy="41" r="35" fill="none" stroke="#f5eaf0" stroke-width="7"/><circle cx="41" cy="41" r="35" fill="none" stroke="#ce5378" stroke-width="7" stroke-linecap="round" pathLength="100" stroke-dasharray="${percent} 100"/></svg><div class="mp-ring-label"><span>${complete}/${total}</span><small>ชำระแล้ว</small></div></div><div class="mp-progress-copy"><h3>ขอบคุณที่ช่วยดูแลส่วนกลาง ♡</h3><p>ชำระแล้ว ${complete} จาก ${total} คน</p>${mpRecentPayers()}</div></div>`, '','mp-progress-card');
 }
 function mpRoundProgress(){const rows=db.rounds.filter(r=>!r.deleted_at&&!r.archived);return rows.length?rows.map(r=>{const cs=mpCharges().filter(c=>c.round_id===r.id),n=cs.filter(c=>balance(c)<=0).length,waiting=(db.prepared_bills||[]).filter(b=>b.round_id===r.id).length,total=cs.length+waiting;return `<div class="mp-round-progress"><div><strong>${esc(r.title)}</strong><small>${n}/${total} คน${waiting?` · รอสมัคร ${waiting} คน`:``}</small></div><div class="progress"><span style="width:${total?n/total*100:0}%"></span></div><div><small>ครบกำหนด ${esc(recordTime(r,'due_date'))}</small><button class="muted-link mp-link" data-round-bills="${esc(r.id)}">ดูบิล${icon('arrow')}</button></div></div>`}).join(''):'<div class="mp-empty">ยังไม่มีบิล</div>'}

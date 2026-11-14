@@ -1078,3 +1078,106 @@
     transition:none !important;
   }
 }
+
+
+/* Slower mobile motion and icon-only dock while the page is scrolled. */
+@media (max-width:720px) {
+  html body .layout > .workspace > .topbar {
+    transition:transform .58s cubic-bezier(.22,.72,.22,1),opacity .38s ease !important;
+  }
+
+  html body .layout .clay-dock,
+  html body .layout.mobile-page-scrolled .clay-dock {
+    transition:
+      left .56s cubic-bezier(.22,.72,.22,1),
+      right .56s cubic-bezier(.22,.72,.22,1),
+      width .56s cubic-bezier(.22,.72,.22,1),
+      height .52s cubic-bezier(.22,.72,.22,1),
+      min-height .52s cubic-bezier(.22,.72,.22,1),
+      padding .52s ease,
+      gap .52s ease,
+      transform .58s cubic-bezier(.22,.72,.22,1),
+      opacity .38s ease,
+      visibility .38s ease !important;
+  }
+
+  html body .layout .clay-dock > button,
+  html body .layout .clay-dock > button.active {
+    transition:
+      flex-basis .52s cubic-bezier(.22,.72,.22,1),
+      width .52s cubic-bezier(.22,.72,.22,1),
+      min-width .52s cubic-bezier(.22,.72,.22,1),
+      max-width .52s cubic-bezier(.22,.72,.22,1),
+      height .52s cubic-bezier(.22,.72,.22,1),
+      padding .52s ease,
+      gap .52s ease,
+      border-radius .52s ease,
+      background .3s ease,
+      box-shadow .3s ease !important;
+  }
+
+  html body .layout .clay-dock > button > svg {
+    transition:width .52s cubic-bezier(.22,.72,.22,1),
+      height .52s cubic-bezier(.22,.72,.22,1),
+      flex-basis .52s cubic-bezier(.22,.72,.22,1),
+      padding .52s ease !important;
+  }
+
+  html body .layout .clay-dock > button > span {
+    flex:0 1 auto !important;
+    width:auto !important;
+    max-width:100% !important;
+    max-height:13px !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    font-size:8px !important;
+    line-height:11px !important;
+    transition:
+      flex-basis .52s cubic-bezier(.22,.72,.22,1),
+      width .52s cubic-bezier(.22,.72,.22,1),
+      max-width .52s cubic-bezier(.22,.72,.22,1),
+      max-height .52s cubic-bezier(.22,.72,.22,1),
+      font-size .52s ease,
+      line-height .52s ease,
+      opacity .38s ease,
+      transform .52s ease,
+      visibility 0s !important;
+  }
+
+  html body .layout.mobile-page-scrolled .clay-dock > button > span {
+    flex:0 0 0 !important;
+    width:0 !important;
+    max-width:0 !important;
+    max-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    font-size:0 !important;
+    line-height:0 !important;
+    transform:translateY(4px) !important;
+    transition:
+      flex-basis .52s cubic-bezier(.22,.72,.22,1),
+      width .52s cubic-bezier(.22,.72,.22,1),
+      max-width .52s cubic-bezier(.22,.72,.22,1),
+      max-height .52s cubic-bezier(.22,.72,.22,1),
+      font-size .52s ease,
+      line-height .52s ease,
+      opacity .38s ease,
+      transform .52s ease,
+      visibility 0s linear .52s !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  html body .layout > .workspace > .topbar,
+  html body .layout .clay-dock,
+  html body .layout .clay-dock > button,
+  html body .layout .clay-dock > button > svg,
+  html body .layout .clay-dock > button > span {
+    transition:none !important;
+  }
+}

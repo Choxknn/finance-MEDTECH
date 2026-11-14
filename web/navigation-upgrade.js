@@ -157,7 +157,8 @@ function adminSearchKeepSingleCamera(top){
  const candidates=[...document.querySelectorAll('button')].filter(button=>{
   const label=(button.getAttribute('aria-label')||'')+' '+(button.getAttribute('title')||'');
   const path=button.querySelector('svg path')?.getAttribute('d')||'';
-  return button.classList.contains('admin-camera-button')||label.includes('สแกน QR')||/^M14 4h-4l-2 3H5/.test(path)||button.id==='admin-search-camera-trigger';
+  const isHeaderButton=button.closest('.topbar')===top;
+  return button.classList.contains('admin-camera-button')||button.id==='admin-search-camera-trigger'||label.includes('สแกน QR ด้วยกล้อง')||(isHeaderButton&&/^M14 4h-4l-2 3H5/.test(path));
  });
  let trigger=candidates.find(button=>button.parentElement===field)||candidates.find(button=>button.closest('.topbar')===top)||null;
  if(!trigger){

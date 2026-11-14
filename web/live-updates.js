@@ -1,23 +1,32 @@
 'use strict';
-let financeLiveClient=null,financeLiveScope='',financeLiveToken='',financeLiveTimer=null,financeLiveBusy=false,financeLivePending=false,financeLiveShopPending=false,financeLiveShopChannel=null;
+let financeLiveClient=null,financeLiveScope='',financeLiveToken='',financeLiveTimer=null,financeLiveBusy=false,financeLivePending=false,financeAnnouncementPending=false,financeLiveShopPending=false,financeLiveShopChannel=null;
 function financeLiveBlocked(){return document.hidden||document.querySelector('dialog[open],.finance-picker-popup')||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]')||document.querySelector('#material-profile-menu:not([hidden])')}
 function scheduleFinanceLiveFlush(){if(!financeLiveTimer)financeLiveTimer=setTimeout(flushFinanceLive,350)}
 function financeLiveResource(message){return message?.payload?.resource||message?.resource||''}
 function financeLiveIsShopResource(message){return ['shop_products','shop_orders','shop_payments'].includes(financeLiveResource(message))}
-function queueFinanceLive(message){if(message&&financeLiveIsShopResource(message))return;financeLivePending=true;scheduleFinanceLiveFlush()}
+function queueFinanceLive(message){
+ if(message&&financeLiveIsShopResource(message))return;
+ const resource=financeLiveResource(message);
+ if(!resource){financeLivePending=true;financeAnnouncementPending=true}
+ else if(resource==='web_announcements')financeAnnouncementPending=true;
+ else financeLivePending=true;
+ scheduleFinanceLiveFlush();
+}
 function queueFinanceShop(){if(!user||document.hidden)return;financeLiveShopPending=true;scheduleFinanceLiveFlush()}
 window.queueFinanceShopRefresh=queueFinanceShop;
 async function flushFinanceLive(){
  financeLiveTimer=null;
  if(!user||cfg.mode!=='live'||document.hidden)return;
- if(financeLiveBusy||backgroundRefreshRunning||financeLiveBlocked())return;
- const owner=user.id,screen=view,doApp=financeLivePending,doShop=financeLiveShopPending;
+ if(financeLiveBusy||financeLiveBlocked())return;
+ if(backgroundRefreshRunning){setTimeout(()=>{if(financeLivePending||financeAnnouncementPending||financeLiveShopPending)scheduleFinanceLiveFlush()},500);return}
+ const owner=user.id,screen=view,doApp=financeLivePending,doAnnouncements=financeAnnouncementPending,doShop=financeLiveShopPending;
  financeLiveShopPending=false;
- if(!doApp&&!doShop)return;
- financeLivePending=false;financeLiveBusy=true;
+ if(!doApp&&!doAnnouncements&&!doShop)return;
+ financeLivePending=false;financeAnnouncementPending=false;financeLiveBusy=true;
  try{
-  let result=null,shop=null,summary=null,attendance=null;
-  if(doApp)result=await api('bootstrap');
+  let result=null,announcements=null,shop=null,summary=null,attendance=null;
+  if(doApp)result=await api('bootstrap',{skip_announcements:true});
+  if(doAnnouncements)announcements=await api('announcements-list');
   if(doShop){
    shop=await api('shop-list');
    if(screen==='shop-summary'&&user.role==='admin')summary=await api('shop-summary',{paid:shopPaidOnly});
@@ -32,9 +41,18 @@ async function flushFinanceLive(){
   const stable=x=>JSON.stringify(x,(k,v)=>k==='last_seen_at'?undefined:v);
   let changed=false;
   if(result){
-   changed=stable(db)!==stable(result.data)||stable(user)!==stable(result.profile);
-   db=result.data;user=result.profile;
+   const cachedAnnouncements=db.announcements||[];
+   const nextData=result.data;
+   nextData.announcements=cachedAnnouncements;
+   const stableWithoutAnnouncements=x=>{const copy={...x};delete copy.announcements;return stable(copy)};
+   changed=stableWithoutAnnouncements(db)!==stableWithoutAnnouncements(nextData)||stable(user)!==stable(result.profile);
+   db=nextData;user=result.profile;
    for(const key of settingKeys)if(typeof db.settings?.[key]==='string')cfg[key]=db.settings[key];
+  }
+  if(announcements){
+   const nextAnnouncements=reuseCachedAnnouncementImages(announcements.announcements||[],db.announcements||[]);
+   if(stable(db.announcements||[])!==stable(nextAnnouncements))changed=true;
+   db.announcements=nextAnnouncements;
   }
   if(shop){
    if(!shopLoaded||shopOwner!==owner||stable(shopData)!==stable(shop))changed=true;
@@ -49,7 +67,7 @@ async function flushFinanceLive(){
   if(doShop)financeLiveShopPending=true;
  }finally{
   financeLiveBusy=false;
-  if(financeLivePending||financeLiveShopPending)scheduleFinanceLiveFlush();
+  if(financeLivePending||financeAnnouncementPending||financeLiveShopPending)scheduleFinanceLiveFlush();
  }
 }
 function stopFinanceLive(){
@@ -57,7 +75,7 @@ function stopFinanceLive(){
  financeLiveClient=null;financeLiveScope='';financeLiveToken='';financeLiveShopChannel=null;
  window.financeShopRealtimeReady=false;
  clearTimeout(financeLiveTimer);financeLiveTimer=null;
- financeLivePending=false;financeLiveShopPending=false;
+ financeLivePending=false;financeAnnouncementPending=false;financeLiveShopPending=false;
 }
 function syncFinanceShopChannel(client){
  const should=!!user&&cfg.mode==='live'&&!document.hidden;

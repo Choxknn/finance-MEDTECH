@@ -2277,3 +2277,63 @@ html body .workspace > .topbar .admin-search-field .admin-camera-button:focus-vi
   opacity:0;
   pointer-events:none;
 }
+
+
+/* Camera mode keeps the expanded search capsule in place while the dialog
+   takes focus, so tapping the camera never snaps the header back to compact. */
+@media (max-width:720px) {
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search:has(> .admin-search.camera-open) > .user {
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search[data-back-hidden="false"] > .admin-search.camera-open {
+    grid-column:3 / -1 !important;
+    width:100% !important;
+    max-width:none !important;
+    justify-self:stretch !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search[data-back-hidden="true"] > .admin-search.camera-open {
+    grid-column:2 / -1 !important;
+    width:100% !important;
+    max-width:none !important;
+    justify-self:stretch !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search > .admin-search.camera-open {
+    position:relative !important;
+    inset:auto !important;
+    top:auto !important;
+    right:auto !important;
+    bottom:auto !important;
+    left:auto !important;
+    transform:none !important;
+    align-self:center !important;
+    grid-row:1 !important;
+    height:42px !important;
+    min-height:42px !important;
+    margin:0 !important;
+  }
+}
+
+.admin-search-camera-file {
+  display:inline-block;
+  width:max-content;
+  padding:4px 0;
+  color:#76658f;
+  font-size:13px;
+  cursor:pointer;
+}
+.admin-search-camera-file span {
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.admin-search-camera-file input {
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  opacity:0;
+}

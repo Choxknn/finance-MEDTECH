@@ -1192,7 +1192,7 @@
   html body .layout.mobile-page-scrolled .clay-dock {
     left:50% !important;
     right:auto !important;
-    width:calc(100vw - 24px) !important;
+    width:var(--mobile-dock-expanded-width,calc(100vw - 24px)) !important;
     max-width:calc(100vw - 24px) !important;
     box-sizing:border-box !important;
     transform:translate3d(-50%,0,0) !important;
@@ -1322,8 +1322,8 @@
     z-index:0 !important;
     left:50% !important;
     top:50% !important;
-    width:calc(100% - 8px) !important;
-    height:40px !important;
+    width:calc(100% - 2px) !important;
+    height:46px !important;
     padding:0 !important;
     border:0 !important;
     border-radius:999px !important;
@@ -1348,16 +1348,16 @@
 
   /* Compact state keeps the highlight pill-shaped instead of turning into a tile. */
   html body .layout.mobile-page-scrolled .clay-dock > button.active::before {
-    width:min(44px,calc(100% - 4px)) !important;
-    height:36px !important;
+    width:min(46px,calc(100% - 2px)) !important;
+    height:42px !important;
     border-radius:999px !important;
   }
 }
 
 @media (max-width:360px) {
   html body .layout.mobile-page-scrolled .clay-dock > button.active::before {
-    width:min(40px,calc(100% - 4px)) !important;
-    height:34px !important;
+    width:min(42px,calc(100% - 2px)) !important;
+    height:42px !important;
   }
 }
 

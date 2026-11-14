@@ -1311,7 +1311,7 @@ html body .workspace > .topbar .admin-search-field:hover {
     transition: left .26s ease !important;
   }
 
-  html body .layout.sidebar-compact::before {
+  html body:has(.layout.sidebar-compact)::before {
     left: 88px !important;
   }
 }

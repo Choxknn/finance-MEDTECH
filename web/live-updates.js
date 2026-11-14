@@ -137,6 +137,6 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopFinance
 window.addEventListener('online',()=>{syncFinanceLive();queueFinanceLive();queueFinanceShop()});
 window.addEventListener('pagehide',stopFinanceLive);
 window.addEventListener('pageshow',()=>{if(!document.hidden)syncFinanceLive()});
-document.getElementById('dialog').addEventListener('close',()=>{if(financeLivePending||financeLiveShopPending)scheduleFinanceLiveFlush()});
-document.addEventListener('focusout',()=>{if(financeLivePending||financeLiveShopPending)scheduleFinanceLiveFlush()});
+document.getElementById('dialog').addEventListener('close',()=>{if(financeLivePending||financeAnnouncementPending||financeLiveShopPending)scheduleFinanceLiveFlush()});
+document.addEventListener('focusout',()=>{if(financeLivePending||financeAnnouncementPending||financeLiveShopPending)scheduleFinanceLiveFlush()});
 syncFinanceLive();

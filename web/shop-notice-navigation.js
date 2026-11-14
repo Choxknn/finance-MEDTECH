@@ -13,11 +13,13 @@
   const hasShopItems=shopLoaded&&shopOwner===user.id&&products.some(p=>!p.deleted_at&&['open','scheduled'].includes(shopSaleState(p)));
   const sidebar=document.querySelector('.sidebar .nav');
   if(hasShopItems&&sidebar&&!sidebar.querySelector('[data-view="shop"]'))sidebar.insertAdjacentHTML('beforeend',`<button data-store-entry data-view="shop" class="${view==='shop'?'active':''}">${storeIcon}<span class="nav-label">ร้านค้า</span></button>`);
-  const dock=document.querySelector('.clay-dock');
-  if(hasShopItems&&!view.startsWith('shop')&&dock&&!dock.querySelector('[data-view="shop"]'))dock.insertAdjacentHTML('beforeend',`<button class="tablet-store-entry ${view==='shop'?'active':''}" data-store-entry data-view="shop">${storeIcon}<span>ร้านค้า</span></button>`);
+  const dock=document.querySelector('.clay-dock'),mobile=window.matchMedia('(max-width:720px)').matches;
+  if(hasShopItems&&!view.startsWith('shop')&&dock&&!dock.querySelector('[data-view="shop"]')){
+   const entryClass=mobile?'mobile-dock-store-entry':'tablet-store-entry';
+   dock.insertAdjacentHTML('beforeend',`<button type="button" class="${entryClass}" data-store-entry data-view="shop" aria-label="เปิดร้านค้า" title="ร้านค้า">${storeIcon}<span>ร้านค้า</span></button>`);
+  }
 
-  if(window.matchMedia('(max-width:720px)').matches){
-   const app=document.querySelector('#app');
+  if(mobile){
    if(user.role==='admin'){
     const topbar=layout?.querySelector('.workspace > .topbar');
     const menuButton=`<button type="button" class="mobile-topbar-menu" data-action="menu" aria-label="เปิดเมนูทั้งหมด" title="เมนู">${icon('menu')}</button>`;
@@ -26,11 +28,10 @@
      if(back)back.insertAdjacentHTML('beforebegin',menuButton);
      else topbar.insertAdjacentHTML('afterbegin',menuButton);
     }
-   }else if(hasShopItems&&!view.startsWith('shop')&&view!=='profile'&&view!=='fund-category'){
-    app?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-store-entry" data-store-entry data-view="shop" aria-label="เปิดร้านค้า" title="ร้านค้า">${storeIcon}</button>`);
    }
   }
-  layout?.classList.toggle('mobile-has-fab',!!document.querySelector('.mobile-store-entry'));
+  // On phones, the store action lives inside the same dock as the other destinations.
+  layout?.classList.remove('mobile-has-fab');
  }
  function updateMobileDockVisibility(){
   const layout=document.querySelector('.layout'),dock=layout?.querySelector('.clay-dock');
@@ -48,20 +49,30 @@
   readObserver=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){readObserver.unobserve(e.target);void mark(e.target)}}),{threshold:.5});rows.forEach(el=>readObserver.observe(el));
  }
  const oldRow=noticeRow;noticeRow=function(n){const html=oldRow(n);return n.id&&n.profile_id===user?.id?html.replace('<article ',`<article data-notice-id="${esc(n.id)}" `):html};
- const oldRender=render;render=function(){oldRender();scope();if(!user){readObserver?.disconnect();return}checkStore();paintBadges();watchRead();updateMobileHeaderScroll();updateMobileDockVisibility()};
- function updateMobileHeaderScroll(){
+ let mobileLastScrollY=null,mobileDownDistance=0,mobileUpDistance=0;
+ const oldRender=render;render=function(){oldRender();scope();if(!user){readObserver?.disconnect();return}checkStore();paintBadges();watchRead();updateMobileHeaderScroll(true);updateMobileDockVisibility()};
+ function updateMobileHeaderScroll(reset=false){
   const layout=document.querySelector('.layout');if(!layout)return;
   const small=window.matchMedia('(max-width:720px)').matches;
-  if(!small){layout.classList.remove('mobile-page-scrolled','mobile-dock-hidden','mobile-has-fab');return}
-  // The page itself scrolls in this layout. Ignore stale inner element scrollTop
-  // values so returning to the real page top always restores the title.
+  if(!small){layout.classList.remove('mobile-page-scrolled','mobile-dock-hidden','mobile-has-fab','mobile-header-hidden');mobileLastScrollY=null;mobileDownDistance=0;mobileUpDistance=0;return}
+  // Read the actual page scroll position (not a stale workspace scrollTop).
   const root=document.scrollingElement||document.documentElement;
   const y=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
   layout.classList.toggle('mobile-page-scrolled',y>14);
+  const searchFocused=!!document.activeElement?.closest?.('.admin-search-field');
+  if(reset||mobileLastScrollY===null){mobileLastScrollY=y;mobileDownDistance=0;mobileUpDistance=0;}
+  else{
+   const delta=y-mobileLastScrollY;mobileLastScrollY=y;
+   if(y<=14){layout.classList.remove('mobile-header-hidden');mobileDownDistance=0;mobileUpDistance=0;}
+   else if(layout.classList.contains('menu-open')||searchFocused){layout.classList.remove('mobile-header-hidden');mobileDownDistance=0;mobileUpDistance=0;}
+   else if(delta>0){mobileDownDistance+=delta;mobileUpDistance=0;if(y>56&&mobileDownDistance>=10)layout.classList.add('mobile-header-hidden');}
+   else if(delta<0){mobileUpDistance+=-delta;mobileDownDistance=0;if(mobileUpDistance>=7){layout.classList.remove('mobile-header-hidden');mobileUpDistance=0;}}
+  }
+  if(y<=14){layout.classList.remove('mobile-header-hidden');mobileDownDistance=0;mobileUpDistance=0;}
   updateMobileDockVisibility();
  }
- window.addEventListener('scroll',updateMobileHeaderScroll,{passive:true});
+ window.addEventListener('scroll',()=>updateMobileHeaderScroll(),{passive:true});
  document.addEventListener('scroll',updateMobileHeaderScroll,{capture:true,passive:true});
- window.addEventListener('resize',updateMobileHeaderScroll,{passive:true});
+ window.addEventListener('resize',()=>updateMobileHeaderScroll(true),{passive:true});
  if(user)render();
 })();

@@ -76,7 +76,7 @@ function mpShell(layout){
  const title=layout.querySelector('.topbar-title'),page=layout.querySelector('main h1')?.textContent||names[view]||'Finance MEDTECH';title.innerHTML=`${user.role==='admin'?'พื้นที่ผู้ดูแล':'พื้นที่ของฉัน'} <span>/</span> <b>${esc(names[view]||page)}</b>`;
  const box=layout.querySelector('.topbar .user'),avatar=box.querySelector('.avatar'),name=box.querySelector('.material-profile-name');
  if(avatar&&name){const trigger=document.createElement('button');trigger.className='mp-profile-trigger';for(const a of ['aria-label','aria-expanded','aria-haspopup','aria-controls'])trigger.setAttribute(a,avatar.getAttribute(a));trigger.dataset.materialProfileToggle='';trigger.innerHTML=`<span class="avatar">${esc(String(user.student_id||'—').slice(-2))}</span><span class="mp-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>`;avatar.replaceWith(trigger);name.remove()}
- const footer=layout.querySelector('.clay-footer');if(footer)footer.innerHTML='Finance · MEDTECH &nbsp; ♡ &nbsp; Small steps, together.';
+ const footer=layout.querySelector('.clay-footer');if(footer)footer.innerHTML=`Finance · MEDTECH &nbsp; ♡ &nbsp; ${window.FINANCE_APP_VERSION||'V.1.3.2'}`;
 }
 function mergedFundRows(){return [...(db.incomes||[]).filter(r=>!r.deleted_at).map(r=>({...r,kind:'income'})),...(db.expenses||[]).filter(r=>!r.deleted_at&&(user.role==='admin'||!r.voided)).map(r=>({...r,kind:'expense'}))].sort((a,b)=>String(b.received_on||b.spent_on||'').localeCompare(String(a.received_on||a.spent_on||''))||String(b.id).localeCompare(String(a.id)))}
 function mpFundChart(){

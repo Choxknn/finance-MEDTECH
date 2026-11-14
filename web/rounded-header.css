@@ -1226,3 +1226,36 @@ html body .workspace > .topbar::before {
     left: 222px !important;
   }
 }
+
+
+/* Full-viewport frosted fade behind both the sidebar and top navigation.
+   Keep it independent of the workspace width so no side gap can appear. */
+@media (min-width: 721px) {
+  html body::before {
+    content: "" !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    height: 56px !important;
+    display: block !important;
+    z-index: 25 !important;
+    pointer-events: none !important;
+    background: linear-gradient(
+      180deg,
+      rgba(224, 226, 230, .82) 0%,
+      rgba(224, 226, 230, .48) 52%,
+      rgba(224, 226, 230, 0) 100%
+    ) !important;
+    -webkit-backdrop-filter: blur(15px) saturate(1.08) !important;
+    backdrop-filter: blur(15px) saturate(1.08) !important;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.78) 48%, transparent 100%) !important;
+    mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.78) 48%, transparent 100%) !important;
+  }
+
+  html body .workspace > .topbar::before {
+    content: none !important;
+    display: none !important;
+  }
+}

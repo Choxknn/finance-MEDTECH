@@ -80,7 +80,7 @@
  }
  const oldRow=noticeRow;noticeRow=function(n){const html=oldRow(n);return n.id&&n.profile_id===user?.id?html.replace('<article ',`<article data-notice-id="${esc(n.id)}" `):html};
  let mobileLastScrollY=null,mobileDownDistance=0,mobileUpDistance=0;
- let mobileLastRenderedView=null,mobileDockCompactByNavigation=false,mobileRenderUnlock=0,mobileTopExpandTimer=null;
+ let mobileLastRenderedView=null,mobileDockCompactByNavigation=false,mobileRenderUnlock=0,mobileTopExpandTimer=null,mobileRouteExpandTimer=null;
  function setMobileDockCompact(layout,compact){
   layout?.classList.toggle('mobile-page-scrolled',compact);
   document.getElementById('app')?.classList.toggle('mobile-dock-compact',compact);
@@ -115,6 +115,7 @@
   const beforeY=Math.max(Number(window.scrollY)||0,Number(beforeRoot?.scrollTop)||0);
   // The dock node is recreated by the page renderer. Disable dock transitions
   // for that render frame so its measured width/position cannot animate sideways.
+  clearTimeout(mobileRouteExpandTimer);mobileRouteExpandTimer=null;
   const renderUnlock=++mobileRenderUnlock;
   app?.classList.add('mobile-dock-route-change');
   // Seed the persistent #app marker before innerHTML is replaced, so the new dock
@@ -151,32 +152,35 @@
   }else{
    updateMobileHeaderScroll(true);updateMobileDockVisibility();
   }
-  // Let the replacement dock paint once in its compact measured state with
-  // transitions locked. Then release the lock, commit that compact geometry,
-  // and expand exactly once when changing pages.
+  // Paint the new page with the dock still compact. Release the redraw lock,
+  // hold that exact geometry briefly, then start the CSS expansion transition.
+  // The small delay is intentional: Safari can coalesce adjacent animation
+  // frames after innerHTML replacement and otherwise skip the compact frame.
   window.requestAnimationFrame(()=>{
    if(renderUnlock!==mobileRenderUnlock)return;
    const finalLayout=document.querySelector('.layout');
    if(small&&expandAfterNavigation){
-    // Recalculate the new page's dock width while it is still compact.
-    // The route lock is then released for one painted frame before expansion.
     updateMobileDockVisibility();
     finalLayout?.classList.remove('mobile-header-hidden');
     finalLayout?.querySelector('.clay-dock')?.getBoundingClientRect();
    }
    app?.classList.remove('mobile-dock-route-change');
    if(small&&expandAfterNavigation){
-    // A nested animation frame guarantees the compact state is actually
-    // painted first. Only then do we animate to the expanded state.
-    window.requestAnimationFrame(()=>{
-     if(renderUnlock!==mobileRenderUnlock)return;
-     const settledLayout=document.querySelector('.layout');
-     mobileDockCompactByNavigation=false;
-     setMobileDockCompact(settledLayout,false);
-     const root=document.scrollingElement||document.documentElement;
-     mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-     mobileDownDistance=0;mobileUpDistance=0;
-    });
+    const compactDock=finalLayout?.querySelector('.clay-dock');
+    if(compactDock)void compactDock.offsetWidth;
+    mobileRouteExpandTimer=window.setTimeout(()=>{
+     mobileRouteExpandTimer=null;
+     window.requestAnimationFrame(()=>{
+      if(renderUnlock!==mobileRenderUnlock)return;
+      const settledLayout=document.querySelector('.layout');
+      if(!settledLayout?.querySelector('.clay-dock'))return;
+      mobileDockCompactByNavigation=false;
+      setMobileDockCompact(settledLayout,false);
+      const root=document.scrollingElement||document.documentElement;
+      mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+      mobileDownDistance=0;mobileUpDistance=0;
+     });
+    },80);
    }
   });
  };

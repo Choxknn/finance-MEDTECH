@@ -486,3 +486,74 @@
     filter:drop-shadow(0 1px 1px rgba(115,38,69,.12)) !important;
   }
 }
+
+/* Stable mobile dock size: keep the same compact height at page top and while scrolling. */
+@media (max-width:720px) {
+  html body .layout .clay-dock,
+  html body .layout.mobile-page-scrolled .clay-dock {
+    height:64px !important;
+    min-height:64px !important;
+    padding:3px 8px !important;
+    align-items:center !important;
+    box-sizing:border-box !important;
+  }
+
+  html body .layout .clay-dock > button,
+  html body .layout.mobile-page-scrolled .clay-dock > button,
+  html body .layout .clay-dock > button.active,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active {
+    height:54px !important;
+    min-height:54px !important;
+    max-height:54px !important;
+    padding:3px 2px !important;
+    gap:2px !important;
+    border-radius:999px !important;
+  }
+
+  html body .layout .clay-dock > button > span,
+  html body .layout.mobile-page-scrolled .clay-dock > button > span {
+    display:block !important;
+    max-height:14px !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    font-size:9px !important;
+    line-height:12px !important;
+    white-space:nowrap !important;
+  }
+
+  html body .layout .clay-dock > button > svg,
+  html body .layout.mobile-page-scrolled .clay-dock > button > svg {
+    flex:0 0 28px !important;
+    width:28px !important;
+    height:28px !important;
+    padding:4px !important;
+  }
+
+  /* Refined iOS capsule: soft rose glass, a crisp edge and restrained depth. */
+  html body .layout .clay-dock > button.active,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active {
+    position:relative !important;
+    border:1px solid rgba(177,54,91,.16) !important;
+    border-radius:999px !important;
+    background:linear-gradient(155deg,#fff 0%,#fff8fb 48%,#f3e5ed 100%) !important;
+    color:#a52c51 !important;
+    box-shadow:
+      0 3px 9px rgba(102,43,70,.13),
+      0 1px 2px rgba(102,43,70,.07),
+      inset 0 1px 0 rgba(255,255,255,.98),
+      inset 0 -1px 2px rgba(151,79,111,.06) !important;
+    transform:translateY(-1px) !important;
+  }
+
+  html body .layout .clay-dock > button.active > span {
+    color:#9f294d !important;
+    font-weight:650 !important;
+    letter-spacing:.01em !important;
+  }
+
+  html body .layout .clay-dock > button.active > svg {
+    color:#a52c51 !important;
+    filter:drop-shadow(0 1px 1px rgba(115,38,69,.10)) !important;
+  }
+}

@@ -196,3 +196,122 @@
 @media (max-width:360px) {
   .workspace > .topbar .topbar-title { max-width: min(36vw, 132px) !important; }
 }
+
+
+/* Correct interpretation: hide the page heading; show each dock label at top,
+   then fold the labels away as the user scrolls. */
+@media (max-width:720px) {
+  .workspace > .topbar .topbar-title,
+  .material-shell .workspace > .topbar .topbar-title {
+    display: none !important;
+  }
+
+  .clay-dock {
+    height: 72px !important;
+    padding: 5px 8px 6px !important;
+  }
+
+  .clay-dock button {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 62px !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    padding: 1px 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+  }
+
+  .clay-dock button > span {
+    display: block !important;
+    max-height: 12px !important;
+    overflow: hidden !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    color: #776a76 !important;
+    font-size: 9px !important;
+    line-height: 12px !important;
+    white-space: nowrap !important;
+    transition: max-height .2s ease, opacity .16s ease, transform .2s ease !important;
+  }
+
+  .clay-dock button > em {
+    display: none !important;
+  }
+
+  .clay-dock button svg {
+    display: block !important;
+    flex: 0 0 36px !important;
+    width: 36px !important;
+    height: 36px !important;
+    box-sizing: border-box !important;
+    padding: 7px !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    color: inherit !important;
+    box-shadow: none !important;
+    transition: background .2s ease, box-shadow .2s ease !important;
+  }
+
+  .clay-dock button.active {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 62px !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    color: #a92e50 !important;
+    box-shadow: none !important;
+  }
+
+  .clay-dock button.active > span {
+    color: #a92e50 !important;
+    font-weight: 600 !important;
+  }
+
+  .clay-dock button.active svg {
+    background: #f3eaf0 !important;
+    box-shadow:
+      0 3px 9px rgba(83,45,66,.12),
+      inset 0 1px 3px rgba(83,45,66,.08),
+      inset 0 -1px 2px rgba(255,255,255,.95) !important;
+  }
+
+  .layout.mobile-page-scrolled .clay-dock {
+    height: 62px !important;
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+  }
+
+  .layout.mobile-page-scrolled .clay-dock button {
+    height: 46px !important;
+    min-height: 46px !important;
+    gap: 0 !important;
+  }
+
+  .layout.mobile-page-scrolled .clay-dock button > span {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    transform: translateY(4px) !important;
+    pointer-events: none !important;
+  }
+
+  .layout.mobile-page-scrolled .clay-dock button svg {
+    flex-basis: 38px !important;
+    width: 38px !important;
+    height: 38px !important;
+    padding: 8px !important;
+  }
+}

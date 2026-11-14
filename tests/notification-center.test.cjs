@@ -10,13 +10,15 @@ const run=s=>vm.runInContext(s,ctx),tick=()=>new Promise(resolve=>setImmediate(r
  run("demoLogin('member');db.charges=[];db.notifications=[{id:'"+noticeId+"',profile_id:user.id,title:'ข้อความแจ้งเตือน',body:'รายละเอียด',created_at:new Date().toISOString(),status:'in_app',seen_at:null}];db.announcements=[{id:'"+announcementId+"',title:'ประกาศในเว็บ',body:'รายละเอียดประกาศ',created_at:new Date().toISOString(),seen_at:null}];nav('notifications')");
  const cards=[...w.document.querySelectorAll('.notification-center-card')];
  assert.equal(cards.length,2,'notification page shows both notification and announcement');
+ const notificationCard=cards.find(card=>card.dataset.noticeIdValue===noticeId),announcementCard=cards.find(card=>card.dataset.noticeIdValue===announcementId);
+ assert.ok(notificationCard&&announcementCard,'each notice type has its own rendered card');
  const observer=w.noticeObservers.at(-1);assert.ok(observer,'notification list installs an IntersectionObserver');
  assert.ok(cards.every(card=>observer.targets.has(card)),'unread cards are observed');
- observer.trigger(cards[0],.2);await tick();
+ observer.trigger(notificationCard,.2);await tick();
  assert.equal(run("db.notifications.find(n=>n.id==='"+noticeId+"').seen_at"),null,'a barely visible item is not marked read');
- observer.trigger(cards[0],.35);await tick();
+ observer.trigger(notificationCard,.35);await tick();
  assert.ok(run("db.notifications.find(n=>n.id==='"+noticeId+"').seen_at"),'scrolling an unread notification into view marks it read');
- assert.ok(!cards[0].classList.contains('is-unread'),'read notification loses unread styling without redrawing the page');
+ assert.ok(!notificationCard.classList.contains('is-unread'),'read notification loses unread styling without redrawing the page');
  assert.equal(run("db.announcements.find(n=>n.id==='"+announcementId+"').seen_at"),null,'an item outside the visible threshold stays unread');
  const allButton=w.document.querySelector('[data-mark-all-notices]');assert.ok(allButton,'notifications page has a mark-all button');
  allButton.click();await tick();

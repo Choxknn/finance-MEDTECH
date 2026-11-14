@@ -90,8 +90,11 @@
   const firstRender=mobileLastRenderedView===null;
   const wasDockCompact=!!(previousLayout?.classList.contains('mobile-page-scrolled')||app?.classList.contains('mobile-dock-compact'));
   const viewChanged=mobileLastRenderedView!==null&&mobileLastRenderedView!==view;
-  const expandAfterNavigation=viewChanged&&wasDockCompact;
+  const expandAfterNavigation=wasDockCompact&&(viewChanged||mobileDockCompactByNavigation);
   const small=window.matchMedia('(max-width:720px)').matches;
+  // Set this BEFORE replacing #app: browser scroll events can fire while
+  // the old page is removed and the new page resets scrollTop to zero.
+  if(small&&expandAfterNavigation)mobileDockCompactByNavigation=true;
   const beforeRoot=document.scrollingElement||document.documentElement;
   const beforeY=Math.max(Number(window.scrollY)||0,Number(beforeRoot?.scrollTop)||0);
   // The dock node is recreated by the page renderer. Disable dock transitions
@@ -110,8 +113,9 @@
   if(small&&layout){
    if(wasDockCompact){
     setMobileDockCompact(layout,true);
-    // Keep the compact appearance while the replacement DOM is being measured.
-    // It will expand after the new dock width has been calculated.
+    // Keep the compact appearance until the new page has painted and the
+    // deliberate route expansion frame begins.
+    mobileDockCompactByNavigation=!!expandAfterNavigation;
     const root=document.scrollingElement||document.documentElement;
     mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
     mobileDownDistance=0;mobileUpDistance=0;
@@ -171,7 +175,11 @@
   if(reset||mobileLastScrollY===null){mobileLastScrollY=y;mobileDownDistance=0;mobileUpDistance=0;}
   else{
    const delta=y-mobileLastScrollY;mobileLastScrollY=y;
-   if(y<=14&&!mobileDockCompactByNavigation){
+   if(mobileDockCompactByNavigation){
+    // A route redraw's scroll reset is synthetic, not a user upward scroll.
+    // Leave the compact dock untouched until the scheduled route expansion.
+    mobileDownDistance=0;mobileUpDistance=0;
+   }else if(y<=14){
     layout.classList.remove('mobile-header-hidden');setMobileDockCompact(layout,false);
     mobileDownDistance=0;mobileUpDistance=0;
    }else if(layout.classList.contains('menu-open')||searchFocused){

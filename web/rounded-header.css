@@ -936,3 +936,110 @@ html body .material-shell > .workspace > main > .meddy-hero {
     padding-top: calc(114px + env(safe-area-inset-top, 0px) + 2px) !important;
   }
 }
+
+
+/* Admin mobile header: search takes the left/logo position in a single row. */
+@media (max-width: 720px) {
+  html body .workspace > .topbar.has-admin-search {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-rows: 46px !important;
+    align-content: center !important;
+    align-items: center !important;
+    column-gap: 9px !important;
+    row-gap: 0 !important;
+    height: calc(66px + env(safe-area-inset-top, 0px)) !important;
+    min-height: calc(66px + env(safe-area-inset-top, 0px)) !important;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px !important;
+    border-radius: 0 0 17px 17px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .topbar-brand {
+    display: none !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .admin-search {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .user {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    gap: 6px !important;
+    min-height: 40px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .user .clay-notifications {
+    flex-basis: 37px !important;
+    width: 37px !important;
+    min-width: 37px !important;
+    height: 37px !important;
+    margin: 0 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .user .mp-profile-trigger {
+    min-width: 56px !important;
+    min-height: 37px !important;
+    padding: 2px 7px 2px 4px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .user .mp-profile-trigger .avatar {
+    width: 26px !important;
+    min-width: 26px !important;
+    height: 26px !important;
+    font-size: 13px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .user .mp-profile-trigger .mp-chevron,
+  html body .workspace > .topbar.has-admin-search > .user .mp-profile-trigger .mp-chevron svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field {
+    height: 44px !important;
+    min-height: 44px !important;
+    gap: 6px !important;
+    padding: 4px 4px 4px 7px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field > svg {
+    flex-basis: 29px !important;
+    width: 29px !important;
+    height: 29px !important;
+    padding: 6px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search,
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search:hover,
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search:focus,
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search:focus-visible,
+  html body .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search:active {
+    height: 34px !important;
+    font-size: 16px !important;
+    line-height: 1.25 !important;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button {
+    flex-basis: 34px !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field .admin-camera-button svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  html body .material-shell > .workspace > main {
+    padding-top: calc(66px + env(safe-area-inset-top, 0px) + 2px) !important;
+  }
+}

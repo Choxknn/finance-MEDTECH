@@ -55,9 +55,12 @@ assert.equal(getLayout().dataset.routeLockAtInsertion,'yes','dock transitions ar
 assert.ok(app.classList.contains('mobile-dock-compact'),'persistent app root retains compact state across page navigation');
 assert.ok(getLayout().classList.contains('mobile-page-scrolled'),'new page keeps the dock compact during navigation even if scrollTop resets');
 await new Promise(resolve=>w.requestAnimationFrame(resolve));
-assert.ok(!app.classList.contains('mobile-dock-route-change'),'dock transition lock is released after the render frame');
-assert.ok(!getLayout().classList.contains('mobile-page-scrolled'),'changing page smoothly returns the dock to expanded state');
-assert.ok(!app.classList.contains('mobile-dock-compact'),'persistent compact marker clears after page navigation');
+assert.ok(!app.classList.contains('mobile-dock-route-change'),'dock transition lock is released after the compact frame');
+assert.ok(getLayout().classList.contains('mobile-page-scrolled'),'new page remains visibly compact for one frame before expanding');
+assert.ok(app.classList.contains('mobile-dock-compact'),'persistent compact marker is held until the expanded transition starts');
+await new Promise(resolve=>w.requestAnimationFrame(resolve));
+assert.ok(!getLayout().classList.contains('mobile-page-scrolled'),'changing page gradually expands the dock after the compact frame');
+assert.ok(!app.classList.contains('mobile-dock-compact'),'persistent compact marker clears when the dock starts expanding');
 setScroll(90);
 assert.ok(getLayout().classList.contains('mobile-page-scrolled'),'dock can fold again after the user scrolls down on the new page');
 const css=fs.readFileSync(root+'/web/shop-notice-navigation.css','utf8');

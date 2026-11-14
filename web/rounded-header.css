@@ -1730,3 +1730,21 @@ html body .workspace > .topbar .admin-search-field .admin-camera-button:focus-vi
     display:none !important;
   }
 }
+
+
+/* Final correction: keep the admin mobile menu as a true circle at the far-left edge. */
+@media (max-width:720px) {
+  html body .layout[data-clay-role="admin"] .workspace > .topbar > .mobile-topbar-menu {
+    left:8px !important;
+    right:auto !important;
+    width:36px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+    max-height:36px !important;
+    border-radius:50% !important;
+    padding:0 !important;
+    margin:0 !important;
+  }
+}

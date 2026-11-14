@@ -134,3 +134,4 @@ html body.signup-page .signup-footer-actions svg{width:19px;height:19px;flex:non
 html body.signup-page .signup-footer-actions>a:hover{background:#f3eaf0;border-color:#d5bdc9}
 html body.signup-page .signup-footer-actions>#register-support:hover{background:#dff2e7;border-color:#b3d9c2}
 @media(max-width:360px){html body.signup-page .signup-footer-actions{gap:7px}html body.signup-page .signup-footer-actions>a,html body.signup-page .signup-footer-actions>#register-support{font-size:11px;gap:5px}}
+html body.signup-page .signup-footer-actions[hidden]{display:none!important}

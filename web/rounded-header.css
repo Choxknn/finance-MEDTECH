@@ -1043,3 +1043,95 @@ html body .material-shell > .workspace > main > .meddy-hero {
     padding-top: calc(66px + env(safe-area-inset-top, 0px) + 2px) !important;
   }
 }
+
+
+/* Admin mobile header: place the back action first and let search use the
+   remaining width. While searching, temporarily give the space back to search. */
+@media (max-width: 720px) {
+  html body .workspace > .topbar.has-admin-search {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-rows: 46px !important;
+    align-items: center !important;
+    column-gap: 8px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .topbar-back:not([hidden]) {
+    display: grid !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    justify-self: start !important;
+    align-self: center !important;
+    flex: 0 0 35px !important;
+    width: 35px !important;
+    min-width: 35px !important;
+    height: 35px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search > .topbar-back:not([hidden]) svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search[data-back-hidden="false"] {
+    grid-template-columns: 35px minmax(0, 1fr) auto !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search[data-back-hidden="false"] > .admin-search {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search[data-back-hidden="false"] > .user {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search[data-back-hidden="true"] > .admin-search {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search[data-back-hidden="true"] > .user {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search:has(.admin-search-field:focus-within) {
+    grid-template-columns: 35px minmax(0, 1fr) !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search[data-back-hidden="true"]:has(.admin-search-field:focus-within) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search:has(.admin-search-field:focus-within) > .user {
+    display: none !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search[data-back-hidden="false"]:has(.admin-search-field:focus-within) > .admin-search {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search[data-back-hidden="true"]:has(.admin-search-field:focus-within) > .admin-search {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  html body .workspace > .topbar.has-admin-search .admin-search-field {
+    width: 100% !important;
+    min-width: 0 !important;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease !important;
+  }
+}

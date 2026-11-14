@@ -1,11 +1,12 @@
 'use strict';
-(()=>{const signupParams=new URLSearchParams(location.search);if(signupParams.has('signup_state')||signupParams.has('friend_gate_state')||signupParams.has('state')||signupParams.has('liff.state'))return;const cfg=window.FINANCE_CONFIG,form=document.getElementById('register-form'),status=document.getElementById('register-status'),fragmentToken=new URLSearchParams(location.hash.slice(1)).get('token');let resume=null;try{resume=JSON.parse(sessionStorage.getItem('finance-signup-resume')||localStorage.getItem('finance-signup-resume')||'null');if(resume&&Date.now()-resume.createdAt>900000)resume=null}catch{}if(fragmentToken&&fragmentToken!==resume?.token){resume=null;sessionStorage.removeItem('finance-signup-resume');localStorage.removeItem('finance-signup-resume')}const token=fragmentToken||resume?.token||sessionStorage.getItem('finance-signup-token');if(token&&/^[0-9a-f]{64}$/.test(token))sessionStorage.setItem('finance-signup-token',token);let batchMode=false,session=resume?.session||null,studentId=resume?.studentId||null,lineReady=false;const lookup=document.getElementById('student-lookup'),line=document.getElementById('registration-line');const lineOaHref=/^https:\/\/(lin\.ee|line\.me)\//.test(cfg.lineOaUrl||'')?cfg.lineOaUrl:'https://lin.ee/rpHtjnI';history.replaceState(null,'',location.pathname+location.search);document.getElementById('register-support').href=lineOaHref;
+(()=>{const signupParams=new URLSearchParams(location.search);if(signupParams.has('signup_state')||signupParams.has('friend_gate_state')||signupParams.has('state')||signupParams.has('liff.state'))return;const cfg=window.FINANCE_CONFIG,form=document.getElementById('register-form'),status=document.getElementById('register-status'),fragmentToken=new URLSearchParams(location.hash.slice(1)).get('token');let resume=null;try{resume=JSON.parse(sessionStorage.getItem('finance-signup-resume')||localStorage.getItem('finance-signup-resume')||'null');if(resume&&Date.now()-resume.createdAt>900000)resume=null}catch{}if(fragmentToken&&fragmentToken!==resume?.token){resume=null;sessionStorage.removeItem('finance-signup-resume');localStorage.removeItem('finance-signup-resume')}const token=fragmentToken||resume?.token||sessionStorage.getItem('finance-signup-token');if(token&&/^[0-9a-f]{64}$/.test(token))sessionStorage.setItem('finance-signup-token',token);let batchMode=false,session=resume?.session||null,studentId=resume?.studentId||null,lineReady=false,activeSignupStep=1,reviewDisplayName='';const lookup=document.getElementById('student-lookup'),line=document.getElementById('registration-line');const lineOaHref=/^https:\/\/(lin\.ee|line\.me)\//.test(cfg.lineOaUrl||'')?cfg.lineOaUrl:'https://lin.ee/rpHtjnI';history.replaceState(null,'',location.pathname+location.search);document.getElementById('register-support').href=lineOaHref;
 async function request(action,data={}){const r=await fetch(cfg.supabaseUrl+'/functions/v1/account-access',{method:'POST',headers:{apikey:cfg.supabaseAnonKey,'Content-Type':'application/json'},body:JSON.stringify({action,token,...data})});const j=await r.json();if(!r.ok)throw Error(j.error||'ดำเนินการไม่สำเร็จ');return j}
-function step(n){document.querySelectorAll('[data-signup-step]').forEach(el=>{const k=Number(el.dataset.signupStep);el.classList.toggle('is-current',k===n);el.classList.toggle('is-done',k<n);if(k===n)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current')})}
+function step(n){activeSignupStep=n;document.querySelectorAll('[data-signup-step]').forEach(el=>{const k=Number(el.dataset.signupStep);el.classList.toggle('is-current',k===n);el.classList.toggle('is-done',k<n);if(k===n)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current')});const back=document.querySelector('.signup-back'),footer=document.querySelector('.signup-footer-actions');if(back){const label=back.querySelector('span'),isBack=n>=2&&n<5;if(label)label.textContent=isBack?'กลับ':'กลับเข้าสู่ระบบ';back.setAttribute('aria-label',isBack?'กลับไปขั้นตอนก่อนหน้า':'กลับเข้าสู่ระบบ')}if(footer)footer.hidden=n===5}
 const review=document.getElementById('registration-review');
 function showReview(name){
  lookup.hidden=true;line.hidden=true;form.hidden=true;review.hidden=false;step(2);
- document.getElementById('review-name').textContent=name.replace(/ · [0-9]+$/,'');
+ reviewDisplayName=name.replace(/ · [0-9]+$/,'');
+ document.getElementById('review-name').textContent=reviewDisplayName;
  document.getElementById('review-student').textContent=studentId;
  document.getElementById('registration-back').hidden=!batchMode;
  status.textContent='ตรวจสอบชื่อและรหัสนักศึกษา แล้วกดยืนยัน';
@@ -23,6 +24,16 @@ document.getElementById('registration-back').addEventListener('click',()=>{
 function showLine(){review.hidden=true;lookup.hidden=true;line.hidden=false;form.hidden=true;step(3);document.getElementById('registration-line-login').hidden=!lineReady;document.getElementById('registration-line-fallback').hidden=lineReady;status.textContent=lineReady?'ตรวจสอบชื่อ แล้วกดเชื่อม LINE เพื่อดำเนินการต่อ':'ส่งรหัสเชื่อมบัญชีใน LINE OA แล้วกลับมาตรวจสอบ'}
 function showPassword(){review.hidden=true;lookup.hidden=true;line.hidden=true;form.hidden=false;step(4);status.textContent='เพิ่มเพื่อนและเชื่อม LINE สำเร็จแล้ว ตั้งรหัสผ่านเพื่อเปิดบัญชี';form.elements.password.focus()}
 step(1);
+document.querySelector('.signup-back').addEventListener('click',e=>{
+ if(activeSignupStep<2)return;
+ e.preventDefault();
+ if(activeSignupStep===2){
+  if(batchMode){document.getElementById('registration-back').click();return}
+  location.assign('./');return;
+ }
+ if(activeSignupStep===3){showReview(reviewDisplayName);return}
+ if(activeSignupStep===4){if(batchMode)showLine();else showReview(reviewDisplayName)}
+});
 document.getElementById('registration-line-login').addEventListener('click',async e=>{const b=e.currentTarget;b.disabled=true;status.textContent='กำลังเปิด LINE…';try{await FinanceLine.startLiffSignup(session)}catch(err){status.textContent=err.message}finally{b.disabled=false}});
 const lineStatus=FinanceLine.request({action:'status'}).then(r=>lineReady=r.enabled).catch(()=>{});
 let checkingLine=false;

@@ -1976,3 +1976,203 @@ html body .workspace > .topbar .admin-search-field .admin-camera-button:focus-vi
     right:112px !important;
   }
 }
+
+
+/* Mobile admin search: compact in the back-button slot, then grow beside
+   the fixed profile controls. The grid never changes when search is focused. */
+@media (max-width:720px) {
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search {
+    display:grid !important;
+    align-items:center !important;
+    justify-content:stretch !important;
+    grid-template-columns:36px 36px minmax(0,1fr) auto !important;
+    grid-template-rows:42px !important;
+    column-gap:8px !important;
+    row-gap:0 !important;
+    width:100% !important;
+    box-sizing:border-box !important;
+    padding-left:8px !important;
+    padding-right:8px !important;
+    overflow:visible !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search[data-back-hidden="true"] {
+    grid-template-columns:36px minmax(0,1fr) auto !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search > .mobile-topbar-menu {
+    position:relative !important;
+    inset:auto !important;
+    transform:none !important;
+    grid-column:1 !important;
+    grid-row:1 !important;
+    justify-self:center !important;
+    align-self:center !important;
+    width:36px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+    max-height:36px !important;
+    margin:0 !important;
+    z-index:2 !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search > .topbar-back:not([hidden]) {
+    position:relative !important;
+    inset:auto !important;
+    transform:none !important;
+    grid-column:2 !important;
+    grid-row:1 !important;
+    justify-self:center !important;
+    align-self:center !important;
+    flex:0 0 36px !important;
+    width:36px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+    max-height:36px !important;
+    margin:0 !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search[data-back-hidden="false"] > .admin-search {
+    grid-column:3 !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search[data-back-hidden="true"] > .admin-search {
+    grid-column:2 !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search > .admin-search {
+    position:relative !important;
+    inset:auto !important;
+    align-self:center !important;
+    justify-self:start !important;
+    grid-row:1 !important;
+    width:42px !important;
+    min-width:42px !important;
+    max-width:100% !important;
+    height:42px !important;
+    margin:0 !important;
+    z-index:156 !important;
+    overflow:visible !important;
+    transition:width .42s cubic-bezier(.22,.72,.22,1) !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search > .admin-search:focus-within {
+    justify-self:stretch !important;
+    width:100% !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search > .user {
+    position:relative !important;
+    inset:auto !important;
+    transform:none !important;
+    grid-row:1 !important;
+    justify-self:end !important;
+    align-self:center !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    flex:0 0 auto !important;
+    width:max-content !important;
+    min-width:max-content !important;
+    margin:0 !important;
+    z-index:157 !important;
+    transition:none !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search[data-back-hidden="false"] > .user {
+    grid-column:4 !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search[data-back-hidden="true"] > .user {
+    grid-column:3 !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search .clay-notifications {
+    flex:0 0 36px !important;
+    width:36px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+    max-height:36px !important;
+    margin:0 !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search .mp-profile-trigger {
+    flex:0 0 auto !important;
+    min-width:64px !important;
+    margin:0 !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search .admin-search-field {
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    width:100% !important;
+    height:42px !important;
+    min-height:42px !important;
+    padding:0 11px !important;
+    box-sizing:border-box !important;
+    overflow:hidden !important;
+    border:1px solid rgba(229,222,235,.94) !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.9) !important;
+    box-shadow:0 4px 14px rgba(73,54,83,.09),inset 0 1px 0 rgba(255,255,255,.94) !important;
+    cursor:text !important;
+    transition:background .2s ease,border-color .2s ease,box-shadow .2s ease !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search .admin-search-field > svg {
+    display:block !important;
+    flex:0 0 19px !important;
+    width:19px !important;
+    min-width:19px !important;
+    height:19px !important;
+    margin:0 !important;
+    color:#76658f !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search .admin-search-field > input#admin-global-search {
+    flex:0 1 0 !important;
+    width:0 !important;
+    min-width:0 !important;
+    height:38px !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    border:0 !important;
+    outline:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    opacity:0 !important;
+    pointer-events:none !important;
+    transition:flex .32s ease,width .32s ease,opacity .2s ease !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search > .admin-search:focus-within .admin-search-field {
+    border-color:rgba(151,126,184,.7) !important;
+    background:#fff !important;
+    box-shadow:0 0 0 3px rgba(151,126,184,.1),0 6px 18px rgba(73,54,83,.1) !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search > .admin-search:focus-within .admin-search-field > input#admin-global-search {
+    flex:1 1 auto !important;
+    width:auto !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+  }
+
+  html body .layout[data-clay-role="admin"] .workspace > .topbar.has-admin-search .admin-search-results {
+    position:absolute !important;
+    top:calc(100% + 7px) !important;
+    left:0 !important;
+    right:0 !important;
+    width:auto !important;
+    max-height:min(55vh,420px) !important;
+    z-index:180 !important;
+  }
+}

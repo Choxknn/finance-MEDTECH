@@ -2,7 +2,7 @@
 (()=>{const signupParams=new URLSearchParams(location.search);if(signupParams.has('signup_state')||signupParams.has('friend_gate_state')||signupParams.has('state')||signupParams.has('liff.state'))return;const cfg=window.FINANCE_CONFIG,form=document.getElementById('register-form'),status=document.getElementById('register-status'),fragmentToken=new URLSearchParams(location.hash.slice(1)).get('token');let resume=null;try{resume=JSON.parse(sessionStorage.getItem('finance-signup-resume')||localStorage.getItem('finance-signup-resume')||'null');if(resume&&Date.now()-resume.createdAt>900000)resume=null}catch{}if(fragmentToken&&fragmentToken!==resume?.token){resume=null;sessionStorage.removeItem('finance-signup-resume');localStorage.removeItem('finance-signup-resume')}const token=fragmentToken||resume?.token||sessionStorage.getItem('finance-signup-token');if(token&&/^[0-9a-f]{64}$/.test(token))sessionStorage.setItem('finance-signup-token',token);let batchMode=false,session=resume?.session||null,studentId=resume?.studentId||null,lineReady=false,activeSignupStep=1,reviewDisplayName='';const lookup=document.getElementById('student-lookup'),line=document.getElementById('registration-line');const lineOaHref=/^https:\/\/(lin\.ee|line\.me)\//.test(cfg.lineOaUrl||'')?cfg.lineOaUrl:'https://lin.ee/rpHtjnI';history.replaceState(null,'',location.pathname+location.search);document.getElementById('register-support').href=lineOaHref;
 async function request(action,data={}){const r=await fetch(cfg.supabaseUrl+'/functions/v1/account-access',{method:'POST',headers:{apikey:cfg.supabaseAnonKey,'Content-Type':'application/json'},body:JSON.stringify({action,token,...data})});const j=await r.json();if(!r.ok)throw Error(j.error||'ดำเนินการไม่สำเร็จ');return j}
 function step(n){activeSignupStep=n;document.querySelectorAll('[data-signup-step]').forEach(el=>{const k=Number(el.dataset.signupStep);el.classList.toggle('is-current',k===n);el.classList.toggle('is-done',k<n);if(k===n)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current')});const back=document.querySelector('.signup-back'),footer=document.querySelector('.signup-footer-actions'),isBack=n>=2&&n<5;if(back){const label=back.querySelector('span');if(label)label.textContent=isBack?'กลับ':'กลับเข้าสู่ระบบ';back.dataset.action=isBack?'back':'login';back.setAttribute('aria-label',isBack?'กลับไปขั้นตอนก่อนหน้า':'กลับเข้าสู่ระบบ')}if(footer)footer.hidden=n===5}
-async function resetBatchSession(discard=false){if(!batchMode||!session||!studentId)return null;const result=await request('batch-reset-line',{student_id:studentId,session,discard});if(discard)return result;if(typeof result.session!=='string'||!/^[0-9a-f]{64}$/.test(result.session)||typeof result.code!=='string'||!result.code)throw Error('รีเซ็ตข้อมูล LINE ไม่สำเร็จ กรุณาลองอีกครั้ง');session=result.session;resume={...(resume||{}),token,session,studentId,code:result.code,createdAt:Date.now(),reviewConfirmed:true,lineVerified:false};sessionStorage.setItem('finance-signup-resume',JSON.stringify(resume));localStorage.setItem('finance-signup-resume',JSON.stringify(resume));document.getElementById('registration-code').textContent='สมัคร '+result.code;document.getElementById('registration-line-link').href=lineOaHref;return result}
+async function resetBatchSession(discard=false,reviewConfirmed=true){if(!batchMode||!session||!studentId)return null;const result=await request('batch-reset-line',{student_id:studentId,session,discard});if(discard)return result;if(typeof result.session!=='string'||!/^[0-9a-f]{64}$/.test(result.session)||typeof result.code!=='string'||!result.code)throw Error('รีเซ็ตข้อมูล LINE ไม่สำเร็จ กรุณาลองอีกครั้ง');session=result.session;resume={...(resume||{}),token,session,studentId,code:result.code,createdAt:Date.now(),reviewConfirmed,lineVerified:false};sessionStorage.setItem('finance-signup-resume',JSON.stringify(resume));localStorage.setItem('finance-signup-resume',JSON.stringify(resume));document.getElementById('registration-code').textContent='สมัคร '+result.code;document.getElementById('registration-line-link').href=lineOaHref;return result}
 const review=document.getElementById('registration-review');
 function showReview(name){
  lookup.hidden=true;line.hidden=true;form.hidden=true;review.hidden=false;step(2);
@@ -34,7 +34,17 @@ document.querySelector('.signup-back').addEventListener('click',async e=>{
   if(batchMode){document.getElementById('registration-back').click();return}
   location.assign('./');return;
  }
- if(activeSignupStep===3){showReview(reviewDisplayName);return}
+ if(activeSignupStep===3){
+  if(batchMode){
+   const back=e.currentTarget;if(back.dataset.busy==='true')return;back.dataset.busy='true';back.setAttribute('aria-disabled','true');
+   status.textContent='กำลังล้างข้อมูล LINE เดิม…';
+   try{const reset=await resetBatchSession(false,false);if(!reset)throw Error('ไม่พบเซสชันสมัครสมาชิก กรุณาเริ่มใหม่');showReview(reviewDisplayName)}
+   catch(error){status.textContent=error.message}
+   finally{delete back.dataset.busy;back.removeAttribute('aria-disabled')}
+   return;
+  }
+  showReview(reviewDisplayName);return;
+ }
  if(activeSignupStep===4){
   if(batchMode){
    const back=e.currentTarget;if(back.dataset.busy==='true')return;back.dataset.busy='true';back.setAttribute('aria-disabled','true');

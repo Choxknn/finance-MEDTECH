@@ -1135,3 +1135,11 @@ html body .material-shell > .workspace > main > .meddy-hero {
     transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease !important;
   }
 }
+
+
+/* Finance category navigation: keep the inline return button for larger screens only. */
+@media (max-width: 720px) {
+  html body .layout[data-clay-view="fund-category"] .page-head [data-view="fund"] {
+    display: none !important;
+  }
+}

@@ -25,8 +25,8 @@ function clayIsMainMenuView(layout) {
     .some(button => button.dataset.view === view));
 }
 function clayNavigateBack() {
-  // No navigation history: return to the app's main page.
-  nav('dashboard');
+  // The finance category ledger returns to the finance overview.
+  nav(view === 'fund-category' ? 'fund' : 'dashboard');
 }
 document.addEventListener('click', event => {
   const button = event.target.closest('[data-topbar-back]');
@@ -55,9 +55,14 @@ function applyClayPresentation() {
     backButton.classList.add('topbar-back');
     backButton.removeAttribute('data-action');
     backButton.dataset.topbarBack = 'true';
-    backButton.setAttribute('aria-label', 'ย้อนกลับ');
-    backButton.title = 'ย้อนกลับ';
-    backButton.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>';
+    const isFinanceCategory = view === 'fund-category';
+    const isMobileBack = window.matchMedia('(max-width: 720px)').matches;
+    const showHomeIcon = isMobileBack && !isFinanceCategory;
+    backButton.setAttribute('aria-label', isFinanceCategory ? 'กลับหน้าการเงิน' : 'กลับหน้าหลัก');
+    backButton.title = isFinanceCategory ? 'กลับหน้าการเงิน' : 'กลับหน้าหลัก';
+    backButton.innerHTML = showHomeIcon
+      ? '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7"></path><path d="M5 9v11h14V9"></path><path d="M9 20v-6h6v6"></path></svg>'
+      : '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>';
   }
   const homeBrand = topbar.querySelector('.mobile-brand');
   if (homeBrand) {

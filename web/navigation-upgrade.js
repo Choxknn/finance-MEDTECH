@@ -65,6 +65,20 @@ const upgradeRender=render;render=function(){const active=document.activeElement
 const upgradeNav=nav;nav=function(v){upgradeNav(v);window.scrollTo({top:0,left:0,behavior:'instant'});document.querySelector('.workspace')?.scrollTo({top:0,left:0,behavior:'instant'})};
 document.addEventListener('input',e=>{if(e.target.id==='admin-global-search')updateAdminSearch()});
 document.addEventListener('click',e=>{if(e.target.closest('[data-search-more]')){adminSearchLimit+=40;updateAdminSearch(false);return}if(e.target.closest('[data-search-retry]')){loadAdminSearchExtras(true);return}const b=e.target.closest('[data-search-result]');if(b&&user?.role==='admin'){const row=adminSearchRows[Number(b.dataset.searchResult)];document.getElementById('admin-search-results').hidden=true;document.getElementById('admin-global-search').setAttribute('aria-expanded','false');Promise.resolve().then(()=>row?.open()).catch(err=>toast(err.message||'เปิดรายการไม่สำเร็จ'));return}if(!e.target.closest('.admin-search')){const list=document.getElementById('admin-search-results');if(list)list.hidden=true;document.getElementById('admin-global-search')?.setAttribute('aria-expanded','false')}});
+// Mobile admin search: tapping the compact search capsule focuses the real input.
+document.addEventListener('click',e=>{
+ const field=e.target.closest('.admin-search-field');
+ if(field&&user?.role==='admin'&&window.matchMedia('(max-width:720px)').matches){
+  if(e.target.closest('.admin-camera-button'))return;
+  const input=field.querySelector('#admin-global-search');
+  if(input&&e.target!==input)input.focus({preventScroll:true});
+  return;
+ }
+ if(user?.role==='admin'&&window.matchMedia('(max-width:720px)').matches&&!e.target.closest('.admin-search')){
+  const input=document.getElementById('admin-global-search');
+  if(input&&document.activeElement===input)input.blur();
+ }
+});
 document.addEventListener('keydown',e=>{if(!e.target.closest('.admin-search'))return;const input=document.getElementById('admin-global-search'),list=document.getElementById('admin-search-results');if(e.key==='Escape'){list.hidden=true;input.setAttribute('aria-expanded','false');input.focus()}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(list.hidden)updateAdminSearch();const buttons=[...list.querySelectorAll('button')],i=buttons.indexOf(document.activeElement),next=e.key==='ArrowDown'?i+1:i-1;buttons[(next+buttons.length)%buttons.length]?.focus()}else if(e.key==='Enter'&&e.target===input&&!list.hidden){e.preventDefault();list.querySelector('button')?.click()}});
 let meddyPose=0;
 document.addEventListener('click',e=>{if(!e.target.closest('[data-meddy-wave]'))return;const hero=document.querySelector('.meddy-hero');if(hero)hero.dataset.pose=String(++meddyPose%3)});

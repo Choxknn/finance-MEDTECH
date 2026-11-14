@@ -12,5 +12,5 @@ function animateMeddyWords(bubble,force=false){
  function tick(now){if(!target.isConnected)return;if(start===undefined)start=now;const count=Math.min(parts.length,1+Math.floor((now-start)/delay));if(count!==last){visual.textContent=parts.slice(0,count).join('');last=count}if(count<parts.length)meddySpeechFrames.set(bubble,requestAnimationFrame(tick));else{meddySpeechFrames.delete(bubble);if(action){action.hidden=false;action.classList.add('meddy-action-ready')}}}
  meddySpeechFrames.set(bubble,requestAnimationFrame(tick));
 }
-const finishingRender=render;render=function(){finishingRender();if(view!=='dashboard'||!user){meddySpokenKey='';return}animateMeddyWords(document.querySelector('.meddy-bubble'))};
+const finishingRender=render;render=function(){finishingRender();if(view!=='dashboard'||!user)return;animateMeddyWords(document.querySelector('.meddy-bubble'))};
 if(user)render();

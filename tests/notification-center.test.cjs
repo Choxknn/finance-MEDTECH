@@ -20,11 +20,13 @@ const run=s=>vm.runInContext(s,ctx),tick=()=>new Promise(resolve=>setImmediate(r
  assert.ok(run("db.notifications.find(n=>n.id==='"+noticeId+"').seen_at"),'scrolling an unread notification into view marks it read');
  assert.ok(!notificationCard.classList.contains('is-unread'),'read notification loses unread styling without redrawing the page');
  assert.equal(run("db.announcements.find(n=>n.id==='"+announcementId+"').seen_at"),null,'an item outside the visible threshold stays unread');
- const allButton=w.document.querySelector('[data-mark-all-notices]');assert.ok(allButton,'notifications page has a mark-all button');
+ const allButton=w.document.querySelector('[data-mark-all-notices]');assert.ok(allButton,'member notifications page has a mark-all button');assert.ok(allButton.closest('.panel-head'),'mark-all button is in the notification panel header');assert.equal(allButton.closest('.page-head'),null,'mark-all button is not placed in the page-level header');
  allButton.click();await tick();
  assert.ok(run("db.announcements.find(n=>n.id==='"+announcementId+"').seen_at"),'mark all marks announcements as read');
  assert.ok(run("db.charge_notice_states.find(n=>n.charge_id==='"+chargeId+"').seen_at"),'mark all marks unpaid charge notices as read');
  assert.equal(run('noticeList().filter(n=>!n.seen_at).length'),0,'mark all clears the unread count for all notice types');
  assert.equal(allButton.disabled,true,'mark-all button is disabled when nothing remains unread');
- console.log('Notification auto-read visibility and mark-all-read behavior passed');
+ run("demoLogin('admin');nav('notifications')");
+ assert.equal(w.document.querySelector('[data-mark-all-notices]'),null,'admin notifications page does not show the mark-all button');
+ console.log('Notification auto-read visibility, member-only mark-all and admin hide behavior passed');
 })().catch(error=>{console.error(error);process.exitCode=1}).finally(()=>setImmediate(()=>w.close()));

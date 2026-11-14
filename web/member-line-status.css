@@ -12,3 +12,15 @@
 .member-status--error{background:#fff1d9;color:#95610e}
 .member-status--pending,.member-status--muted{background:#eef1f4;color:#5f6e7b}
 @media(max-width:700px){.member-identity{min-width:160px}.member-line-state{align-items:flex-start}.member-line-linked,.member-status{font-size:.72rem}}
+
+@media(max-width:760px){
+ .member-identity{width:100%;min-width:0}
+ .member-identity-meta{width:100%;gap:7px}
+ .member-line-state{display:flex;flex-direction:column;align-items:flex-start;gap:7px;width:100%}
+ .member-line-linked,.member-status{box-sizing:border-box;min-height:29px;max-width:100%;width:max-content;padding:4px 10px;border:1px solid;border-radius:9px;font-size:.75rem;line-height:1.4;box-shadow:0 1px 2px rgba(50,35,45,.04)}
+ .member-line-linked{border-color:#b8d9c9}
+ .member-status--added{border-color:#b7dcbf}
+ .member-status--not-friend{border-color:#efb9b9}
+ .member-status--error{border-color:#e9ca91}
+ .member-status--pending,.member-status--muted{border-color:#d4dbe1}
+}

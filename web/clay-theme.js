@@ -1,4 +1,5 @@
 'use strict';
+icons.bill='<path d="M6 3h9l4 4v14H6Z"/><path d="M14 3v5h5M9 12h7M9 16h5"/>';
 // Presentation only: reuse the existing data, permissions and action handlers.
 const clayWallet = () => `<div class="clay-sculpture" aria-hidden="true"><div class="clay-coin">฿</div><div class="clay-wallet"><i></i></div><div class="clay-coin clay-coin-small">฿</div><span class="clay-spark">✦</span></div>`;
 const clayOpenBills = new Set();
@@ -95,8 +96,8 @@ function applyClayPresentation() {
   });
   if (!layout.querySelector('.clay-dock')) {
     const items = user.role==='admin'
-      ? [['dashboard','home','ภาพรวม'],['rounds','wallet','รายการบิล'],['review','check','ตรวจสอบ'],['fund','wallet','กองกลาง']]
-      : [['dashboard','home','หน้าหลัก'],['bills','wallet','รายการบิล'],['history','history','ประวัติ'],['fund','wallet','กองกลาง']];
+      ? [['dashboard','home','ภาพรวม'],['rounds','bill','รายการบิล'],['review','check','ตรวจสอบ'],['fund','wallet','กองกลาง']]
+      : [['dashboard','home','หน้าหลัก'],['bills','bill','รายการบิล'],['history','history','ประวัติ'],['fund','wallet','กองกลาง']];
     layout.insertAdjacentHTML('beforeend', `<nav class="clay-dock" aria-label="เมนูด่วน">${items.map(([v,i,label])=>`<button type="button" data-view="${v}" class="${view===v?'active':''}" ${view===v?'aria-current="page"':''}>${icon(i)}<span>${label}</span></button>`).join('')}<button type="button" data-action="menu" aria-label="เปิดเมนูทั้งหมด">${icon('menu')}<span>เมนู</span></button></nav>`);
   }
   // Re-evaluate after the dock exists; this also runs on every later render.

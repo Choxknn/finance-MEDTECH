@@ -771,3 +771,16 @@
     z-index:40 !important;
   }
 }
+
+/* Keep the bottom frosted blur strictly within the navigation capsule height. */
+@media (max-width:720px) {
+  html body::after {
+    bottom:max(12px, env(safe-area-inset-bottom, 0px)) !important;
+    height:54px !important;
+    background:rgba(255,253,255,.30) !important;
+    -webkit-backdrop-filter:blur(18px) saturate(1.28) !important;
+    backdrop-filter:blur(18px) saturate(1.28) !important;
+    -webkit-mask-image:none !important;
+    mask-image:none !important;
+  }
+}

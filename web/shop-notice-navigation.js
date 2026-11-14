@@ -63,7 +63,7 @@
  }
  const oldRow=noticeRow;noticeRow=function(n){const html=oldRow(n);return n.id&&n.profile_id===user?.id?html.replace('<article ',`<article data-notice-id="${esc(n.id)}" `):html};
  let mobileLastScrollY=null,mobileDownDistance=0,mobileUpDistance=0;
- let mobileLastRenderedView=null,mobileDockCompactByNavigation=false;
+ let mobileLastRenderedView=null,mobileDockCompactByNavigation=false,mobileRenderUnlock=0;
  function setMobileDockCompact(layout,compact){
   layout?.classList.toggle('mobile-page-scrolled',compact);
   document.getElementById('app')?.classList.toggle('mobile-dock-compact',compact);
@@ -76,6 +76,10 @@
   const small=window.matchMedia('(max-width:720px)').matches;
   const beforeRoot=document.scrollingElement||document.documentElement;
   const beforeY=Math.max(Number(window.scrollY)||0,Number(beforeRoot?.scrollTop)||0);
+  // The dock node is recreated by the page renderer. Disable dock transitions
+  // for that render frame so its measured width/position cannot animate sideways.
+  const renderUnlock=++mobileRenderUnlock;
+  app?.classList.add('mobile-dock-route-change');
   // Seed the persistent #app marker before innerHTML is replaced, so the new dock
   // is compact on its first painted frame instead of flashing at expanded width.
   app?.classList.toggle('mobile-dock-compact',small&&(wasDockCompact||(firstRender&&beforeY>56)));
@@ -108,6 +112,9 @@
   }else{
    updateMobileHeaderScroll(true);updateMobileDockVisibility();
   }
+  window.requestAnimationFrame(()=>{
+   if(renderUnlock===mobileRenderUnlock)app?.classList.remove('mobile-dock-route-change');
+  });
  };
  function updateMobileHeaderScroll(reset=false){
   const layout=document.querySelector('.layout');if(!layout)return;

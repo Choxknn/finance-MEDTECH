@@ -29,7 +29,11 @@ function showRecordWindow(button){
  const cells=[...row.cells].map(cell=>{
   const copy=cell.cloneNode(true);copy.querySelectorAll('.record-disclosure,.detail-cell-label').forEach(el=>el.remove());
   copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
-  copy.querySelectorAll('.record-original-content,.record-original-title').forEach(el=>el.replaceWith(...el.childNodes));
+  copy.querySelectorAll('.record-original-content').forEach(el=>el.replaceWith(...el.childNodes));
+  copy.querySelectorAll('.record-original-title').forEach(el=>{
+   if(el.matches('.member-name-row'))el.classList.remove('record-original-title');
+   else el.replaceWith(...el.childNodes);
+  });
   const memberCopy=copy.querySelector('.member-list-identity');
   if(memberCopy){
    memberCopy.querySelectorAll('.member-name-row>.member-meta-icon,.member-student-id>.member-meta-icon').forEach(el=>el.remove());

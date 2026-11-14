@@ -1358,3 +1358,78 @@
       padding .68s cubic-bezier(.22,.72,.22,1) !important;
   }
 }
+
+
+/* Final scroll-collapse motion: every part of the mobile dock eases together
+   after the compact state changes, independent of how quickly the page scrolls. */
+@media (max-width:720px) {
+  html body #app .layout .clay-dock,
+  html body #app.mobile-dock-compact .layout .clay-dock {
+    transition:
+      left .88s cubic-bezier(.16,1,.3,1),
+      right .88s cubic-bezier(.16,1,.3,1),
+      width .92s cubic-bezier(.16,1,.3,1),
+      height .86s cubic-bezier(.16,1,.3,1),
+      min-height .86s cubic-bezier(.16,1,.3,1),
+      max-height .86s cubic-bezier(.16,1,.3,1),
+      padding .86s cubic-bezier(.16,1,.3,1),
+      gap .86s cubic-bezier(.16,1,.3,1),
+      opacity .3s ease,
+      visibility .3s ease !important;
+  }
+
+  html body #app .layout .clay-dock > button,
+  html body #app.mobile-dock-compact .layout .clay-dock > button,
+  html body #app .layout .clay-dock > button.active,
+  html body #app.mobile-dock-compact .layout .clay-dock > button.active {
+    transition:
+      flex-basis .88s cubic-bezier(.16,1,.3,1),
+      width .88s cubic-bezier(.16,1,.3,1),
+      min-width .88s cubic-bezier(.16,1,.3,1),
+      max-width .88s cubic-bezier(.16,1,.3,1),
+      height .86s cubic-bezier(.16,1,.3,1),
+      min-height .86s cubic-bezier(.16,1,.3,1),
+      max-height .86s cubic-bezier(.16,1,.3,1),
+      padding .86s cubic-bezier(.16,1,.3,1),
+      gap .86s cubic-bezier(.16,1,.3,1),
+      border-radius .62s cubic-bezier(.16,1,.3,1),
+      background-color .28s ease,
+      box-shadow .28s ease !important;
+  }
+
+  html body #app .layout .clay-dock > button > svg,
+  html body #app.mobile-dock-compact .layout .clay-dock > button > svg {
+    transition:
+      width .82s cubic-bezier(.16,1,.3,1),
+      height .82s cubic-bezier(.16,1,.3,1),
+      flex-basis .82s cubic-bezier(.16,1,.3,1),
+      padding .82s cubic-bezier(.16,1,.3,1),
+      margin .82s cubic-bezier(.16,1,.3,1) !important;
+  }
+
+  html body #app .layout .clay-dock > button > span,
+  html body #app.mobile-dock-compact .layout .clay-dock > button > span {
+    transition:
+      width .82s cubic-bezier(.16,1,.3,1),
+      max-width .82s cubic-bezier(.16,1,.3,1),
+      max-height .82s cubic-bezier(.16,1,.3,1),
+      font-size .82s cubic-bezier(.16,1,.3,1),
+      line-height .82s cubic-bezier(.16,1,.3,1),
+      opacity .48s ease,
+      transform .82s cubic-bezier(.16,1,.3,1),
+      visibility 0s linear .82s !important;
+  }
+
+  html body #app.mobile-dock-compact .layout .clay-dock > button > span {
+    visibility:hidden !important;
+    transition:
+      width .82s cubic-bezier(.16,1,.3,1),
+      max-width .82s cubic-bezier(.16,1,.3,1),
+      max-height .82s cubic-bezier(.16,1,.3,1),
+      font-size .82s cubic-bezier(.16,1,.3,1),
+      line-height .82s cubic-bezier(.16,1,.3,1),
+      opacity .48s ease,
+      transform .82s cubic-bezier(.16,1,.3,1),
+      visibility 0s linear .82s !important;
+  }
+}

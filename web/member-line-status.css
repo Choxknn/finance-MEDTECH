@@ -68,3 +68,14 @@
  .member-record-summary .member-line-state{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center;gap:6px;width:max-content;max-width:100%}
  .member-record-summary .member-line-linked,.member-record-summary .member-status{display:inline-flex!important;flex:0 0 auto;align-items:center;white-space:nowrap!important;min-height:27px;padding:4px 8px;font-size:.69rem}
 }
+
+/* Modal details: plain name and ID values, with LINE status chips kept in a row. */
+.reading-record .member-window-identity{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0}
+.reading-record .member-window-identity .member-name-row{display:block;width:100%;min-width:0}
+.reading-record .member-window-identity .member-name-row .member-meta-icon,
+.reading-record .member-window-identity .member-student-id .member-meta-icon{display:none!important}
+.reading-record .member-window-identity .member-name{display:block;min-width:0;white-space:normal;overflow-wrap:anywhere}
+.reading-record .member-window-identity .member-identity-meta{width:100%;padding:0;gap:8px}
+.reading-record .member-window-identity .member-student-id{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.reading-record .member-window-identity .member-line-status-wrap{display:block!important;width:100%}
+.reading-record .member-window-identity .member-line-state{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:center;gap:6px}

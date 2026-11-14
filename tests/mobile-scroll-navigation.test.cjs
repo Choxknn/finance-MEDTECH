@@ -48,7 +48,8 @@ assert.equal(getDock().style.getPropertyValue('--mobile-dock-expanded-width'),'4
 assert.ok(getLayout().querySelector('.mobile-topbar-menu'),'admin mobile menu remains available in the header');
 setScroll(90);
 assert.ok(getLayout().classList.contains('mobile-page-scrolled'),'dock is compact before changing page');
-resetScrollOnRender=true;w.view='members';w.render();
+resetScrollOnRender=true;w.view='members';assert.doesNotThrow(()=>w.render(),'changing pages must not throw from the navigation render wrapper');
+assert.equal(w.view,'members','navigation updates the active page');
 assert.equal(getLayout().dataset.compactAtInsertion,'yes','persistent app marker is set before the new dock is inserted');
 assert.equal(getLayout().dataset.routeLockAtInsertion,'yes','dock transitions are disabled before the new dock is inserted');
 assert.ok(app.classList.contains('mobile-dock-compact'),'persistent app root retains compact state across page navigation');

@@ -10,3 +10,22 @@ test('mascot action lives inside speech and survives continuous text animation',
  assert.equal(action.hidden,false);assert.equal(d.querySelector('[data-meddy-go]'),action);assert.equal(d.querySelector('.meddy-spoken-text').textContent,'มีสลิปที่ต้องแก้ไขนะ เข้าไปดูเหตุผลและส่งหลักฐานใหม่ได้เลย');assert.equal(d.querySelector('.meddy-spoken-text').children.length,0);assert.equal(d.querySelectorAll('.meddy-link').length,1);
  }finally{w.close()}
 });
+
+
+test('changing pages does not replay the mascot speech typing animation',()=>{
+ const dom=new JSDOM('<body></body>',{runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,d=w.document;
+ try{
+  w.user={id:'student',role:'member'};w.view='dashboard';w.matchMedia=()=>({matches:false});
+  w.render=()=>{};const frames=[];w.requestAnimationFrame=fn=>(frames.push(fn),frames.length);w.cancelAnimationFrame=()=>{};
+  const bubble='<div class="meddy-bubble"><span class="meddy-speech-text">ข้อความเดิมของน้องเม็ดเลือด</span><button data-meddy-go>ดูบิล</button></div>';
+  d.body.innerHTML=bubble;
+  w.eval(fs.readFileSync('web/finishing-polish.js','utf8'));
+  let clock=0;while(frames.length&&clock<10000){const frame=frames.shift();frame(clock);clock+=100}
+  assert.equal(d.querySelector('.meddy-spoken-text').textContent,'ข้อความเดิมของน้องเม็ดเลือด');
+  w.view='profile';w.render();
+  d.body.innerHTML=bubble;
+  w.view='dashboard';w.render();
+  assert.equal(frames.length,0,'returning to dashboard with unchanged speech should not schedule typing frames');
+  assert.equal(d.querySelector('.meddy-speech-text').textContent,'ข้อความเดิมของน้องเม็ดเลือด');
+ }finally{w.close()}
+});

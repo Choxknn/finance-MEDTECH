@@ -1,5 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom');
 const root=require('node:path').resolve(__dirname,'..');
+(async()=>{
 const dom=new JSDOM('<div id="app"><div class="layout"><div class="mobile-scrim"></div><aside class="sidebar"><nav class="nav"></nav></aside><div class="workspace"><header class="topbar"><button class="topbar-back">back</button><div class="user"></div></header><main></main></div><nav class="clay-dock" aria-label="เมนูด่วน"><button data-view="dashboard"><svg></svg><span>หน้าหลัก</span></button><button data-view="bills"><svg></svg><span>บิล</span></button><button data-view="history"><svg></svg><span>ประวัติ</span></button><button data-view="fund"><svg></svg><span>การเงิน</span></button></nav></div></div>',{url:'https://example.test',runScripts:'outside-only',pretendToBeVisual:true});
 const w=dom.window,ctx=dom.getInternalVMContext(),layout=w.document.querySelector('.layout');
 let y=0;
@@ -22,6 +23,10 @@ setScroll(66);
 assert.ok(!layout.classList.contains('mobile-header-hidden'),'header slides back while scrolling up');
 setScroll(92);
 assert.ok(layout.classList.contains('mobile-header-hidden'),'header hides again on the next downward scroll');
+assert.ok(layout.classList.contains('mobile-page-scrolled'),'dock folds while scrolling down');
+setScroll(80);
+assert.ok(!layout.classList.contains('mobile-header-hidden'),'header returns while scrolling up before reaching the top');
+assert.ok(!layout.classList.contains('mobile-page-scrolled'),'dock expands while scrolling up before reaching the top');
 setScroll(0);
 assert.ok(!layout.classList.contains('mobile-header-hidden'),'header is always visible at the top');
 assert.ok(!layout.classList.contains('mobile-page-scrolled'),'dock returns to its expanded state at the top');
@@ -31,6 +36,12 @@ assert.ok(layout.classList.contains('mobile-dock-hidden'),'main dock keeps its e
 w.view='dashboard';w.user.role='admin';w.render();
 assert.ok(dock.querySelector('.mobile-dock-store-entry'),'admin also gets the store inside the dock when sale items exist');
 assert.ok(w.document.querySelector('.mobile-topbar-menu'),'admin mobile menu remains available in the header');
+setScroll(90);
+assert.ok(layout.classList.contains('mobile-page-scrolled'),'dock is compact before changing page');
+w.view='members';w.render();
+assert.ok(layout.classList.contains('mobile-page-scrolled'),'new page starts from the compact dock state for its expansion transition');
+await new Promise(resolve=>w.requestAnimationFrame(resolve));
+assert.ok(!layout.classList.contains('mobile-page-scrolled'),'dock expands after a menu navigation frame');
 const css=fs.readFileSync(root+'/web/shop-notice-navigation.css','utf8');
 assert.match(css,/mobile-header-hidden[^}]*topbar/s,'mobile header has an animated hidden state');
 assert.match(css,/mobile-page-scrolled \.clay-dock[\s\S]*?left:50%[\s\S]*?translate3d\(-50%,0,0\)/,'scrolled dock folds into the center');
@@ -38,5 +49,7 @@ assert.match(css,/mobile-dock-store-entry/,'the store button has compact-dock st
 assert.match(css,/mobile-page-scrolled \\.clay-dock > button > span[\\s\\S]*?visibility:hidden/s,'all labels including the store label disappear when the dock is folded');
 assert.match(css,/transition:transform \\.58s cubic-bezier/,'mobile header slide animation is slower');
 assert.match(css,/transform \\.58s cubic-bezier/,'mobile dock fold animation is slower');
-console.log('Mobile header direction, slower icon-only centered dock, and dock-store behavior passed');
+assert.match(css,/flex-grow \\.52s cubic-bezier/,'dock items smoothly grow back when expanding');
+console.log('Mobile header direction, upward dock expansion, route-change animation, and store behavior passed');
 w.close();
+})().catch(error=>{console.error(error);process.exitCode=1});

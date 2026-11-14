@@ -893,24 +893,42 @@
 }
 
 
-/* Restore the earlier white capsule with a neutral-grey active capsule and a
-   separate red circular action. Keep scroll folding smooth and centered. */
+
+
+/* Stable mobile capsule geometry: the dock stays on one center anchor.
+   Only its width and inner content animate, eliminating the sideways bounce. */
 @media (max-width:720px) {
-  html body .layout .clay-dock,
-  html body .layout.mobile-page-scrolled .clay-dock {
+  html body #app .layout .clay-dock {
+    position:fixed !important;
+    top:auto !important;
+    left:50% !important;
+    right:auto !important;
+    bottom:max(12px,env(safe-area-inset-bottom,0px)) !important;
+    width:var(--mobile-dock-expanded-width,calc(100vw - 24px)) !important;
+    max-width:calc(100vw - 24px) !important;
+    height:54px !important;
+    min-height:54px !important;
+    max-height:54px !important;
+    box-sizing:border-box !important;
+    transform:translate3d(-50%,0,0) !important;
     transition:
-      width .58s cubic-bezier(.22,.72,.22,1),
-      left .58s cubic-bezier(.22,.72,.22,1),
-      right .58s cubic-bezier(.22,.72,.22,1),
+      width .52s cubic-bezier(.22,.72,.22,1),
       height .48s cubic-bezier(.22,.72,.22,1),
       padding .48s cubic-bezier(.22,.72,.22,1),
-      transform .48s cubic-bezier(.22,.72,.22,1),
-      opacity .24s ease,
-      visibility .24s ease !important;
-    will-change: width, left, right, height !important;
+      opacity .22s ease,
+      visibility .22s ease !important;
+    will-change:width !important;
   }
 
-  #app.mobile-dock-compact .layout .clay-dock {
+  /* When the detached red action exists, reserve its space in BOTH states. */
+  html body #app .layout.mobile-has-fab .clay-dock {
+    left:calc(50% - 35px) !important;
+    right:auto !important;
+    max-width:calc(100vw - 94px) !important;
+  }
+
+  /* Compact and expanded states share the same anchor and transform. */
+  html body #app.mobile-dock-compact .layout .clay-dock {
     left:50% !important;
     right:auto !important;
     width:var(--mobile-dock-compact-width,244px) !important;
@@ -924,13 +942,52 @@
     transform:translate3d(-50%,0,0) !important;
   }
 
-  #app.mobile-dock-compact .layout.mobile-has-fab .clay-dock {
+  html body #app.mobile-dock-compact .layout.mobile-has-fab .clay-dock {
     left:calc(50% - 35px) !important;
+    right:auto !important;
     max-width:calc(100vw - 94px) !important;
   }
 
-  #app.mobile-dock-compact .layout .clay-dock > button,
-  #app.mobile-dock-compact .layout .clay-dock > button.active {
+  html body #app .layout .clay-dock > button,
+  html body #app.mobile-dock-compact .layout .clay-dock > button {
+    transition:
+      flex-basis .48s cubic-bezier(.22,.72,.22,1),
+      width .48s cubic-bezier(.22,.72,.22,1),
+      min-width .48s cubic-bezier(.22,.72,.22,1),
+      max-width .48s cubic-bezier(.22,.72,.22,1),
+      height .48s cubic-bezier(.22,.72,.22,1),
+      padding .48s cubic-bezier(.22,.72,.22,1),
+      gap .48s cubic-bezier(.22,.72,.22,1),
+      background-color .24s ease !important;
+  }
+
+  html body #app .layout .clay-dock > button > svg {
+    transition:
+      width .48s cubic-bezier(.22,.72,.22,1),
+      height .48s cubic-bezier(.22,.72,.22,1),
+      flex-basis .48s cubic-bezier(.22,.72,.22,1),
+      padding .48s cubic-bezier(.22,.72,.22,1) !important;
+  }
+
+  html body #app .layout .clay-dock > button > span {
+    width:100% !important;
+    max-width:72px !important;
+    max-height:14px !important;
+    overflow:hidden !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:translateY(0) !important;
+    transition:
+      width .44s cubic-bezier(.22,.72,.22,1),
+      max-width .44s cubic-bezier(.22,.72,.22,1),
+      max-height .44s cubic-bezier(.22,.72,.22,1),
+      opacity .28s ease,
+      transform .44s cubic-bezier(.22,.72,.22,1),
+      visibility 0s linear 0s !important;
+  }
+
+  html body #app.mobile-dock-compact .layout .clay-dock > button,
+  html body #app.mobile-dock-compact .layout .clay-dock > button.active {
     flex:1 1 48px !important;
     width:48px !important;
     min-width:48px !important;
@@ -943,19 +1000,14 @@
     border-radius:999px !important;
   }
 
-  #app.mobile-dock-compact .layout .clay-dock > button > svg {
+  html body #app.mobile-dock-compact .layout .clay-dock > button > svg {
     flex:0 0 23px !important;
     width:23px !important;
     height:23px !important;
     padding:2px !important;
-    transition:width .48s cubic-bezier(.22,.72,.22,1),
-      height .48s cubic-bezier(.22,.72,.22,1),
-      flex-basis .48s cubic-bezier(.22,.72,.22,1),
-      padding .48s cubic-bezier(.22,.72,.22,1) !important;
   }
 
-  #app.mobile-dock-compact .layout .clay-dock > button > span {
-    flex:0 0 0 !important;
+  html body #app.mobile-dock-compact .layout .clay-dock > button > span {
     width:0 !important;
     max-width:0 !important;
     max-height:0 !important;
@@ -967,13 +1019,15 @@
     line-height:0 !important;
     transform:translateY(3px) !important;
     transition:
-      max-height .42s cubic-bezier(.22,.72,.22,1),
+      width .44s cubic-bezier(.22,.72,.22,1),
+      max-width .44s cubic-bezier(.22,.72,.22,1),
+      max-height .44s cubic-bezier(.22,.72,.22,1),
       opacity .28s ease,
-      transform .42s cubic-bezier(.22,.72,.22,1),
-      visibility 0s linear .42s !important;
+      transform .44s cubic-bezier(.22,.72,.22,1),
+      visibility 0s linear .44s !important;
   }
 
-  #app.mobile-dock-compact .layout .clay-dock > button.active {
+  html body #app.mobile-dock-compact .layout .clay-dock > button.active {
     border:0 !important;
     outline:0 !important;
     border-radius:999px !important;
@@ -985,7 +1039,7 @@
 
   .layout > .workspace > .topbar {
     transition:transform .52s cubic-bezier(.22,.72,.22,1),
-      opacity .32s ease, visibility .32s ease !important;
+      opacity .32s ease,visibility .32s ease !important;
     will-change:transform,opacity;
   }
 
@@ -998,8 +1052,8 @@
 }
 
 @media (max-width:360px) {
-  #app.mobile-dock-compact .layout .clay-dock > button,
-  #app.mobile-dock-compact .layout .clay-dock > button.active {
+  html body #app.mobile-dock-compact .layout .clay-dock > button,
+  html body #app.mobile-dock-compact .layout .clay-dock > button.active {
     flex-basis:44px !important;
     width:44px !important;
     min-width:44px !important;
@@ -1008,10 +1062,10 @@
 }
 
 @media (prefers-reduced-motion:reduce) {
-  html body .layout .clay-dock,
-  html body .layout .clay-dock > button,
-  html body .layout .clay-dock > button > svg,
-  html body .layout .clay-dock > button > span,
+  html body #app .layout .clay-dock,
+  html body #app .layout .clay-dock > button,
+  html body #app .layout .clay-dock > button > svg,
+  html body #app .layout .clay-dock > button > span,
   .layout > .workspace > .topbar {
     transition:none !important;
   }

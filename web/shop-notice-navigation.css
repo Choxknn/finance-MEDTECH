@@ -1295,3 +1295,66 @@
     transition:opacity .28s ease,width .68s cubic-bezier(.22,.72,.22,1),max-width .68s cubic-bezier(.22,.72,.22,1),max-height .68s cubic-bezier(.22,.72,.22,1),transform .68s cubic-bezier(.22,.72,.22,1) !important;
   }
 }
+
+
+/* Final dock motion fix:
+   Keep flex-grow/flex-shrink identical in both states. The previous compact
+   rule switched flex from 1 1 0 to 0 0 Npx (non-interpolable), which caused
+   the icons to jump toward the center before their width transition began.
+   Now the dock itself narrows continuously and every item shares that space. */
+@media (max-width:720px) {
+  html body #app .layout .clay-dock > button,
+  html body #app .layout .clay-dock > button.active,
+  html body #app.mobile-dock-compact .layout .clay-dock > button,
+  html body #app.mobile-dock-compact .layout .clay-dock > button.active {
+    flex:1 1 0 !important;
+    width:auto !important;
+    min-width:0 !important;
+    max-width:62px !important;
+    margin:0 !important;
+    transform:none !important;
+    transition:
+      height .68s cubic-bezier(.22,.72,.22,1),
+      min-height .68s cubic-bezier(.22,.72,.22,1),
+      max-height .68s cubic-bezier(.22,.72,.22,1),
+      padding .68s cubic-bezier(.22,.72,.22,1),
+      gap .68s cubic-bezier(.22,.72,.22,1),
+      border-radius .42s ease,
+      background-color .24s ease !important;
+  }
+
+  html body #app.mobile-dock-compact .layout .clay-dock > button > svg {
+    flex:0 0 22px !important;
+    width:22px !important;
+    height:22px !important;
+    padding:1px !important;
+    transition:none !important;
+  }
+
+  html body #app.mobile-dock-compact .layout .clay-dock > button > span {
+    width:0 !important;
+    max-width:0 !important;
+    max-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    transform:translateY(2px) !important;
+    transition:
+      max-height .42s ease,
+      opacity .24s ease,
+      transform .42s ease,
+      visibility 0s linear .42s !important;
+  }
+
+  html body #app.mobile-dock-compact .layout .clay-dock {
+    justify-content:space-between !important;
+    transition:
+      left .72s cubic-bezier(.22,.72,.22,1),
+      right .72s cubic-bezier(.22,.72,.22,1),
+      width .76s cubic-bezier(.22,.72,.22,1),
+      height .68s cubic-bezier(.22,.72,.22,1),
+      padding .68s cubic-bezier(.22,.72,.22,1) !important;
+  }
+}

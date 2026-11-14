@@ -1174,3 +1174,28 @@ html body .workspace > .topbar::before {
     backdrop-filter: none !important;
   }
 }
+
+
+/* Shorter, top-heavy glass fade: opaque at the top and clear at the bottom. */
+html body .workspace > .topbar::before {
+  inset: 0 0 auto !important;
+  height: 56px !important;
+  border-radius: 0 !important;
+  background: linear-gradient(
+    180deg,
+    rgba(224, 226, 230, .82) 0%,
+    rgba(224, 226, 230, .48) 52%,
+    rgba(224, 226, 230, 0) 100%
+  ) !important;
+  -webkit-backdrop-filter: blur(15px) saturate(1.08) !important;
+  backdrop-filter: blur(15px) saturate(1.08) !important;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.78) 48%, transparent 100%) !important;
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.78) 48%, transparent 100%) !important;
+}
+@media (max-width: 720px) {
+  html body .workspace > .topbar.has-admin-search::before {
+    height: 0 !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+}

@@ -53,10 +53,10 @@ assert.match(css,/mobile-page-scrolled \\.clay-dock > button > span[\\s\\S]*?vis
 assert.match(css,/transition:transform \\.58s cubic-bezier/,'mobile header slide animation is slower');
 assert.match(css,/transform \\.58s cubic-bezier/,'mobile dock fold animation is slower');
 const stableDock=css.slice(css.lastIndexOf('/* Stable, non-bouncing mobile dock collapse.'));
-assert.match(stableDock,/width:calc\\(100vw - 24px\\)/,'expanded dock has an explicit interpolable width');
-assert.match(stableDock,/width:var\\(--mobile-dock-compact-width/,'compact dock uses a measured numeric target width');
-assert.match(stableDock,/transform:translate3d\\(-50%,0,0\\)/,'dock stays centered without scale bounce');
-assert.doesNotMatch(stableDock,/width:max-content|scale\\(\\.96\\)|flex-grow/,'compact dock has no intrinsic-width jump, scale bounce, or flex-grow rebound');
+assert.ok(stableDock.includes('width:calc(100vw - 24px)'),'expanded dock has an explicit interpolable width');
+assert.ok(stableDock.includes('width:var(--mobile-dock-compact-width'),'compact dock uses a measured numeric target width');
+assert.ok(stableDock.includes('transform:translate3d(-50%,0,0)'),'dock stays centered without scale bounce');
+assert.ok(!stableDock.includes('width:max-content')&&!stableDock.includes('scale(.96)')&&!stableDock.includes('flex-grow'),'compact dock has no intrinsic-width jump, scale bounce, or flex-grow rebound');
 console.log('Mobile header direction, upward dock expansion, route-change animation, and store behavior passed');
 w.close();
 })().catch(error=>{console.error(error);process.exitCode=1});

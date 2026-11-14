@@ -16,6 +16,30 @@ function unlockModalPage(){
 const recordModal=modal;modal=function(...args){lockModalPage();try{recordModal(...args);document.getElementById('dialog').setAttribute('aria-label',String(args[0]))}catch(error){unlockModalPage();throw error}};
 document.getElementById('dialog').addEventListener('close',unlockModalPage);
 new MutationObserver(()=>{if(document.getElementById('dialog').open)lockModalPage();else unlockModalPage()}).observe(document.getElementById('dialog'),{attributes:true,attributeFilter:['open']});
+
+const sharedDialog=document.getElementById('dialog');
+function requestSharedDialogClose(){
+ if(!sharedDialog?.open)return;
+ if(typeof sharedDialog.requestClose==='function'){
+  sharedDialog.requestClose();
+  return;
+ }
+ const cancelEvent=new Event('cancel',{cancelable:true});
+ if(sharedDialog.dispatchEvent(cancelEvent))sharedDialog.close();
+}
+// Clicking the native dialog backdrop produces a click whose target is the dialog itself.
+sharedDialog.addEventListener('click',event=>{
+ if(event.target!==sharedDialog)return;
+ event.preventDefault();
+ requestSharedDialogClose();
+});
+// Keep Escape consistent on desktop, tablet and mobile, while honoring all cancel guards.
+sharedDialog.addEventListener('keydown',event=>{
+ if((event.key!=='Escape'&&event.key!=='Esc')||event.defaultPrevented||event.isComposing||event.keyCode===229)return;
+ event.preventDefault();
+ requestSharedDialogClose();
+});
+
 function recordReadingRow(label,value,name=detailIcon(label)){
  return `<div class="reading-row"><span class="reading-icon" aria-hidden="true">${icon(name)}</span><div><dt>${esc(label)}</dt><dd>${value}</dd></div></div>`;
 }

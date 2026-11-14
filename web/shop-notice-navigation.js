@@ -38,12 +38,15 @@
   }
   // Use an explicit numeric target width so the browser can interpolate the
   // capsule width smoothly instead of jumping from auto to max-content.
-  const itemCount=dock.querySelectorAll(':scope > button').length;
-  const itemWidth=window.matchMedia('(max-width:360px)').matches?44:48;
+  const itemCount=[...dock.querySelectorAll(':scope > button')].filter(button=>getComputedStyle(button).display!=='none').length;
   const hasFab=layout.classList.contains('mobile-has-fab');
   const viewportLimit=Math.max(0,window.innerWidth-(hasFab?94:24));
-  const compactWidth=itemCount*itemWidth+Math.max(0,itemCount-1)*2+16;
+  const compactGap=2,compactPadding=16;
+  const preferredItemWidth=window.matchMedia('(max-width:360px)').matches?36:40;
+  const itemWidth=Math.max(32,Math.min(preferredItemWidth,Math.floor((viewportLimit-compactPadding-Math.max(0,itemCount-1)*compactGap)/Math.max(1,itemCount))));
+  const compactWidth=itemCount*itemWidth+Math.max(0,itemCount-1)*compactGap+compactPadding;
   const expandedWidth=itemCount*62+Math.max(0,itemCount-1)*6+24;
+  dock.style.setProperty('--mobile-dock-compact-item-width',`${itemWidth}px`);
   dock.style.setProperty('--mobile-dock-compact-width',`${Math.min(compactWidth,viewportLimit)}px`);
   dock.style.setProperty('--mobile-dock-expanded-width',`${Math.min(expandedWidth,viewportLimit)}px`);
   const hasCurrentMainItem=[...dock.querySelectorAll(':scope > button[data-view]:not([data-store-entry])')].some(button=>button.dataset.view===view);
@@ -69,8 +72,6 @@
   const previousLayout=document.querySelector('.layout');
   const firstRender=mobileLastRenderedView===null;
   const wasDockCompact=!!(previousLayout?.classList.contains('mobile-page-scrolled')||app?.classList.contains('mobile-dock-compact'));
-  const viewChanged=mobileLastRenderedView!==null&&mobileLastRenderedView!==view;
-  const expandAfterNavigation=viewChanged&&wasDockCompact;
   const small=window.matchMedia('(max-width:720px)').matches;
   const beforeRoot=document.scrollingElement||document.documentElement;
   const beforeY=Math.max(Number(window.scrollY)||0,Number(beforeRoot?.scrollTop)||0);
@@ -90,7 +91,7 @@
   if(small&&layout){
    if(wasDockCompact){
     setMobileDockCompact(layout,true);
-    mobileDockCompactByNavigation=!expandAfterNavigation;
+    mobileDockCompactByNavigation=true;
     const root=document.scrollingElement||document.documentElement;
     mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
     mobileDownDistance=0;mobileUpDistance=0;

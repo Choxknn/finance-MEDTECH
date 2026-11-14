@@ -36,7 +36,17 @@
  function updateMobileDockVisibility(){
   const layout=document.querySelector('.layout'),dock=layout?.querySelector('.clay-dock');
   if(!layout||!dock)return;
-  if(!window.matchMedia('(max-width:720px)').matches){layout.classList.remove('mobile-dock-hidden');return}
+  if(!window.matchMedia('(max-width:720px)').matches){
+   layout.classList.remove('mobile-dock-hidden');
+   dock.style.removeProperty('--mobile-dock-compact-width');
+   return;
+  }
+  // Use an explicit numeric target width so the browser can interpolate the
+  // capsule width smoothly instead of jumping from auto to max-content.
+  const itemCount=dock.querySelectorAll(':scope > button').length;
+  const itemWidth=window.matchMedia('(max-width:360px)').matches?44:48;
+  const targetWidth=itemCount*itemWidth+Math.max(0,itemCount-1)*2+16;
+  dock.style.setProperty('--mobile-dock-compact-width',`${Math.min(targetWidth,Math.max(0,window.innerWidth-24))}px`);
   const hasCurrentMainItem=[...dock.querySelectorAll(':scope > button[data-view]:not([data-store-entry])')].some(button=>button.dataset.view===view);
   layout.classList.toggle('mobile-dock-hidden',!hasCurrentMainItem);
  } function checkStore(){if(!scope()||!user)return;if(shopLoaded&&shopOwner===user.id)products=shopData.products||[];paintStore()}
@@ -125,6 +135,6 @@
  }
  window.addEventListener('scroll',()=>updateMobileHeaderScroll(),{passive:true});
  document.addEventListener('scroll',()=>updateMobileHeaderScroll(),{capture:true,passive:true});
- window.addEventListener('resize',()=>updateMobileHeaderScroll(true),{passive:true});
+ window.addEventListener('resize',()=>{updateMobileHeaderScroll(true);updateMobileDockVisibility()},{passive:true});
  if(user)render();
 })();

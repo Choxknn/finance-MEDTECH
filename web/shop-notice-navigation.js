@@ -20,7 +20,7 @@
    const app=document.querySelector('#app');
    if(user.role==='admin'){
     app?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-menu-entry" data-action="menu" aria-label="เปิดเมนูทั้งหมด" title="เมนู">${icon('menu')}</button>`);
-   }else if(hasShopItems&&!view.startsWith('shop')&&view!=='profile'){
+   }else if(hasShopItems&&!view.startsWith('shop')&&view!=='profile'&&view!=='fund-category'){
     app?.insertAdjacentHTML('beforeend',`<button type="button" class="mobile-store-entry" data-store-entry data-view="shop" aria-label="เปิดร้านค้า" title="ร้านค้า">${storeIcon}</button>`);
    }
   }

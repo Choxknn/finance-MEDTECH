@@ -18,14 +18,20 @@ Deno.serve(async req=>{
    if(nId){const n=await query(db.from('notifications').select('*').eq('id',nId).single());await deliverNotification(db,n)}
    return json({message:'หากรหัสนักศึกษานี้เชื่อม LINE ไว้ ระบบจะส่งลิงก์ตั้งรหัสผ่านให้ กรุณาตรวจสอบแชต LINE OA หากไม่ได้รับข้อความหรือยังไม่เชื่อม LINE ให้ติดต่อผู้ดูแลระบบ'});
   }
-  if(!['invite-preview','invite-accept','batch-start','batch-state','batch-accept'].includes(input.action)||typeof input.token!=='string'||!/^[0-9a-f]{64}$/.test(input.token))return json({error:'ลิงก์ไม่ถูกต้อง'},400);
+  if(!['invite-preview','invite-accept','batch-start','batch-state','batch-accept','batch-reset-line'].includes(input.action)||typeof input.token!=='string'||!/^[0-9a-f]{64}$/.test(input.token))return json({error:'ลิงก์ไม่ถูกต้อง'},400);
   let tokenHash=await hash(input.token);
   if(input.action==='batch-start'){
    if(typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id))throw Error('รหัสนักศึกษาไม่ถูกต้อง');
    const session=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-',''),code=crypto.randomUUID().replaceAll('-','').slice(0,16).toUpperCase();
    const person=await query(db.rpc('start_registration_session',{p_batch_hash:tokenHash,p_student:input.student_id,p_session_hash:await hash(session),p_code_hash:await hash(code)}));return json({person,session,code});
   }
-  if(['batch-state','batch-accept'].includes(input.action)&&(typeof input.session!=='string'||!/^[0-9a-f]{64}$/.test(input.session)||typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id)))throw Error('ข้อมูลการสมัครไม่ถูกต้อง');
+  if(['batch-state','batch-accept','batch-reset-line'].includes(input.action)&&(typeof input.session!=='string'||!/^[0-9a-f]{64}$/.test(input.session)||typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id)))throw Error('ข้อมูลการสมัครไม่ถูกต้อง');
+  if(input.action==='batch-reset-line'){
+   if(typeof input.discard!=='boolean')throw Error('ข้อมูลการสมัครไม่ถูกต้อง');
+   const nextSession=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-',''),nextCode=crypto.randomUUID().replaceAll('-','').slice(0,16).toUpperCase();
+   await query(db.rpc('reset_registration_line_session',{p_session_hash:await hash(input.session),p_batch_hash:tokenHash,p_student:input.student_id,p_discard:input.discard,p_new_session_hash:input.discard?null:await hash(nextSession),p_new_code_hash:input.discard?null:await hash(nextCode)}));
+   return json(input.discard?{ok:true,discarded:true}:{ok:true,session:nextSession,code:nextCode});
+  }
   if(input.action==='batch-state')return json(await query(db.rpc('registration_session_state',{p_session_hash:await hash(input.session),p_batch_hash:tokenHash,p_student:input.student_id,p_claim:false})));
   if(input.action==='invite-preview'){
    const batch=await query(db.from('registration_batches').select('id').eq('token_hash',tokenHash).maybeSingle());if(batch){const remaining=await query(db.from('member_invites').select('id').eq('batch_id',batch.id).in('status',['pending','processing']).limit(1));if(!remaining.length)return json({error:'สมาชิกในลิงก์นี้สมัครครบแล้ว หรือผู้ดูแลยกเลิกลิงก์แล้ว'},400);return json({batch:{reusable:true}})}

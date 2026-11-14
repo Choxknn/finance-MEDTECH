@@ -72,6 +72,8 @@
   const previousLayout=document.querySelector('.layout');
   const firstRender=mobileLastRenderedView===null;
   const wasDockCompact=!!(previousLayout?.classList.contains('mobile-page-scrolled')||app?.classList.contains('mobile-dock-compact'));
+  const viewChanged=mobileLastRenderedView!==null&&mobileLastRenderedView!==view;
+  const expandAfterNavigation=viewChanged&&wasDockCompact;
   const small=window.matchMedia('(max-width:720px)').matches;
   const beforeRoot=document.scrollingElement||document.documentElement;
   const beforeY=Math.max(Number(window.scrollY)||0,Number(beforeRoot?.scrollTop)||0);
@@ -91,9 +93,8 @@
   if(small&&layout){
    if(wasDockCompact){
     setMobileDockCompact(layout,true);
-    // Keep the compact appearance during DOM replacement only. The final
-    // state is recalculated from the new page's real scroll position below.
-    mobileDockCompactByNavigation=false;
+    // Keep the compact appearance while the replacement DOM is being measured.
+    // It will expand after the new dock width has been calculated.
     const root=document.scrollingElement||document.documentElement;
     mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
     mobileDownDistance=0;mobileUpDistance=0;
@@ -113,25 +114,26 @@
   }else{
    updateMobileHeaderScroll(true);updateMobileDockVisibility();
   }
-  // Wait until the replacement layout and browser scroll restoration settle.
-  // Keep transitions disabled while applying the final state, so the dock never
-  // flashes wide and then animates back to compact.
-  window.requestAnimationFrame(()=>window.requestAnimationFrame(()=>{
+  // Let the replacement dock paint once in its compact measured state with
+  // transitions locked. Then release the lock, commit that compact geometry,
+  // and expand exactly once when changing pages.
+  window.requestAnimationFrame(()=>{
    if(renderUnlock!==mobileRenderUnlock)return;
-   const finalLayout=document.querySelector('.layout');
-   if(small&&finalLayout){
-    const root=document.scrollingElement||document.documentElement;
-    const restoredY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-    const pageIsScrolled=restoredY>56;
-    mobileDockCompactByNavigation=false;
-    setMobileDockCompact(finalLayout,pageIsScrolled);
-    finalLayout.classList.toggle('mobile-header-hidden',pageIsScrolled);
-    mobileLastScrollY=restoredY;
-    mobileDownDistance=0;mobileUpDistance=0;
-    updateMobileDockVisibility();
-   }
    app?.classList.remove('mobile-dock-route-change');
-  }));
+   if(small&&expandAfterNavigation){
+    const finalLayout=document.querySelector('.layout');
+    updateMobileDockVisibility();
+    finalLayout?.classList.remove('mobile-header-hidden');
+    const dock=finalLayout?.querySelector('.clay-dock');
+    // Force the browser to commit the measured compact width before expanding.
+    dock?.getBoundingClientRect();
+    mobileDockCompactByNavigation=false;
+    setMobileDockCompact(finalLayout,false);
+    const root=document.scrollingElement||document.documentElement;
+    mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+    mobileDownDistance=0;mobileUpDistance=0;
+   }
+  });
  };
  function updateMobileHeaderScroll(reset=false){
   const layout=document.querySelector('.layout');if(!layout)return;

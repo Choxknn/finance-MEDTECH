@@ -57,6 +57,11 @@ assert.ok(stableDock.includes('width:calc(100vw - 24px)'),'expanded dock has an 
 assert.ok(stableDock.includes('width:var(--mobile-dock-compact-width'),'compact dock uses a measured numeric target width');
 assert.ok(stableDock.includes('transform:translate3d(-50%,0,0)'),'dock stays centered without scale bounce');
 assert.ok(!stableDock.includes('width:max-content')&&!stableDock.includes('scale(.96)')&&!stableDock.includes('flex-grow'),'compact dock has no intrinsic-width jump, scale bounce, or flex-grow rebound');
+const selected=css.slice(css.lastIndexOf('/* iOS-style selected tab:'));
+assert.ok(selected.includes('button.active::before'),'selected navigation uses a dedicated highlight capsule');
+assert.ok(selected.includes('background:#e7e7e9'),'selected capsule is grey');
+assert.ok(selected.includes('width:min(44px,calc(100% - 4px))')&&selected.includes('height:36px'),'compact selected highlight stays pill-shaped');
+assert.ok(selected.includes('border-radius:999px'),'highlight has capsule ends in both states');
 console.log('Mobile header direction, upward dock expansion, route-change animation, and store behavior passed');
 w.close();
 })().catch(error=>{console.error(error);process.exitCode=1});

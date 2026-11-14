@@ -50,7 +50,43 @@
  }
  const oldRow=noticeRow;noticeRow=function(n){const html=oldRow(n);return n.id&&n.profile_id===user?.id?html.replace('<article ',`<article data-notice-id="${esc(n.id)}" `):html};
  let mobileLastScrollY=null,mobileDownDistance=0,mobileUpDistance=0;
- const oldRender=render;render=function(){oldRender();scope();if(!user){readObserver?.disconnect();return}checkStore();paintBadges();watchRead();updateMobileHeaderScroll(true);updateMobileDockVisibility()};
+ let mobileLastRenderedView=null;
+ const oldRender=render;render=function(){
+  const previousLayout=document.querySelector('.layout');
+  const wasDockCompact=!!previousLayout?.classList.contains('mobile-page-scrolled');
+  const routeChanged=mobileLastRenderedView!==null&&mobileLastRenderedView!==view;
+  const firstRender=mobileLastRenderedView===null;
+  oldRender();
+  mobileLastRenderedView=view;
+  scope();
+  if(!user){readObserver?.disconnect();return}
+  checkStore();paintBadges();watchRead();
+  const layout=document.querySelector('.layout');
+  const small=window.matchMedia('(max-width:720px)').matches;
+  if(small&&layout){
+   if(routeChanged&&wasDockCompact){
+    // The app rebuilds its layout on navigation. Recreate the compact starting
+    // state for one frame so the new dock can animate smoothly into its wide state.
+    layout.classList.add('mobile-page-scrolled');
+    void layout.offsetWidth;
+    window.requestAnimationFrame(()=>{
+     if(!layout.isConnected)return;
+     layout.classList.remove('mobile-page-scrolled');
+     const root=document.scrollingElement||document.documentElement;
+     mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+     mobileDownDistance=0;mobileUpDistance=0;
+    });
+   }else if(!routeChanged&&wasDockCompact){
+    // Preserve the current dock state across non-navigation re-renders.
+    layout.classList.add('mobile-page-scrolled');
+   }else if(firstRender){
+    const root=document.scrollingElement||document.documentElement;
+    const y=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+    if(y>56)layout.classList.add('mobile-page-scrolled');
+   }
+  }
+  updateMobileHeaderScroll(true);updateMobileDockVisibility();
+ };
  function updateMobileHeaderScroll(reset=false){
   const layout=document.querySelector('.layout');if(!layout)return;
   const small=window.matchMedia('(max-width:720px)').matches;
@@ -58,17 +94,33 @@
   // Read the actual page scroll position (not a stale workspace scrollTop).
   const root=document.scrollingElement||document.documentElement;
   const y=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-  layout.classList.toggle('mobile-page-scrolled',y>14);
   const searchFocused=!!document.activeElement?.closest?.('.admin-search-field');
   if(reset||mobileLastScrollY===null){mobileLastScrollY=y;mobileDownDistance=0;mobileUpDistance=0;}
   else{
    const delta=y-mobileLastScrollY;mobileLastScrollY=y;
-   if(y<=14){layout.classList.remove('mobile-header-hidden');mobileDownDistance=0;mobileUpDistance=0;}
-   else if(layout.classList.contains('menu-open')||searchFocused){layout.classList.remove('mobile-header-hidden');mobileDownDistance=0;mobileUpDistance=0;}
-   else if(delta>0){mobileDownDistance+=delta;mobileUpDistance=0;if(y>56&&mobileDownDistance>=10)layout.classList.add('mobile-header-hidden');}
-   else if(delta<0){mobileUpDistance+=-delta;mobileDownDistance=0;if(mobileUpDistance>=7){layout.classList.remove('mobile-header-hidden');mobileUpDistance=0;}}
+   if(y<=14){
+    layout.classList.remove('mobile-header-hidden','mobile-page-scrolled');
+    mobileDownDistance=0;mobileUpDistance=0;
+   }else if(layout.classList.contains('menu-open')||searchFocused){
+    layout.classList.remove('mobile-header-hidden','mobile-page-scrolled');
+    mobileDownDistance=0;mobileUpDistance=0;
+   }else if(delta>0){
+    mobileDownDistance+=delta;mobileUpDistance=0;
+    if(y>56&&mobileDownDistance>=10){
+     layout.classList.add('mobile-header-hidden','mobile-page-scrolled');
+    }
+   }else if(delta<0){
+    mobileUpDistance+=-delta;mobileDownDistance=0;
+    if(mobileUpDistance>=7){
+     layout.classList.remove('mobile-header-hidden','mobile-page-scrolled');
+     mobileUpDistance=0;
+    }
+   }
   }
-  if(y<=14){layout.classList.remove('mobile-header-hidden');mobileDownDistance=0;mobileUpDistance=0;}
+  if(y<=14){
+   layout.classList.remove('mobile-header-hidden','mobile-page-scrolled');
+   mobileDownDistance=0;mobileUpDistance=0;
+  }
   updateMobileDockVisibility();
  }
  window.addEventListener('scroll',()=>updateMobileHeaderScroll(),{passive:true});

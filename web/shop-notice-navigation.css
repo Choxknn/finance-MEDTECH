@@ -1250,3 +1250,48 @@
     animation:none !important;
   }
 }
+
+
+/* Smooth compacting: keep each icon in its own measured slot instead of
+   letting flex-grow pull the buttons into a center cluster. */
+@media (max-width:720px) {
+  html body #app.mobile-dock-compact .layout .clay-dock {
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:center !important;
+    gap:2px !important;
+    padding-left:8px !important;
+    padding-right:8px !important;
+    box-sizing:border-box !important;
+    transition:
+      left .72s cubic-bezier(.22,.72,.22,1),
+      right .72s cubic-bezier(.22,.72,.22,1),
+      width .76s cubic-bezier(.22,.72,.22,1),
+      height .72s cubic-bezier(.22,.72,.22,1),
+      padding .72s cubic-bezier(.22,.72,.22,1) !important;
+  }
+  html body #app.mobile-dock-compact .layout .clay-dock > button,
+  html body #app.mobile-dock-compact .layout .clay-dock > button.active {
+    flex:0 0 var(--mobile-dock-compact-item-width,40px) !important;
+    width:var(--mobile-dock-compact-item-width,40px) !important;
+    min-width:var(--mobile-dock-compact-item-width,40px) !important;
+    max-width:var(--mobile-dock-compact-item-width,40px) !important;
+    margin:0 !important;
+    transform:translate3d(0,0,0) !important;
+    transition:
+      flex-basis .72s cubic-bezier(.22,.72,.22,1),
+      width .72s cubic-bezier(.22,.72,.22,1),
+      min-width .72s cubic-bezier(.22,.72,.22,1),
+      max-width .72s cubic-bezier(.22,.72,.22,1),
+      height .72s cubic-bezier(.22,.72,.22,1),
+      padding .72s cubic-bezier(.22,.72,.22,1),
+      border-radius .42s ease,
+      background-color .24s ease !important;
+  }
+  html body #app.mobile-dock-compact .layout .clay-dock > button > svg {
+    transition:width .68s cubic-bezier(.22,.72,.22,1),height .68s cubic-bezier(.22,.72,.22,1) !important;
+  }
+  html body #app.mobile-dock-compact .layout .clay-dock > button > span {
+    transition:opacity .28s ease,width .68s cubic-bezier(.22,.72,.22,1),max-width .68s cubic-bezier(.22,.72,.22,1),max-height .68s cubic-bezier(.22,.72,.22,1),transform .68s cubic-bezier(.22,.72,.22,1) !important;
+  }
+}

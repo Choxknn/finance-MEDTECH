@@ -45,8 +45,11 @@
   // capsule width smoothly instead of jumping from auto to max-content.
   const itemCount=dock.querySelectorAll(':scope > button').length;
   const itemWidth=window.matchMedia('(max-width:360px)').matches?44:48;
-  const targetWidth=itemCount*itemWidth+Math.max(0,itemCount-1)*2+16;
-  dock.style.setProperty('--mobile-dock-compact-width',`${Math.min(targetWidth,Math.max(0,window.innerWidth-24))}px`);
+  const viewportLimit=Math.max(0,window.innerWidth-24);
+  const compactWidth=itemCount*itemWidth+Math.max(0,itemCount-1)*2+16;
+  const expandedWidth=itemCount*52+Math.max(0,itemCount-1)*3+16;
+  dock.style.setProperty('--mobile-dock-compact-width',`${Math.min(compactWidth,viewportLimit)}px`);
+  dock.style.setProperty('--mobile-dock-expanded-width',`${Math.min(expandedWidth,viewportLimit)}px`);
   const hasCurrentMainItem=[...dock.querySelectorAll(':scope > button[data-view]:not([data-store-entry])')].some(button=>button.dataset.view===view);
   layout.classList.toggle('mobile-dock-hidden',!hasCurrentMainItem);
  } function checkStore(){if(!scope()||!user)return;if(shopLoaded&&shopOwner===user.id)products=shopData.products||[];paintStore()}
@@ -74,22 +77,14 @@
   const layout=document.querySelector('.layout');
   const small=window.matchMedia('(max-width:720px)').matches;
   if(small&&layout){
-   if(routeChanged&&wasDockCompact){
-    // The app rebuilds its layout on navigation. Recreate the compact starting
-    // state for one frame so the new dock can animate smoothly into its wide state.
-    layout.classList.add('mobile-page-scrolled');
-    void layout.offsetWidth;
-    window.requestAnimationFrame(()=>{
-     if(!layout.isConnected)return;
-     layout.classList.remove('mobile-page-scrolled');
+   if(wasDockCompact){
+     // Keep the dock compact across page navigation. It only expands again
+     // when the user scrolls upward or returns to the top.
+     layout.classList.add('mobile-page-scrolled');
      const root=document.scrollingElement||document.documentElement;
      mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
      mobileDownDistance=0;mobileUpDistance=0;
-    });
-   }else if(!routeChanged&&wasDockCompact){
-    // Preserve the current dock state across non-navigation re-renders.
-    layout.classList.add('mobile-page-scrolled');
-   }else if(firstRender){
+    }else if(firstRender){
     const root=document.scrollingElement||document.documentElement;
     const y=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
     if(y>56)layout.classList.add('mobile-page-scrolled');

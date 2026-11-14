@@ -696,3 +696,25 @@
     text-shadow:none !important;
   }
 }
+
+/* Align the admin red menu circle beside the white dock at the same bottom edge.
+   It is injected as a sibling of .layout inside #app, so target it directly. */
+@media (max-width:720px) {
+  html body #app > .mobile-menu-entry,
+  html body #app > .mobile-store-entry {
+    position:fixed !important;
+    top:auto !important;
+    right:16px !important;
+    bottom:max(12px, env(safe-area-inset-bottom, 0px)) !important;
+    left:auto !important;
+    width:54px !important;
+    min-width:54px !important;
+    max-width:54px !important;
+    height:54px !important;
+    min-height:54px !important;
+    max-height:54px !important;
+    margin:0 !important;
+    transform:none !important;
+    z-index:50 !important;
+  }
+}

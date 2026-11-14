@@ -604,3 +604,95 @@
     filter:drop-shadow(0 1px 1px rgba(125,25,48,.12)) !important;
   }
 }
+
+/* Final mobile dock geometry: the red action sits beside the white dock,
+   and the dock only shortens horizontally when that action exists. */
+@media (max-width:720px) {
+  html body .layout .clay-dock,
+  html body .layout.mobile-page-scrolled .clay-dock {
+    left:12px !important;
+    right:12px !important;
+    width:auto !important;
+    max-width:none !important;
+    height:54px !important;
+    min-height:54px !important;
+    max-height:54px !important;
+    padding:2px 7px !important;
+    box-sizing:border-box !important;
+    align-items:center !important;
+    transition:right .24s ease,transform .28s cubic-bezier(.2,.75,.25,1),opacity .2s ease,visibility .2s ease !important;
+  }
+
+  html body .layout.mobile-has-fab .clay-dock,
+  html body .layout.mobile-has-fab.mobile-page-scrolled .clay-dock {
+    right:82px !important;
+  }
+
+  html body .layout .mobile-store-entry,
+  html body .layout .mobile-menu-entry {
+    right:16px !important;
+    bottom:max(12px, env(safe-area-inset-bottom, 0px)) !important;
+    width:54px !important;
+    min-width:54px !important;
+    height:54px !important;
+    min-height:54px !important;
+    max-height:54px !important;
+    margin:0 !important;
+  }
+
+  html body .layout .clay-dock > button,
+  html body .layout.mobile-page-scrolled .clay-dock > button,
+  html body .layout .clay-dock > button.active,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active {
+    flex:1 1 0 !important;
+    height:48px !important;
+    min-height:48px !important;
+    max-height:48px !important;
+    padding:2px 2px !important;
+    gap:1px !important;
+    border-radius:999px !important;
+  }
+
+  html body .layout .clay-dock > button > svg,
+  html body .layout.mobile-page-scrolled .clay-dock > button > svg {
+    flex:0 0 26px !important;
+    width:26px !important;
+    height:26px !important;
+    padding:3px !important;
+    filter:none !important;
+  }
+
+  html body .layout .clay-dock > button > span,
+  html body .layout.mobile-page-scrolled .clay-dock > button > span {
+    display:block !important;
+    max-height:14px !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:none !important;
+    font-size:9px !important;
+    line-height:11px !important;
+    white-space:nowrap !important;
+  }
+
+  /* Flat grey selected capsule: no outline, border or shadow. */
+  html body .layout .clay-dock > button.active,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active {
+    border:0 !important;
+    outline:0 !important;
+    border-radius:999px !important;
+    background:#e7e7e9 !important;
+    color:#c62848 !important;
+    box-shadow:none !important;
+    filter:none !important;
+    transform:none !important;
+  }
+
+  html body .layout .clay-dock > button.active > span,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active > span,
+  html body .layout .clay-dock > button.active > svg,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active > svg {
+    color:#c62848 !important;
+    filter:none !important;
+    text-shadow:none !important;
+  }
+}

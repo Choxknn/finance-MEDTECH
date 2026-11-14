@@ -63,38 +63,56 @@
  }
  const oldRow=noticeRow;noticeRow=function(n){const html=oldRow(n);return n.id&&n.profile_id===user?.id?html.replace('<article ',`<article data-notice-id="${esc(n.id)}" `):html};
  let mobileLastScrollY=null,mobileDownDistance=0,mobileUpDistance=0;
- let mobileLastRenderedView=null;
+ let mobileLastRenderedView=null,mobileDockCompactByNavigation=false;
+ function setMobileDockCompact(layout,compact){
+  layout?.classList.toggle('mobile-page-scrolled',compact);
+  document.getElementById('app')?.classList.toggle('mobile-dock-compact',compact);
+ }
  const oldRender=render;render=function(){
+  const app=document.getElementById('app');
   const previousLayout=document.querySelector('.layout');
-  const wasDockCompact=!!previousLayout?.classList.contains('mobile-page-scrolled');
   const firstRender=mobileLastRenderedView===null;
+  const wasDockCompact=!!(previousLayout?.classList.contains('mobile-page-scrolled')||app?.classList.contains('mobile-dock-compact'));
+  const small=window.matchMedia('(max-width:720px)').matches;
+  const beforeRoot=document.scrollingElement||document.documentElement;
+  const beforeY=Math.max(Number(window.scrollY)||0,Number(beforeRoot?.scrollTop)||0);
+  // Seed the persistent #app marker before innerHTML is replaced, so the new dock
+  // is compact on its first painted frame instead of flashing at expanded width.
+  app?.classList.toggle('mobile-dock-compact',small&&(wasDockCompact||(firstRender&&beforeY>56)));
   oldRender();
   mobileLastRenderedView=view;
   scope();
-  if(!user){readObserver?.disconnect();return}
+  if(!user){readObserver?.disconnect();app?.classList.remove('mobile-dock-compact');mobileDockCompactByNavigation=false;return}
   checkStore();paintBadges();watchRead();
   const layout=document.querySelector('.layout');
-  const small=window.matchMedia('(max-width:720px)').matches;
   if(small&&layout){
    if(wasDockCompact){
-     // Keep the dock compact across page navigation. It only expands again
-     // when the user scrolls upward or returns to the top.
-     layout.classList.add('mobile-page-scrolled');
-     const root=document.scrollingElement||document.documentElement;
-     mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-     mobileDownDistance=0;mobileUpDistance=0;
-    }else if(firstRender){
+    setMobileDockCompact(layout,true);
+    mobileDockCompactByNavigation=true;
     const root=document.scrollingElement||document.documentElement;
-    const y=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
-    if(y>56)layout.classList.add('mobile-page-scrolled');
+    mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+    mobileDownDistance=0;mobileUpDistance=0;
+   }else{
+    mobileDockCompactByNavigation=false;
+    if(firstRender&&beforeY>56)setMobileDockCompact(layout,true);
    }
+  }else{
+   mobileDockCompactByNavigation=false;
+   app?.classList.remove('mobile-dock-compact');
   }
-  updateMobileHeaderScroll(true);updateMobileDockVisibility();
+  // Some page renders reset scrollTop. Do not let that reset expand a dock
+  // that the user had already folded; only a genuine upward scroll expands it.
+  if(wasDockCompact&&small){
+   layout?.classList.remove('mobile-header-hidden');
+   updateMobileDockVisibility();
+  }else{
+   updateMobileHeaderScroll(true);updateMobileDockVisibility();
+  }
  };
  function updateMobileHeaderScroll(reset=false){
   const layout=document.querySelector('.layout');if(!layout)return;
   const small=window.matchMedia('(max-width:720px)').matches;
-  if(!small){layout.classList.remove('mobile-page-scrolled','mobile-dock-hidden','mobile-has-fab','mobile-header-hidden');mobileLastScrollY=null;mobileDownDistance=0;mobileUpDistance=0;return}
+  if(!small){setMobileDockCompact(layout,false);layout.classList.remove('mobile-dock-hidden','mobile-has-fab','mobile-header-hidden');mobileDockCompactByNavigation=false;mobileLastScrollY=null;mobileDownDistance=0;mobileUpDistance=0;return}
   // Read the actual page scroll position (not a stale workspace scrollTop).
   const root=document.scrollingElement||document.documentElement;
   const y=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
@@ -102,8 +120,8 @@
   if(reset||mobileLastScrollY===null){mobileLastScrollY=y;mobileDownDistance=0;mobileUpDistance=0;}
   else{
    const delta=y-mobileLastScrollY;mobileLastScrollY=y;
-   if(y<=14){
-    layout.classList.remove('mobile-header-hidden','mobile-page-scrolled');
+   if(y<=14&&!mobileDockCompactByNavigation){
+    layout.classList.remove('mobile-header-hidden');setMobileDockCompact(layout,false);
     mobileDownDistance=0;mobileUpDistance=0;
    }else if(layout.classList.contains('menu-open')||searchFocused){
     layout.classList.remove('mobile-header-hidden','mobile-page-scrolled');
@@ -111,7 +129,7 @@
    }else if(delta>0){
     mobileDownDistance+=delta;mobileUpDistance=0;
     if(y>56&&mobileDownDistance>=10){
-     layout.classList.add('mobile-header-hidden','mobile-page-scrolled');
+     layout.classList.add('mobile-header-hidden');setMobileDockCompact(layout,true);
     }
    }else if(delta<0){
     mobileUpDistance+=-delta;mobileDownDistance=0;

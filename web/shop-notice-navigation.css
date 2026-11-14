@@ -557,3 +557,50 @@
     filter:drop-shadow(0 1px 1px rgba(115,38,69,.10)) !important;
   }
 }
+
+/* Keep the bottom dock fixed in place when the detached red action is present.
+   Place that action above the dock instead of squeezing the dock horizontally. */
+@media (max-width:720px) {
+  html body .layout .clay-dock,
+  html body .layout.mobile-page-scrolled .clay-dock,
+  html body .layout.mobile-has-fab .clay-dock,
+  html body .layout.mobile-has-fab.mobile-page-scrolled .clay-dock {
+    left:12px !important;
+    right:12px !important;
+    width:auto !important;
+    max-width:none !important;
+    transition:transform .28s cubic-bezier(.2,.75,.25,1),opacity .2s ease,visibility .2s ease !important;
+  }
+
+  .mobile-store-entry,
+  .mobile-menu-entry {
+    bottom:calc(64px + max(12px, env(safe-area-inset-bottom, 0px)) + 12px) !important;
+  }
+
+  /* Neutral grey selected capsule with red icon and label. */
+  html body .layout .clay-dock > button.active,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active {
+    border:1px solid rgba(112,112,120,.13) !important;
+    border-radius:999px !important;
+    background:linear-gradient(155deg,#f2f2f3 0%,#e6e6e8 58%,#dedee1 100%) !important;
+    color:#c62848 !important;
+    box-shadow:
+      0 3px 9px rgba(40,40,48,.11),
+      0 1px 2px rgba(40,40,48,.06),
+      inset 0 1px 0 rgba(255,255,255,.96),
+      inset 0 -1px 2px rgba(55,55,62,.045) !important;
+    transform:translateY(-1px) !important;
+  }
+
+  html body .layout .clay-dock > button.active > span,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active > span {
+    color:#c62848 !important;
+    font-weight:650 !important;
+  }
+
+  html body .layout .clay-dock > button.active > svg,
+  html body .layout.mobile-page-scrolled .clay-dock > button.active > svg {
+    color:#c62848 !important;
+    filter:drop-shadow(0 1px 1px rgba(125,25,48,.12)) !important;
+  }
+}

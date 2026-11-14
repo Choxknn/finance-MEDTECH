@@ -315,3 +315,126 @@
     padding: 8px !important;
   }
 }
+
+
+/* iOS-like selected capsule wraps both the icon and its menu label.
+   Keep every dock label visible even while the page is scrolled. */
+@media (max-width:720px) {
+  .clay-dock {
+    height: 72px !important;
+    padding: 5px 8px 6px !important;
+    align-items: center !important;
+  }
+
+  .clay-dock button,
+  .clay-dock button.active {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 66px !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    margin: 0 !important;
+    padding: 3px 2px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    border: 1px solid transparent !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: #6f626e !important;
+    box-shadow: none !important;
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+  }
+
+  .clay-dock button > span {
+    display: block !important;
+    width: 100% !important;
+    max-height: 14px !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    color: inherit !important;
+    font-size: 9px !important;
+    line-height: 12px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    transition: none !important;
+  }
+
+  .layout.mobile-page-scrolled .clay-dock,
+  .layout.mobile-page-scrolled .clay-dock button,
+  .layout.mobile-page-scrolled .clay-dock button.active {
+    height: 58px !important;
+    min-height: 58px !important;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+    gap: 2px !important;
+  }
+
+  .layout.mobile-page-scrolled .clay-dock button > span {
+    display: block !important;
+    max-height: 14px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+
+  .clay-dock button svg,
+  .clay-dock button.active svg {
+    display: block !important;
+    flex: 0 0 30px !important;
+    width: 30px !important;
+    height: 30px !important;
+    box-sizing: border-box !important;
+    padding: 5px !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    color: inherit !important;
+    box-shadow: none !important;
+  }
+
+  /* The selected capsule encloses its icon AND its label together. */
+  .clay-dock button.active {
+    max-width: 70px !important;
+    border-color: rgba(185,35,72,.10) !important;
+    background: linear-gradient(180deg, #fff8fb 0%, #f5eaf0 100%) !important;
+    color: #a92e50 !important;
+    box-shadow:
+      0 3px 10px rgba(83,45,66,.12),
+      inset 0 1px 0 rgba(255,255,255,.98),
+      inset 0 -1px 2px rgba(83,45,66,.045) !important;
+  }
+
+  .clay-dock button.active > span {
+    color: #a92e50 !important;
+    font-weight: 650 !important;
+  }
+
+  .clay-dock button.active svg {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .layout.mobile-page-scrolled .clay-dock button.active,
+  .layout.mobile-page-scrolled .clay-dock button:not(.active) {
+    height: 58px !important;
+    min-height: 58px !important;
+  }
+}
+@media (max-width:360px) {
+  .clay-dock button,
+  .clay-dock button.active {
+    max-width: 60px !important;
+  }
+  .clay-dock button > span {
+    font-size: 8px !important;
+  }
+}

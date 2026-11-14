@@ -1104,6 +1104,8 @@
   html body .layout .clay-dock > button,
   html body .layout .clay-dock > button.active {
     transition:
+      flex-grow .52s cubic-bezier(.22,.72,.22,1),
+      flex-shrink .52s cubic-bezier(.22,.72,.22,1),
       flex-basis .52s cubic-bezier(.22,.72,.22,1),
       width .52s cubic-bezier(.22,.72,.22,1),
       min-width .52s cubic-bezier(.22,.72,.22,1),

@@ -3,6 +3,7 @@
 (()=>{
  const now=()=>new Date().toISOString();
  const copy=value=>JSON.parse(JSON.stringify(value));
+ const fileDataUrl=file=>new Promise((resolve,reject)=>{if(!file){resolve(null);return}const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('อ่านไฟล์ตัวอย่างไม่สำเร็จ'));reader.readAsDataURL(file)});
  const products=[
   {id:'sandbox-product-shirt',title:'เสื้อ MEDTECH รุ่นทดลอง',description:'สินค้าตัวอย่างสำหรับทดสอบหน้าร้านและขั้นตอนเลือกสินค้า',price:250,stock:24,active:true,images:[],sale_starts_at:null,sale_ends_at:null,option_groups:[{id:'sandbox-size',name:'ขนาด',required:true,options:[{id:'sandbox-size-s',name:'S',price_delta:0},{id:'sandbox-size-m',name:'M',price_delta:0},{id:'sandbox-size-l',name:'L',price_delta:20}]}]},
   {id:'sandbox-product-mug',title:'แก้ว MEDTECH รุ่นทดลอง',description:'สินค้าตัวอย่างอีกหนึ่งรายการ ใช้ทดสอบการ์ดสินค้าและสต็อก',price:120,stock:12,active:true,images:[],sale_starts_at:null,sale_ends_at:null,option_groups:[]},
@@ -49,7 +50,11 @@
     Object.assign(p,{title:String(payload.title||'สินค้าใหม่'),description:String(payload.description||''),price:Number(payload.price)||0,stock:Number(payload.stock)||0,active:!!payload.active,sale_starts_at:payload.sale_starts_at||null,sale_ends_at:payload.sale_ends_at||null,option_groups:copy(payload.option_groups||[])});
     return copy({product:p});
    }
-   case 'shop-upload': return {uploaded:false,simulated:true,message:'Offline Sandbox ไม่อัปโหลดไฟล์ไปที่ Storage'};
+   case 'shop-upload': {
+    const product=requireProduct(payload.id);if(!file)return {uploaded:false,simulated:true,message:'ไม่มีไฟล์ตัวอย่าง'};
+    const image=await fileDataUrl(file);product.images=product.images||[];product.images.push(image);
+    return {uploaded:true,path:image,simulated:true,message:'เก็บรูปไว้ในหน่วยความจำของ Sandbox เท่านั้น'};
+   }
    case 'shop-image-remove': {
     const p=requireProduct(payload.id);p.images=(p.images||[]).filter(path=>path!==payload.path);return {removed:true};
    }
@@ -71,7 +76,8 @@
     if(patch.quantity!==undefined)o.quantity=Math.max(1,Math.trunc(Number(patch.quantity)||1));
     if(patch.base_unit_price!==undefined)o.base_unit_price=Math.max(0,Number(patch.base_unit_price)||0);
     if(patch.note!==undefined)o.note=String(patch.note);
-    o.unit_price=o.base_unit_price||o.unit_price;o.total=o.unit_price*o.quantity;o.updated_at=now();return {order:copy(o)};
+    if(patch.choices){const p=requireProduct(o.product_id);o.selected_options=(p.option_groups||[]).map(group=>{const option=group.options.find(item=>item.id===patch.choices[group.id]);return option?{group_id:group.id,option_id:option.id,group_name:group.name,option_name:option.name,price_delta:Number(option.price_delta)||0}:null}).filter(Boolean)}
+    o.unit_price=Number(o.base_unit_price||o.unit_price)+ (o.selected_options||[]).reduce((n,item)=>n+Number(item.price_delta||0),0);o.total=o.unit_price*o.quantity;o.updated_at=now();return {order:copy(o)};
    }
    case 'shop-status-bulk': {
     for(const id of payload.ids||[])requireOrder(id).status=payload.status;
@@ -103,6 +109,25 @@
     const page=Math.max(0,Math.trunc(Number(payload.page)||0));
     return copy({orders:visibleOrders().slice(page*500,(page+1)*500)});
    }
+   case 'publish-announcement': {
+    let rows=[];try{db.announcements??=[];rows=db.announcements}catch{}
+    const row={id:'sandbox-announcement-'+(++serial),title:String(payload.title||'ประกาศตัวอย่าง'),body:String(payload.body||''),show_on_entry:!!payload.show_on_entry,dismissed_at:null,created_at:now(),image_url:await fileDataUrl(file)};
+    rows.unshift(row);return copy({announcement:row,simulated:true,message:'เผยแพร่ประกาศจำลองแล้ว'});
+   }
+   case 'edit-announcement': {
+    let rows=[];try{rows=db.announcements||[]}catch{}
+    const row=rows.find(item=>item.id===payload.id);if(!row)throw new Error('ไม่พบประกาศตัวอย่าง');
+    Object.assign(row,{title:String(payload.title||row.title),body:String(payload.body||''),show_on_entry:!!payload.show_on_entry});
+    if(file)row.image_url=await fileDataUrl(file);return copy({announcement:row,simulated:true});
+   }
+   case 'delete-announcement': {
+    try{db.announcements=(db.announcements||[]).filter(item=>item.id!==payload.id)}catch{}
+    return {deleted:true,simulated:true};
+   }
+   case 'dismiss-announcement': {
+    try{const row=(db.announcements||[]).find(item=>item.id===payload.id);if(row)row.dismissed_at=now()}catch{}
+    return {dismissed:true,simulated:true};
+   }
    case 'announcements-list': {
     let rows=[];try{rows=db.announcements||[]}catch{}
     return copy({announcements:rows});
@@ -112,7 +137,10 @@
     const item=rows.find(row=>row.id===payload.id);if(item)item.show_on_entry=!!payload.show_on_entry;
     return {updated:!!item,simulated:true};
    }
-   case 'read-notification': return {updated:true,simulated:true};
+   case 'read-notification': {
+    try{const row=(db.notifications||[]).find(item=>item.id===payload.id);if(row)row.seen_at=now()}catch{}
+    return {updated:true,simulated:true};
+   }
    default: throw new Error('Offline Sandbox ปิดคำสั่ง "'+action+'" ไว้ เพราะไม่มีตัวจำลองและจะไม่ส่งคำขอไปยังระบบจริง');
   }
  };

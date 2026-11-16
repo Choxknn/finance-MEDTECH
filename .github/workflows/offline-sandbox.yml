@@ -1,0 +1,35 @@
+name: Offline Sandbox checks
+on:
+  push:
+    branches: [dev-offline]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'web/offline-*'
+      - 'web/index.html'
+      - 'web/app.js'
+      - 'web/shop.js'
+      - 'scripts/offline-server.cjs'
+      - 'tests/offline-sandbox.test.cjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/offline-sandbox.yml'
+permissions:
+  contents: read
+jobs:
+  offline-sandbox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run test:offline
+      - name: Check offline JavaScript syntax
+        run: |
+          node --check web/offline-guard.js
+          node --check web/offline-api.js
+          node --check scripts/offline-server.cjs
+          node --check tests/offline-sandbox.test.cjs

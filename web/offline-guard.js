@@ -1,44 +1,35 @@
 'use strict';
 /* Offline Sandbox network boundary.
- * Only same-origin requests are allowed. External API, storage, LINE and realtime
- * connections are rejected here; the CSP in index.html provides a second boundary.
+ * The application may load same-origin static assets, but runtime network APIs are denied.
+ * CSP and the local-only dev server add independent barriers.
  */
 (()=>{
  const origin=location.origin;
+ const pagePath=location.pathname;
+ const rootPath=pagePath.slice(0,pagePath.lastIndexOf('/')+1)||'/';
  const blocked=value=>{
-  let target='external destination';
-  try{target=String(value?.url||value); }catch{}
-  const error=new TypeError('Offline Sandbox: ปิดกั้นการเชื่อมต่อภายนอกแล้ว ('+target+')');
+  let target='network request';
+  try{target=String(value?.url||value)}catch{}
+  const error=new TypeError('Offline Sandbox: ปิดกั้นเครือข่ายแล้ว ('+target+')');
   try{console.warn(error.message)}catch{}
   return error;
  };
- function allowed(value){
+ function safeNavigation(value){
   try{
    const raw=value&&typeof value==='object'&&'url'in value?value.url:value;
    const url=new URL(String(raw),location.href);
-   return url.origin===origin||url.protocol==='blob:'||url.protocol==='data:';
+   if(url.protocol==='blob:'||url.protocol==='data:')return true;
+   return url.origin===origin&&(url.pathname===pagePath||url.pathname===rootPath||url.pathname===rootPath+'index.html');
   }catch{return false}
  }
  window.FINANCE_OFFLINE_SANDBOX=true;
- window.FINANCE_OFFLINE_NETWORK_POLICY='same-origin-only';
+ window.FINANCE_OFFLINE_NETWORK_POLICY='no-runtime-network';
  const nativeFetch=window.fetch?.bind(window);
- if(nativeFetch)window.fetch=function(input,options){
-  if(!allowed(input))return Promise.reject(blocked(input));
-  return nativeFetch(input,options);
- };
+ if(nativeFetch)window.fetch=function(input){return Promise.reject(blocked(input))};
  const XHR=window.XMLHttpRequest;
  if(XHR?.prototype){
-  const open=XHR.prototype.open,send=XHR.prototype.send,blockedRequests=new WeakMap();
-  XHR.prototype.open=function(method,url,...args){
-   if(!allowed(url)){blockedRequests.set(this,blocked(url));return}
-   blockedRequests.delete(this);
-   return open.call(this,method,url,...args);
-  };
-  XHR.prototype.send=function(...args){
-   const error=blockedRequests.get(this);
-   if(error)throw error;
-   return send.apply(this,args);
-  };
+  XHR.prototype.open=function(method,url){throw blocked(url)};
+  XHR.prototype.send=function(){throw blocked('XMLHttpRequest')};
  }
  if(window.WebSocket){
   const Original=window.WebSocket;
@@ -53,12 +44,12 @@
   OfflineEventSource.prototype=Original.prototype;
   window.EventSource=OfflineEventSource;
  }
- const beacon=window.navigator?.sendBeacon?.bind(window.navigator);
- if(beacon)try{Object.defineProperty(window.navigator,'sendBeacon',{configurable:true,value:(url,data)=>allowed(url)?beacon(url,data):false})}catch{}
- const nativeOpen=window.open?.bind(window);
- if(nativeOpen)window.open=function(url,...args){if(url&&!allowed(url)){blocked(url);return null}return nativeOpen(url,...args)};
- document.addEventListener('click',event=>{
+ if(window.navigator?.sendBeacon)try{Object.defineProperty(window.navigator,'sendBeacon',{configurable:true,value:url=>{blocked(url);return false}})}catch{}
+ if(window.open)window.open=function(url){if(safeNavigation(url))return null;blocked(url);return null};
+ const stopUnsafeNavigation=event=>{
   const link=event.target?.closest?.('a[href]');
-  if(link&&!allowed(link.href)){event.preventDefault();event.stopImmediatePropagation();blocked(link.href)}
- },true);
+  if(link&&!safeNavigation(link.href)){event.preventDefault();event.stopImmediatePropagation();blocked(link.href)}
+ };
+ document.addEventListener('click',stopUnsafeNavigation,true);
+ document.addEventListener('auxclick',stopUnsafeNavigation,true);
 })();

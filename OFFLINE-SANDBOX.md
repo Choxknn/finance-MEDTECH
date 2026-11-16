@@ -37,6 +37,7 @@ npm run dev:offline
 ## ทดสอบขอบเขต Offline
 
 ```bash
+npm ci
 npm run test:offline
 ```
 

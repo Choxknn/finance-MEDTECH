@@ -1,13 +1,13 @@
 // Public values only. Never put service-role keys or provider secrets here.
 window.FINANCE_CONFIG = {
-  mode: 'live',
-  supabaseUrl: 'https://sdegiugcttarbsnqvusm.supabase.co',
-  supabaseAnonKey: 'sb_publishable_-M0J8pWSiEJay-LiT5DGRg_iZDqKkmh',
+  mode: 'demo',
+  supabaseUrl: '',
+  supabaseAnonKey: '',
   studentEmailDomain: 'students.finance-medtech.invalid',
-  bankName: 'พร้อมเพย์ อี-วอลเล็ต / G-Wallet',
-  accountName: 'ภานุมาศ นกไทย',
-  accountNumber: '006660001474178',
-  paymentQrUrl: './payment-qr.png',
-  lineOaUrl: 'https://lin.ee/rpHtjnI',
-  lineLiffId: '2011933909-4qXo3pGn',
+  bankName: 'บัญชีจำลองสำหรับทดสอบเท่านั้น',
+  accountName: 'ไม่มีบัญชีรับเงินจริง',
+  accountNumber: '000000000000',
+  paymentQrUrl: '',
+  lineOaUrl: '',
+  lineLiffId: '',
 };

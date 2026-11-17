@@ -2358,3 +2358,36 @@ html body .workspace > .topbar .admin-search-field .admin-camera-button:focus-vi
     pointer-events:none !important;
   }
 }
+
+/* Keep the overdue notice in normal flow below the fixed top bar. */
+html body .workspace > .overdue-page-banner {
+  position: relative !important;
+  inset: auto !important;
+  z-index: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: 1440px !important;
+  margin: calc(76px + env(safe-area-inset-top, 0px)) 24px 0 !important;
+  padding: 12px 16px !important;
+  border: 1px solid #f0c4ce !important;
+  border-radius: 14px !important;
+  background: #fff1f3 !important;
+  color: #8e243c !important;
+  box-shadow: 0 4px 14px rgba(142, 36, 60, .08) !important;
+}
+
+html body .workspace:has(> .overdue-page-banner) > main {
+  padding-top: 18px !important;
+}
+
+@media (max-width: 720px) {
+  html body .workspace > .overdue-page-banner {
+    margin-right: 14px !important;
+    margin-left: 14px !important;
+    padding: 11px 13px !important;
+  }
+}
+

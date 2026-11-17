@@ -28,7 +28,7 @@ const db={
   return q
  }
 };
-const source=fs.readFileSync(require('path').resolve(__dirname,'../supabase/functions/account-access/index.ts'),'utf8').replace(/^import .*;\\n/gm,'');
+const source=fs.readFileSync(require('path').resolve(__dirname,'../supabase/functions/account-access/index.ts'),'utf8').replace(/^import .*;\n/gm,'');
 vm.runInNewContext(esbuild.transformSync(source,{loader:'ts',format:'esm'}).code,{
  Deno:{env:{get:key=>key==='ALLOWED_ORIGINS'?'https://example.test':key==='SUPABASE_SERVICE_ROLE_KEY'?'service-secret':key==='LINE_CHANNEL_ACCESS_TOKEN'?'line-secret':''},serve:fn=>handler=fn},
  adminDb:()=>db,

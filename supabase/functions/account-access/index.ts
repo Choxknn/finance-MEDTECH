@@ -29,6 +29,13 @@ Deno.serve(async req=>{
    }
    return json({message:'หากรหัสนักศึกษานี้มีบัญชีและเชื่อม LINE ไว้ ระบบจะส่งรหัส OTP ไปยัง LINE ที่ผูกบัญชี กรุณาตรวจสอบแชต LINE'});
   }
+  if(input.action==='check-otp'){
+   if(typeof input.student_id!=='string'||!/^\\d{5,20}$/.test(input.student_id)||typeof input.otp!=='string'||!/^\\d{6}$/.test(input.otp))return json({valid:false});
+   const pepper=secret('SUPABASE_SERVICE_ROLE_KEY');
+   const codeHash=await hash(pepper+':finance-medtech-password-recovery:'+input.student_id+':'+input.otp);
+   const valid=await query(db.rpc('check_line_recovery_otp',{p_student:input.student_id,p_code_hash:codeHash}));
+   return json({valid:valid===true});
+  }
   if(input.action==='verify-otp'){
    if(typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id)||typeof input.otp!=='string'||!/^\d{6}$/.test(input.otp)||typeof input.password!=='string'||input.password.length<6||input.password.length>128)return json({error:'กรุณาตรวจสอบรหัสนักศึกษา รหัส OTP และรหัสผ่านใหม่'},400);
    const pepper=secret('SUPABASE_SERVICE_ROLE_KEY');

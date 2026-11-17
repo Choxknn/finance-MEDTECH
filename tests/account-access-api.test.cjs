@@ -5,7 +5,8 @@ const reserve={student_id:'670111',name_prefix:'นาย',first_name:'Fixed',la
 const db={
  rpc:async(name,args)=>{
   if(name==='request_line_recovery_otp'){requestArgs=args;return {data:recoveryResult}}
-  if(name==='verify_line_recovery_otp'){verifyArgs=args;return {data:verifyValid?'member-user':null}}\n  if(name==='check_line_recovery_otp'){checkArgs=args;return {data:checkValid}}
+  if(name==='verify_line_recovery_otp'){verifyArgs=args;return {data:verifyValid?'member-user':null}}
+  if(name==='check_line_recovery_otp'){checkArgs=args;return {data:checkValid}}
   if(name==='claim_member_invite'){if(inviteState!=='pending')return {error:{message:'used'}};inviteState='processing';return {data:reserve}}
   if(name==='finish_member_invite'){inviteState='used';if(finishFails)return {error:{message:'lost response'}};return {data:null}}
   return {data:null}
@@ -27,7 +28,8 @@ const db={
   return q
  }
 };
-const source=fs.readFileSync(require('path').resolve(__dirname,'../supabase/functions/account-access/index.ts'),'utf8').replace(/^import .*;\n/gm,'');
+const source=fs.readFileSync(require('path').resolve(__dirname,'../supabase/functions/account-access/index.ts'),'utf8').replace(/^import .*;
+/gm,'');
 vm.runInNewContext(esbuild.transformSync(source,{loader:'ts',format:'esm'}).code,{
  Deno:{env:{get:key=>key==='ALLOWED_ORIGINS'?'https://example.test':key==='SUPABASE_SERVICE_ROLE_KEY'?'service-secret':key==='LINE_CHANNEL_ACCESS_TOKEN'?'line-secret':''},serve:fn=>handler=fn},
  adminDb:()=>db,

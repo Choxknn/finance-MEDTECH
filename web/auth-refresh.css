@@ -135,3 +135,24 @@ html body.signup-page .signup-footer-actions>a:hover{background:#f3eaf0;border-c
 html body.signup-page .signup-footer-actions>#register-support:hover{background:#dff2e7;border-color:#b3d9c2}
 @media(max-width:360px){html body.signup-page .signup-footer-actions{gap:7px}html body.signup-page .signup-footer-actions>a,html body.signup-page .signup-footer-actions>#register-support{font-size:11px;gap:5px}}
 html body.signup-page .signup-footer-actions[hidden]{display:none!important}
+
+/* LINE OTP password-recovery modal. */
+#forgot-line-form .recovery-progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0 0 20px}
+#forgot-line-form .recovery-progress span{padding:8px 5px;border-radius:10px;background:#f4f0f2;color:#968991;text-align:center;font-size:11px;line-height:1.4}
+#forgot-line-form .recovery-progress span.active{background:#fde8ed;color:#b52343;font-weight:700}
+#forgot-line-form .recovery-step[hidden]{display:none!important}
+#forgot-line-form .recovery-step>p{margin:0 0 14px;color:#766a70;font-size:13px;line-height:1.7}
+#forgot-line-form .recovery-step label{display:block;margin:14px 0 7px;color:#65545c;font-size:13px;font-weight:600}
+#forgot-line-form .recovery-step input{width:100%;min-height:48px;border:1px solid #eadfe3;border-radius:13px;background:#faf7f8;padding:12px 14px;color:#35272e;font-size:16px}
+#forgot-line-form .recovery-step input:focus{border-color:#c13c55;outline:1px solid #c13c55;outline-offset:0;background:#fff}
+#forgot-line-form .recovery-step>[data-forgot-back]{margin-top:13px}
+#forgot-line-form .actions{margin-top:18px}
+#forgot-line-form .form-error{margin-top:12px;color:#a5233e;font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+#forgot-line-form .recovery-demo-code{display:grid;gap:5px;margin-top:12px;padding:13px 15px;border:1px solid #f0c5cf;border-radius:14px;background:#fff0f3;color:#9e1d39}
+#forgot-line-form .recovery-demo-code code{font-size:22px;letter-spacing:.18em;color:#a91e3f}
+#forgot-line-form .recovery-demo-code span{font-size:11px;color:#8c5361}
+.recovery-success{text-align:center;padding:12px 4px 8px}
+.recovery-success>p{margin:12px 0;color:#65545c}
+.recovery-success .help{font-size:12px;line-height:1.8}
+.recovery-success-mark{display:grid;place-items:center;width:56px;height:56px;margin:0 auto 10px;border-radius:50%;background:#e9f7ee;color:#21834b;font-size:28px;font-weight:700}
+@media(max-width:420px){#forgot-line-form .recovery-progress{gap:4px}#forgot-line-form .recovery-progress span{font-size:10px;padding:7px 3px}}

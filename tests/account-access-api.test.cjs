@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),esbuild=require('esbuild');
 let handler,inviteState='pending',createdPassword='',updatedPassword='',updatedUser='',finishFails=false,deleteCount=0;
-let recoveryResult={id:'otp-row',profile_id:'member-user',line_user_id:'LINE-USER'},verifyValid=false,requestArgs=null,verifyArgs=null,linePushes=[];
+let recoveryResult={id:'otp-row',profile_id:'member-user',line_user_id:'LINE-USER'},verifyValid=false,checkValid=false,requestArgs=null,verifyArgs=null,checkArgs=null,linePushes=[];
 const reserve={student_id:'670111',name_prefix:'นาย',first_name:'Fixed',last_name:'Identity',year:'1'};
 const db={
  rpc:async(name,args)=>{
@@ -28,8 +28,7 @@ const db={
   return q
  }
 };
-const source=fs.readFileSync(require('path').resolve(__dirname,'../supabase/functions/account-access/index.ts'),'utf8').replace(/^import .*;
-/gm,'');
+const source=fs.readFileSync(require('path').resolve(__dirname,'../supabase/functions/account-access/index.ts'),'utf8').replace(/^import .*;\\n/gm,'');
 vm.runInNewContext(esbuild.transformSync(source,{loader:'ts',format:'esm'}).code,{
  Deno:{env:{get:key=>key==='ALLOWED_ORIGINS'?'https://example.test':key==='SUPABASE_SERVICE_ROLE_KEY'?'service-secret':key==='LINE_CHANNEL_ACCESS_TOKEN'?'line-secret':''},serve:fn=>handler=fn},
  adminDb:()=>db,
@@ -61,6 +60,12 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  assert.deepEqual(await r.json(),generic,'Do not disclose whether an account or LINE link exists');
  assert.equal(linePushes.length,1,'unlinked IDs do not receive LINE messages');
 
+ checkValid=true;
+ r=await handler(request({action:'check-otp',student_id:'670111',otp:'123456'}));
+ assert.equal(r.status,200);assert.equal((await r.json()).valid,true);assert.equal(checkArgs.p_student,'670111');
+ checkValid=false;
+ r=await handler(request({action:'check-otp',student_id:'670111',otp:'000000'}));
+ assert.equal((await r.json()).valid,false);
  verifyValid=false;
  r=await handler(request({action:'verify-otp',student_id:'670111',otp:'000000',password:'Ab1234'}));
  assert.equal(r.status,400);

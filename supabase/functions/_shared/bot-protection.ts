@@ -4,7 +4,7 @@ export async function limitRequest(db:any,key:string,limit:number,seconds:number
 export async function protectAccountRequest(db:any,req:Request,input:any){
  const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1)!.trim();
  await limitRequest(db,'account-ip:'+ip,120,60);
- if(['batch-start','batch-accept','invite-accept','forgot'].includes(input.action)){
+ if(['batch-start','batch-accept','invite-accept','forgot','verify-otp'].includes(input.action)){
   await limitRequest(db,'account-sensitive:'+ip+':'+String(input.student_id||input.token||'').slice(0,100),12,900);
   if(captchaConfig().enabled){
    if(typeof input.captcha_token!=='string'||!input.captcha_token)throw Error('กรุณายืนยันว่าไม่ใช่บอท');

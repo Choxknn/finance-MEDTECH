@@ -71,3 +71,28 @@ end;
 $$;
 revoke all on function public.request_line_recovery_otp(text,text,text,text),public.verify_line_recovery_otp(text,text) from public,anon,authenticated;
 grant execute on function public.request_line_recovery_otp(text,text,text,text),public.verify_line_recovery_otp(text,text) to service_role;
+
+create function public.check_line_recovery_otp(p_student text,p_code_hash text)
+returns boolean language plpgsql security invoker set search_path=public as $$
+declare candidate password_recovery_otps;
+begin
+ if p_student is null or p_student!~'^[0-9]{5,20}$' or p_code_hash is null or p_code_hash!~'^[0-9a-f]{64}$' then return false; end if;
+ select * into candidate from password_recovery_otps
+ where student_id=p_student and consumed_at is null
+ order by created_at desc limit 1 for update;
+ if candidate.id is null then return false; end if;
+ if candidate.expires_at<=now() or candidate.attempts>=5 then
+  update password_recovery_otps set consumed_at=now() where id=candidate.id;
+  return false;
+ end if;
+ if candidate.code_hash<>p_code_hash then
+  update password_recovery_otps set attempts=attempts+1,
+   consumed_at=case when attempts+1>=5 then now() else null end
+   where id=candidate.id;
+  return false;
+ end if;
+ return true;
+end;
+$$;
+revoke all on function public.check_line_recovery_otp(text,text) from public,anon,authenticated;
+grant execute on function public.check_line_recovery_otp(text,text) to service_role;

@@ -27,8 +27,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:offline
+      - run: node tests/account-access-api.test.cjs
       - name: Check offline JavaScript syntax
         run: |
+          node --check web/account-access.js
+          node --check tests/account-access-api.test.cjs
           node --check web/offline-guard.js
           node --check web/offline-api.js
           node --check scripts/offline-server.cjs

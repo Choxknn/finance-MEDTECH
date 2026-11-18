@@ -29,6 +29,10 @@ const db={
   return q
  }
 };
+const flexSource=fs.readFileSync(require('path').resolve(__dirname,'../supabase/functions/_shared/line-flex.ts'),'utf8');
+const flexModule={exports:{}};
+vm.runInNewContext(esbuild.transformSync(flexSource,{loader:'ts',format:'cjs'}).code,{exports:flexModule.exports,module:flexModule});
+const {accountOtpFlex,passwordChangedFlex}=flexModule.exports;
 const source=fs.readFileSync(require('path').resolve(__dirname,'../supabase/functions/account-access/index.ts'),'utf8').replace(/^import .*;\n/gm,'');
 vm.runInNewContext(esbuild.transformSync(source,{loader:'ts',format:'esm'}).code,{
  Deno:{env:{get:key=>key==='ALLOWED_ORIGINS'?'https://example.test':key==='SUPABASE_SERVICE_ROLE_KEY'?'service-secret':key==='LINE_CHANNEL_ACCESS_TOKEN'?'line-secret':''},serve:fn=>handler=fn},
@@ -40,7 +44,7 @@ vm.runInNewContext(esbuild.transformSync(source,{loader:'ts',format:'esm'}).code
  protectAccountRequest:async()=>{},
  Response,Request,URL,Date,JSON,Error,AbortSignal,crypto:{getRandomValues:array=>{array[0]=123456;return array}},
  fetch:async(url,options)=>{linePushes.push({url,options});return {ok:true,status:200}},
- console:{warn:()=>{}}
+ console:{warn:()=>{}},accountOtpFlex,passwordChangedFlex
 });
 const request=data=>new Request('https://project.test/functions/v1/account-access',{method:'POST',headers:{origin:'https://example.test','content-type':'application/json'},body:JSON.stringify(data)});
 (async()=>{
@@ -51,7 +55,9 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  assert.equal(linePushes.length,1,'linked accounts receive a LINE push');
  const push=JSON.parse(linePushes[0].options.body);
  assert.equal(push.to,'LINE-USER');
- assert.match(push.messages[0].text,/123456/);
+ assert.equal(push.messages[0].type,'flex','OTP must be sent as a LINE Flex Message');
+ assert.match(JSON.stringify(push.messages[0]),/123456/);
+ assert.match(push.messages[0].altText,/OTP/);
  assert.equal(requestArgs.p_student,'670111');
  assert.match(requestArgs.p_code_hash,/service-secret/);
  assert.ok(!JSON.stringify(generic).includes('123456'),'OTP is never returned to the browser');
@@ -62,7 +68,8 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  assert.equal(linePushes.length,2,'resend action issues a replacement LINE OTP');
  const resendPush=JSON.parse(linePushes[1].options.body);
  assert.equal(resendPush.to,'LINE-USER');
- assert.match(resendPush.messages[0].text,/123456/);
+ assert.equal(resendPush.messages[0].type,'flex','resent OTP must be sent as a LINE Flex Message');
+ assert.match(JSON.stringify(resendPush.messages[0]),/123456/);
  assert.equal(requestArgs.p_student,'670111');
  
  recoveryResult=null;
@@ -95,8 +102,10 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  assert.equal(linePushes.length,3,'successful password recovery sends a LINE security alert');
  const securityNotice=JSON.parse(linePushes[2].options.body);
  assert.equal(securityNotice.to,'LINE-USER');
- assert.match(securityNotice.messages[0].text,/เปลี่ยนรหัสผ่านบัญชีของคุณสำเร็จ/);
- assert.match(securityNotice.messages[0].text,/วันที่และเวลา/);
+ assert.equal(securityNotice.messages[0].type,'flex','password confirmation must be a LINE Flex Message');
+ assert.match(securityNotice.messages[0].altText,/เปลี่ยนรหัสผ่านสำเร็จ/);
+ assert.match(JSON.stringify(securityNotice.messages[0]),/วันที่และเวลาที่เปลี่ยน/);
+ assert.match(JSON.stringify(securityNotice.messages[0]),/หากไม่ใช่คุณที่ดำเนินการ/);
 
  r=await handler(request({action:'invite-preview',token:'a'.repeat(64)}));
  assert.equal(r.status,200);

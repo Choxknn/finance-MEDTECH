@@ -1,5 +1,6 @@
 import {adminDb,query,secret,hash} from '../_shared/services.ts';
 import {financeSite} from '../_shared/line-flex.ts';
+import {protectAccountRequest,recordAccountSecurityEvent} from '../_shared/bot-protection.ts';
 const callback=financeSite+'line-callback.html';
 const LIFF_ID='2011933909-4qXo3pGn';
 async function registrationSessionHash(db:any,sessionValue:any){
@@ -43,6 +44,7 @@ async function verifyOfficialAccountFriendship(lineUserId:string){
  return profile;
 }
 Deno.serve(async req=>{
+ let lineSecurityContext:any=null,lineSecurityPending=false,lineSecurityProfile:string|null=null;
  const origin=req.headers.get('origin')||'',allowed=(Deno.env.get('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim());
  const headers={'Access-Control-Allow-Origin':allowed.includes(origin)?origin:'null','Access-Control-Allow-Headers':'apikey,content-type,authorization','Access-Control-Allow-Methods':'POST,OPTIONS','Cache-Control':'no-store','Vary':'Origin'};
  const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...headers,'Content-Type':'application/json'}});
@@ -53,6 +55,7 @@ Deno.serve(async req=>{
   if(input.action==='status')return json({enabled:configured});
   if(!configured)return json({error:'ยังไม่ได้ตั้งค่า LINE Login กรุณาใช้รหัสนักศึกษาเข้าสู่ระบบก่อน'},503);
   const db=adminDb();
+  if(input.action==='start'&&input.mode==='login')lineSecurityContext=await protectAccountRequest(db,req,{action:'login',student_id:'LINE_LOGIN'});
 
   if(input.action==='friendship-audit'){
    const actor=await activeProfile(db,req);
@@ -146,6 +149,7 @@ Deno.serve(async req=>{
    const lineProfile=await verifyOfficialAccountFriendship(identity.sub);
    const displayName=(typeof identity.name==='string'&&identity.name.trim()?identity.name.trim():typeof lineProfile.displayName==='string'?lineProfile.displayName.trim():'').slice(0,200)||null;
    const linked=await query(db.from('line_accounts').select('profile_id').eq('line_user_id',identity.sub).maybeSingle());
+  if(state.mode==='login'&&linked?.profile_id)lineSecurityProfile=linked.profile_id;
    if(linked)throw Error('LINE นี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบแทนการสมัครใหม่');
    const session=await query(db.from('registration_sessions').select('code_hash').eq('session_hash',state.sessionHash).gt('expires_at',new Date().toISOString()).single());
    const id=await query(db.rpc('consume_registration_line_code_with_name',{p_hash:session.code_hash,p_line_user:identity.sub,p_display_name:displayName}));
@@ -160,6 +164,7 @@ Deno.serve(async req=>{
    const signed=await signState(state),url=new URL('https://access.line.me/oauth2/v2.1/authorize');const params=new URLSearchParams({response_type:'code',client_id:clientId!,redirect_uri:callback,state:signed,scope:'openid profile',nonce:state.nonce,code_challenge:state.challenge,code_challenge_method:'S256'});if(input.mode==='signup'){params.set('prompt','consent');params.set('bot_prompt','normal')}else if(input.mode==='link'){params.set('bot_prompt','normal')}url.search=params.toString();return json({url:url.href,state:signed});
   }
   if(input.action!=='finish')throw Error('คำขอไม่ถูกต้อง');const state=await readState(input.state);
+  if(state.mode==='login'){lineSecurityPending=true;lineSecurityContext=await protectAccountRequest(db,req,{action:'login',student_id:'LINE_LOGIN'});}
   if(typeof input.verifier!=='string'||!/^[A-Za-z0-9_-]{43,128}$/.test(input.verifier)||base64url(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(input.verifier))))!==state.challenge)throw Error('ไม่พบคำขอจากเบราว์เซอร์นี้ กรุณาเริ่มใหม่');
   if(state.mode==='link'&&(await activeProfile(db,req)).id!==state.profile)throw Error('บัญชีที่เชื่อมไม่ตรงกัน');
   if(typeof input.code!=='string'||!input.code||input.code.length>2000)throw Error('ไม่ได้รับรหัสยืนยันจาก LINE');
@@ -185,6 +190,12 @@ Deno.serve(async req=>{
   const account=await db.auth.admin.getUserById(linked.profile_id);if(account.error||!account.data.user?.email)throw Error('ไม่พบบัญชีที่ใช้งานได้');
   const magic=await db.auth.admin.generateLink({type:'magiclink',email:account.data.user.email});if(magic.error||!magic.data.properties?.hashed_token)throw Error('สร้างเซสชันไม่สำเร็จ');
   const verified=await db.auth.verifyOtp({type:'email',token_hash:magic.data.properties.hashed_token});if(verified.error||!verified.data.session||verified.data.user?.id!==linked.profile_id)throw Error('เข้าสู่ระบบไม่สำเร็จ');
-  const s=verified.data.session;return json({mode:'login',session:{access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at,expires_in:s.expires_in}});
- }catch(error){return json({error:error instanceof Error?error.message:'เชื่อม LINE ไม่สำเร็จ'},400)}
+  const s=verified.data.session;
+  await recordAccountSecurityEvent(db,lineSecurityContext,{type:'login_succeeded',profileId:linked.profile_id,severity:'info',message:'เข้าสู่ระบบสำเร็จด้วย LINE Login'});
+  lineSecurityPending=false;
+  return json({mode:'login',session:{access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at,expires_in:s.expires_in}});
+ }catch(error){
+  if(lineSecurityPending&&lineSecurityContext)await recordAccountSecurityEvent(adminDb(),lineSecurityContext,{type:'login_failed',profileId:lineSecurityProfile,severity:'warning',message:'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ'});
+  return json({error:error instanceof Error?error.message:'เชื่อม LINE ไม่สำเร็จ'},400);
+ }
 });

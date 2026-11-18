@@ -196,6 +196,6 @@ Deno.serve(async req=>{
   return json({mode:'login',session:{access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at,expires_in:s.expires_in}});
  }catch(error){
   if(lineSecurityPending&&lineSecurityContext)await recordAccountSecurityEvent(adminDb(),lineSecurityContext,{type:'login_failed',profileId:lineSecurityProfile,severity:'warning',message:'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ'});
-  return json({error:error instanceof Error?error.message:'เชื่อม LINE ไม่สำเร็จ'},400);
+  return json({error:error instanceof Error?error.message:'เชื่อม LINE ไม่สำเร็จ'},(error as any)?.status===429?429:400);
  }
 });

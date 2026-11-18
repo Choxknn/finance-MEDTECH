@@ -191,7 +191,7 @@ Deno.serve(async req=>{
   const magic=await db.auth.admin.generateLink({type:'magiclink',email:account.data.user.email});if(magic.error||!magic.data.properties?.hashed_token)throw Error('สร้างเซสชันไม่สำเร็จ');
   const verified=await db.auth.verifyOtp({type:'email',token_hash:magic.data.properties.hashed_token});if(verified.error||!verified.data.session||verified.data.user?.id!==linked.profile_id)throw Error('เข้าสู่ระบบไม่สำเร็จ');
   const s=verified.data.session;
-  await recordAccountSecurityEvent(db,lineSecurityContext,{type:'login_succeeded',profileId:linked.profile_id,severity:'info',message:'เข้าสู่ระบบสำเร็จด้วย LINE Login'});
+  await recordAccountSecurityEvent(adminDb(),lineSecurityContext,{type:'login_succeeded',profileId:linked.profile_id,severity:'info',message:'เข้าสู่ระบบสำเร็จด้วย LINE Login'});
   lineSecurityPending=false;
   return json({mode:'login',session:{access_token:s.access_token,refresh_token:s.refresh_token,expires_at:s.expires_at,expires_in:s.expires_in}});
  }catch(error){

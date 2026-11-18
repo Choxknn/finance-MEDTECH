@@ -3,6 +3,7 @@ const root=require('node:path').resolve(__dirname,'..');
 (async()=>{
 const dom=new JSDOM('<dialog id="dialog"></dialog><div id="app"><div class="layout"><div class="mobile-scrim"></div><aside class="sidebar"><nav class="nav"></nav></aside><div class="workspace"><header class="topbar"><button class="topbar-back">back</button><div class="user"></div></header><main></main></div><nav class="clay-dock" aria-label="เมนูด่วน"><button data-view="dashboard"><svg></svg><span>หน้าหลัก</span></button><button data-view="bills"><svg></svg><span>บิล</span></button><button data-view="history"><svg></svg><span>ประวัติ</span></button><button data-view="fund"><svg></svg><span>การเงิน</span></button><button data-action="menu"><svg></svg><span>เมนู</span></button></nav></div></div>',{url:'https://example.test',runScripts:'outside-only',pretendToBeVisual:true});
 const w=dom.window,ctx=dom.getInternalVMContext(),app=w.document.querySelector('#app');
+Object.defineProperty(w.document,'scrollingElement',{configurable:true,value:w.document.documentElement});
 const layoutMarkup=app.innerHTML,getLayout=()=>w.document.querySelector('.layout');
 let y=0;
 Object.defineProperty(w,'scrollY',{configurable:true,get:()=>y});

@@ -32,12 +32,12 @@ export async function recordAccountSecurityEvent(db:any,context:AccountSecurityC
     .eq('ip_hash',context.ipHash).in('event_type',['rate_limit_exceeded','captcha_failed']).gte('created_at',since);
    if(!counted.error&&Number(counted.count||0)>=3)
     await blockSuspiciousIp(db,context.ipHash,'มีคำขอผิดปกติหรือไม่ผ่านการจำกัดความถี่หลายครั้ง');
-  }else if(event.type==='otp_verification_failed'&&context?.targetHash){
+  }else if(['otp_verification_failed','login_failed'].includes(event.type)&&context?.targetHash){
    const counted=await db.from('account_security_events').select('id',{count:'exact',head:true})
     .eq('ip_hash',context.ipHash).eq('target_hash',context.targetHash)
-    .eq('event_type','otp_verification_failed').gte('created_at',since);
+    .eq('event_type',event.type).gte('created_at',since);
    if(!counted.error&&Number(counted.count||0)>=5)
-    await blockSuspiciousIp(db,context.ipHash,'กรอกรหัส OTP ผิดซ้ำหลายครั้ง');
+    await blockSuspiciousIp(db,context.ipHash,event.type==='login_failed'?'เข้าสู่ระบบไม่สำเร็จซ้ำหลายครั้ง':'กรอกรหัส OTP ผิดซ้ำหลายครั้ง');
   }
  }catch(error){console.warn('Account security event logging failed');}
 }
@@ -63,7 +63,7 @@ export async function protectAccountRequest(db:any,req:Request,input:any):Promis
   }
  };
  await guardedLimit('account-ip:'+ip,120,60);
- const sensitive=['batch-start','batch-accept','invite-accept','forgot','resend-otp','verify-otp','check-otp'].includes(input.action);
+ const sensitive=['login','batch-start','batch-accept','invite-accept','forgot','resend-otp','verify-otp','check-otp'].includes(input.action);
  if(sensitive){
   // Detect one network probing many student IDs, not only repeated attempts against one ID.
   await guardedLimit('account-sensitive-ip:'+ip,40,900);

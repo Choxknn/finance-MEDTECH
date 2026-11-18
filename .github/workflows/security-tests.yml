@@ -1,0 +1,27 @@
+name: Security regression tests
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: security-regression-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install pinned test dependencies
+        run: npm ci
+      - name: Test abnormal request detection and temporary blocking
+        run: node tests/bot-protection.test.cjs
+      - name: Test OTP recovery and LINE Flex notification preview
+        run: node tests/account-access-api.test.cjs
+      - name: Test profile and session UI parsing
+        run: node tests/session-history.test.cjs

@@ -46,6 +46,9 @@ assert.equal(app.querySelector('#payment-qr').hidden,false,'the configured main 
 assert.ok(app.querySelector('#payment-qr-hint'),'the QR hint remains available for exact-amount guidance');
 assert.equal(app.querySelector('#pay-form').dataset.id,'c1','the original charge identifier is retained for slip submission');
 app.querySelector('.layout .workspace > .topbar [data-topbar-back]').click();
+assert.equal(run('view'),'payment','back from QR details returns to the method selector');
+assert.ok(app.querySelector('[data-payment-method="bank"]'),'the method selector is shown after returning from QR details');
+app.querySelector('.layout .workspace > .topbar [data-topbar-back]').click();
 assert.equal(run('view'),'dashboard','the payment-method selector back control returns to the home page');
 assert.equal(app.querySelector('.payment-page'),null,'leaving payment removes the dedicated payment page');
 const safetyCss=fs.readFileSync(root+'/web/payment-safety.css','utf8'),safetyJs=fs.readFileSync(root+'/web/payment-safety.js','utf8');

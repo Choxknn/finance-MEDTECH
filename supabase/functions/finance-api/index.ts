@@ -207,6 +207,15 @@ Deno.serve(async req=>{
     const jobs=await query(db.rpc('claim_campaign',{p_id:id,p_actor:profile.id}));for(let i=0;i<jobs.length;i+=5)await Promise.all(jobs.slice(i,i+5).map((n:any)=>deliverNotification(db,n)));
     const summary=await query(db.rpc('campaign_summary',{p_actor:profile.id,p_id:id}));if(!summary.length)throw Error('ไม่พบชุดข้อความ');return json({campaign:summary[0],processed:jobs.length});
    }
+   case 'record-password-change':{
+    const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1).trim();
+    await query(db.from('account_security_events').insert({
+     profile_id:profile.id,event_type:'password_changed',severity:'info',
+     message:'เปลี่ยนรหัสผ่านสำเร็จจากหน้าโปรไฟล์',
+     ip_hash:await hash(secret('SUPABASE_SERVICE_ROLE_KEY')+':finance-medtech:ip:'+ip)
+    }));
+    return json({ok:true});
+   }
    case 'account-security-history':{
     let request=db.from('account_security_events').select('id,profile_id,event_type,severity,message,created_at').order('created_at',{ascending:false}).limit(isAdmin?100:50);
     if(!isAdmin)request=request.eq('profile_id',profile.id);

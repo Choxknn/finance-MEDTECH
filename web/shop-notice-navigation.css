@@ -1433,3 +1433,31 @@
       visibility 0s linear .82s !important;
   }
 }
+
+/* Show mobile dock page labels as soon as the dock starts expanding.
+   Keep label motion short and in sync with the expanding buttons so the text
+   does not appear a beat after the icons. */
+@media (max-width:720px) {
+  html body #app:not(.mobile-dock-compact) .layout .clay-dock > button > span {
+    width:100% !important;
+    max-width:72px !important;
+    max-height:14px !important;
+    overflow:hidden !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    transform:translateY(0) !important;
+    transition:
+      width .26s cubic-bezier(.22,.72,.22,1),
+      max-width .26s cubic-bezier(.22,.72,.22,1),
+      max-height .2s ease,
+      opacity .16s ease .02s,
+      transform .2s cubic-bezier(.22,.72,.22,1),
+      visibility 0s linear 0s !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  html body #app:not(.mobile-dock-compact) .layout .clay-dock > button > span {
+    transition:none !important;
+  }
+}

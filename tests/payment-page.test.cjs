@@ -40,7 +40,7 @@ assert.equal(app.querySelector('.payment-page'),null,'leaving payment removes th
 const safetyCss=fs.readFileSync(root+'/web/payment-safety.css','utf8'),safetyJs=fs.readFileSync(root+'/web/payment-safety.js','utf8');
 assert.match(safetyCss,/#slip-scroll-cue\s*\{[^}]*position:fixed/s,'the slip reminder floats at the bottom without taking layout space');
 assert.match(safetyCss,/#slip-scroll-cue\.is-visible\s*\{[^}]*opacity:1/s,'the reminder has a separate visible animation state');
-assert.match(safetyJs,/cue\.classList\.toggle\('is-visible',show\)/,'the reminder shows and hides without toggling display or document flow');
+assert.match(safetyJs,/reminderCue\.classList\.toggle\('is-visible',show\)/,'the reminder shows and hides without toggling display or document flow');
 assert.match(safetyJs,/observe\(app,\{childList:true,subtree:true\}\)/,'the slip reminder also works on the full-page app payment route');
 
 run("payModal('c1')");

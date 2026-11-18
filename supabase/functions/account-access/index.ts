@@ -1,4 +1,4 @@
-import {captchaConfig,protectAccountRequest} from '../_shared/bot-protection.ts';
+import {captchaConfig,protectAccountRequest,recordAccountSecurityEvent} from '../_shared/bot-protection.ts';
 import {adminDb,query,hash,secret} from '../_shared/services.ts';
 import {accountOtpFlex,passwordChangedFlex} from '../_shared/line-flex.ts';
 Deno.serve(async req=>{
@@ -11,7 +11,7 @@ Deno.serve(async req=>{
  try{
   const raw=await req.text();if(raw.length>4096)return json({error:'คำขอใหญ่เกินไป'},413);const input=JSON.parse(raw),db=adminDb();
   if(input.action==='security-config')return json(captchaConfig());
-  await protectAccountRequest(db,req,input);
+  const securityContext=await protectAccountRequest(db,req,input);
   if(input.action==='forgot'||input.action==='resend-otp'){
    if(typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id))return json({error:'กรุณาระบุรหัสนักศึกษาให้ถูกต้อง'},400);
    const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1)!.trim();
@@ -20,13 +20,18 @@ Deno.serve(async req=>{
    const codeHash=await hash(pepper+':finance-medtech-password-recovery:'+input.student_id+':'+code);
    const request=await query(db.rpc('request_line_recovery_otp',{p_student:input.student_id,p_student_hash:await hash(input.student_id),p_ip_hash:await hash(ip),p_code_hash:codeHash}));
    if(request?.id&&request?.line_user_id){
+    await recordAccountSecurityEvent(db,securityContext,{type:'otp_requested',profileId:request.profile_id,severity:'info',message:'ขอรหัส OTP สำหรับตั้งรหัสผ่านใหม่'});
     try{
      const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:request.line_user_id,messages:[accountOtpFlex(code)]}),signal:AbortSignal.timeout(15000)});
      if(!sent.ok)throw Error('LINE HTTP '+sent.status);
+     await recordAccountSecurityEvent(db,securityContext,{type:'otp_sent',profileId:request.profile_id,severity:'info',message:'ส่งรหัส OTP ไปยัง LINE ที่เชื่อมบัญชีแล้ว'});
     }catch(error){
      await query(db.from('password_recovery_otps').delete().eq('id',request.id));
+     await recordAccountSecurityEvent(db,securityContext,{type:'otp_delivery_failed',profileId:request.profile_id,severity:'warning',message:'ส่งรหัส OTP ทาง LINE ไม่สำเร็จ'});
      console.warn('Password recovery OTP delivery failed');
     }
+   }else{
+    await recordAccountSecurityEvent(db,securityContext,{type:'otp_request_unavailable',severity:'info',message:'มีคำขอ OTP แต่ไม่พบช่องทางที่ส่งรหัสได้'});
    }
    return json({message:'หากรหัสนักศึกษานี้มีบัญชีและเชื่อม LINE ไว้ ระบบจะส่งรหัส OTP ไปยัง LINE ที่ผูกบัญชี กรุณาตรวจสอบแชต LINE'});
   }
@@ -35,6 +40,13 @@ Deno.serve(async req=>{
    const pepper=secret('SUPABASE_SERVICE_ROLE_KEY');
    const codeHash=await hash(pepper+':finance-medtech-password-recovery:'+input.student_id+':'+input.otp);
    const valid=await query(db.rpc('check_line_recovery_otp',{p_student:input.student_id,p_code_hash:codeHash}));
+   let profileId=null;
+   try{const owner=await db.from('profiles').select('id').eq('student_id',input.student_id).maybeSingle();profileId=owner.data?.id||null}catch{}
+   await recordAccountSecurityEvent(db,securityContext,{
+    type:valid===true?'otp_verified':'otp_verification_failed',
+    profileId,severity:valid===true?'info':'warning',
+    message:valid===true?'ยืนยันรหัส OTP สำเร็จ':'กรอกรหัส OTP ไม่ถูกต้องหรือหมดอายุ'
+   });
    return json({valid:valid===true});
   }
   if(input.action==='verify-otp'){
@@ -42,10 +54,16 @@ Deno.serve(async req=>{
    const pepper=secret('SUPABASE_SERVICE_ROLE_KEY');
    const codeHash=await hash(pepper+':finance-medtech-password-recovery:'+input.student_id+':'+input.otp);
    const profileId=await query(db.rpc('verify_line_recovery_otp',{p_student:input.student_id,p_code_hash:codeHash}));
-   if(!profileId)return json({error:'รหัส OTP ไม่ถูกต้อง หมดอายุ หรือถูกใช้แล้ว กรุณาขอรหัสใหม่'},400);
+   if(!profileId){
+    let ownerId=null;try{const owner=await db.from('profiles').select('id').eq('student_id',input.student_id).maybeSingle();ownerId=owner.data?.id||null}catch{}
+    await recordAccountSecurityEvent(db,securityContext,{type:'otp_verification_failed',profileId:ownerId,severity:'warning',message:'กรอกรหัส OTP ไม่ถูกต้อง หมดอายุ หรือถูกใช้แล้ว'});
+    return json({error:'รหัส OTP ไม่ถูกต้อง หมดอายุ หรือถูกใช้แล้ว กรุณาขอรหัสใหม่'},400);
+   }
    const changed=await db.auth.admin.updateUserById(profileId,{password:input.password});
    if(changed.error)throw Error('เปลี่ยนรหัสผ่านไม่สำเร็จ กรุณาขอ OTP ใหม่');
-   await query(db.rpc('revoke_user_auth_sessions',{p_user_id:profileId}));
+   await recordAccountSecurityEvent(db,securityContext,{type:'password_changed',profileId,severity:'info',message:'เปลี่ยนรหัสผ่านสำเร็จผ่านกระบวนการยืนยัน OTP'});
+   const revokedCount=await query(db.rpc('revoke_user_auth_sessions',{p_user_id:profileId}));
+   await recordAccountSecurityEvent(db,securityContext,{type:'sessions_revoked',profileId,severity:'info',message:'ออกจากระบบทุกอุปกรณ์เดิมหลังเปลี่ยนรหัสผ่าน',details:{revoked_sessions:Number(revokedCount||0)}});
    let notificationSent=false;
    try{
     const lineAccount=await query(db.from('line_accounts').select('line_user_id').eq('profile_id',profileId).maybeSingle());

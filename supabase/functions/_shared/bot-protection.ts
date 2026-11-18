@@ -14,7 +14,7 @@ async function blockSuspiciousIp(db:any,ipHash:string,reason:string,targetHash:s
  const logged=await db.from('account_security_events').insert({
   event_type:'ip_temporarily_blocked',severity:'high',
   message:'ระงับคำขอจากเครือข่ายนี้ชั่วคราวเนื่องจากตรวจพบพฤติกรรมผิดปกติ',
-  ip_hash:ipHash,details:{duration_minutes:30,reason}
+  ip_hash:ipHash,target_hash:targetHash||null,details:{duration_minutes:30,reason,scope:targetHash?'account_and_network':'network'}
  });
  if(logged.error)console.warn('Account security block event write failed');
 }

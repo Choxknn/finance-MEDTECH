@@ -26,6 +26,7 @@ function clayIsMainMenuView(layout) {
     .some(button => button.dataset.view === view));
 }
 function clayNavigateBack() {
+  if (view === 'payment' && typeof window.paymentPageHandleTopbarBack === 'function' && window.paymentPageHandleTopbarBack()) return;
   // The finance category ledger returns to the finance overview.
   nav(view === 'fund-category' ? 'fund' : 'dashboard');
 }

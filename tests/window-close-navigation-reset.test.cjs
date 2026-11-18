@@ -1,0 +1,38 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path'),{JSDOM}=require('jsdom');
+const root=path.resolve(__dirname,'..');
+const dom=new JSDOM('<div id="app"><div class="layout"><aside class="sidebar"><nav class="nav"></nav></aside><div class="workspace"><header class="topbar"></header><main></main></div><nav class="clay-dock"><button data-view="dashboard"><svg></svg><span>หน้าหลัก</span></button><button data-view="bills"><svg></svg><span>บิล</span></button></nav></div></div><dialog id="payment-window"></dialog><dialog id="record-window"></dialog>',{url:'https://example.test',runScripts:'outside-only',pretendToBeVisual:true});
+const w=dom.window,ctx=dom.getInternalVMContext(),app=w.document.getElementById('app');
+Object.defineProperty(w.document,'scrollingElement',{configurable:true,value:w.document.documentElement});
+let y=0;
+Object.defineProperty(w,'scrollY',{configurable:true,get:()=>y});
+w.matchMedia=()=>({matches:true,media:'(max-width:720px)'});
+w.user={id:'member-1',role:'member'};w.view='dashboard';w.db={notifications:[]};w.cfg={mode:'demo'};
+w.shopLoaded=false;w.shopOwner='member-1';w.shopData={products:[]};w.shopSaleState=()=> 'closed';
+w.icon=()=>'<svg></svg>';w.esc=x=>String(x);w.noticeRow=()=>'';w.api=async()=>({});
+const layoutMarkup=app.innerHTML;
+w.render=()=>{app.innerHTML=layoutMarkup};
+w.document.scrollingElement.scrollTop=0;
+vm.runInContext(fs.readFileSync(root+'/web/shop-notice-navigation.js','utf8'),ctx);
+const layout=()=>w.document.querySelector('.layout');
+const setScroll=value=>{y=value;w.document.scrollingElement.scrollTop=value;w.dispatchEvent(new w.Event('scroll'))};
+assert.ok(!layout().classList.contains('mobile-header-hidden'),'header starts visible');
+assert.ok(!layout().classList.contains('mobile-page-scrolled'),'dock starts expanded');
+for(const id of ['payment-window','record-window']){
+ setScroll(y+90);
+ assert.ok(layout().classList.contains('mobile-header-hidden'),'scrolling down hides the header before a window closes');
+ assert.ok(layout().classList.contains('mobile-page-scrolled'),'scrolling down compacts the dock before a window closes');
+ assert.ok(app.classList.contains('mobile-dock-compact'),'compact state is stored on the app root before close');
+ const before=y;
+ const dialog=w.document.getElementById(id);
+ dialog.dispatchEvent(new w.Event('close'));
+ assert.ok(!layout().classList.contains('mobile-header-hidden'),id+' close restores the top bar');
+ assert.ok(!layout().classList.contains('mobile-page-scrolled'),id+' close expands the bottom dock');
+ assert.ok(!app.classList.contains('mobile-dock-compact'),id+' close clears the stored compact state');
+ assert.equal(y,before,id+' close preserves the underlying page scroll position');
+ setScroll(y+12);
+ assert.ok(layout().classList.contains('mobile-header-hidden'),'a fresh downward gesture can hide the header again after close');
+ assert.ok(layout().classList.contains('mobile-page-scrolled'),'a fresh downward gesture can compact the dock again after close');
+}
+console.log('Closing payment and record dialogs resets the mobile top bar and bottom dock while preserving page scroll');
+w.close();

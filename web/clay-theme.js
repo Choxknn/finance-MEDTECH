@@ -57,10 +57,13 @@ function applyClayPresentation() {
     backButton.removeAttribute('data-action');
     backButton.dataset.topbarBack = 'true';
     const isFinanceCategory = view === 'fund-category';
+    const isPaymentView = view === 'payment';
+    const isPaymentMethodDetail = isPaymentView && Boolean(window.paymentPageHasSelectedMethod?.());
+    const backLabel = isFinanceCategory ? 'กลับหน้าการเงิน' : isPaymentMethodDetail ? 'กลับเลือกวิธีชำระ' : 'กลับหน้าหลัก';
     const isMobileBack = window.matchMedia('(max-width: 720px)').matches;
-    const showHomeIcon = isMobileBack && !isFinanceCategory;
-    backButton.setAttribute('aria-label', isFinanceCategory ? 'กลับหน้าการเงิน' : 'กลับหน้าหลัก');
-    backButton.title = isFinanceCategory ? 'กลับหน้าการเงิน' : 'กลับหน้าหลัก';
+    const showHomeIcon = isMobileBack && !isFinanceCategory && !isPaymentMethodDetail;
+    backButton.setAttribute('aria-label', backLabel);
+    backButton.title = backLabel;
     backButton.innerHTML = showHomeIcon
       ? '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7"></path><path d="M5 9v11h14V9"></path><path d="M9 20v-6h6v6"></path></svg>'
       : '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>';
@@ -102,8 +105,8 @@ function applyClayPresentation() {
   }
   // Re-evaluate after the dock exists; this also runs on every later render.
   if (backButton) {
-    const hideMobileAdminHomeAction = user.role === 'admin' && window.matchMedia('(max-width: 720px)').matches;
-    backButton.hidden = hideMobileAdminHomeAction || clayIsMainMenuView(layout);
+    const hideMobileAdminHomeAction = user.role === 'admin' && window.matchMedia('(max-width: 720px)').matches && view !== 'payment';
+    backButton.hidden = hideMobileAdminHomeAction || (!isPaymentView && clayIsMainMenuView(layout));
     backButton.setAttribute('aria-hidden', String(backButton.hidden));
     topbar.dataset.backHidden = String(backButton.hidden);
   }

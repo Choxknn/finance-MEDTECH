@@ -1,5 +1,6 @@
 import {captchaConfig,protectAccountRequest} from '../_shared/bot-protection.ts';
 import {adminDb,query,hash,secret} from '../_shared/services.ts';
+import {accountOtpFlex,passwordChangedFlex} from '../_shared/line-flex.ts';
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'',allowed=(Deno.env.get('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim());
  const headers={'Access-Control-Allow-Origin':allowed.includes(origin)?origin:'null','Access-Control-Allow-Headers':'apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS','Cache-Control':'no-store','Vary':'Origin'};
@@ -20,7 +21,7 @@ Deno.serve(async req=>{
    const request=await query(db.rpc('request_line_recovery_otp',{p_student:input.student_id,p_student_hash:await hash(input.student_id),p_ip_hash:await hash(ip),p_code_hash:codeHash}));
    if(request?.id&&request?.line_user_id){
     try{
-     const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:request.line_user_id,messages:[{type:'text',text:'รหัส OTP สำหรับตั้งรหัสผ่านใหม่ของ finance MEDTECH คือ '+code+'\nรหัสมีอายุ 5 นาทีและใช้ได้ครั้งเดียว หากไม่ได้เป็นผู้ขอ สามารถละเว้นข้อความนี้ได้'}]}),signal:AbortSignal.timeout(15000)});
+     const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:request.line_user_id,messages:[accountOtpFlex(code)],signal:AbortSignal.timeout(15000)});
      if(!sent.ok)throw Error('LINE HTTP '+sent.status);
     }catch(error){
      await query(db.from('password_recovery_otps').delete().eq('id',request.id));
@@ -50,13 +51,8 @@ Deno.serve(async req=>{
     const lineAccount=await query(db.from('line_accounts').select('line_user_id').eq('profile_id',profileId).maybeSingle());
     if(lineAccount?.line_user_id){
      const stamp=new Intl.DateTimeFormat('th-TH',{dateStyle:'long',timeStyle:'short',hourCycle:'h23',timeZone:'Asia/Bangkok'}).format(new Date());
-     const notice=`finance MEDTECH
-แจ้งเตือนความปลอดภัย
-มีการเปลี่ยนรหัสผ่านบัญชีของคุณสำเร็จ
-วันที่และเวลา: ${stamp} น.
-
-หากคุณไม่ได้เป็นผู้ดำเนินการ กรุณาติดต่อผู้ดูแลระบบทันที`;
-     const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:lineAccount.line_user_id,messages:[{type:'text',text:notice}]}),signal:AbortSignal.timeout(10000)});
+     const flex=passwordChangedFlex(stamp);
+     const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:lineAccount.line_user_id,messages:[flex]}),signal:AbortSignal.timeout(10000)});
      if(!sent.ok)throw Error('LINE HTTP '+sent.status);
      notificationSent=true;
     }

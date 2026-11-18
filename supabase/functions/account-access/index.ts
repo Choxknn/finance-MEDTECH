@@ -24,7 +24,7 @@ Deno.serve(async req=>{
     await recordAccountSecurityEvent(db,securityContext,{type:'login_failed',profileId,severity:'warning',message:'เข้าสู่ระบบไม่สำเร็จด้วยรหัสนักศึกษาและรหัสผ่าน'});
     return json({error:'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง'},401);
    }
-   await recordAccountSecurityEvent(db,securityContext,{type:'login_succeeded',profileId:signed.data.user.id,severity:'info',message:'เข้าสู่ระบบสำเร็จด้วยรหัสนักศึกษาและรหัสผ่าน'});
+   await recordAccountSecurityEvent(adminDb(),securityContext,{type:'login_succeeded',profileId:signed.data.user.id,severity:'info',message:'เข้าสู่ระบบสำเร็จด้วยรหัสนักศึกษาและรหัสผ่าน'});
    const session=signed.data.session;
    return json({access_token:session.access_token,refresh_token:session.refresh_token,expires_at:session.expires_at,expires_in:session.expires_in,token_type:session.token_type});
   }

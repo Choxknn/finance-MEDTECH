@@ -60,7 +60,7 @@ const request=(action='forgot')=>new Request('https://example.test',{headers:{'x
  const existingBlock=makeDb({blocked:true});
  await assert.rejects(()=>protectAccountRequest(existingBlock,request(),{action:'forgot',student_id:'670111'}),error=>error.status===429);
 
- const otpDb=makeDb({countOverride:5});
+ const otpDb=makeDb();
  for(let i=0;i<5;i++)await recordAccountSecurityEvent(otpDb,context,{type:'otp_verification_failed',severity:'warning',message:'กรอกรหัส OTP ไม่ถูกต้อง'});
  assert.ok(otpDb.blocks.length===1,'five failed OTP checks for one target temporarily block the source IP');
  assert.ok(otpDb.events.some(event=>event.event_type==='ip_temporarily_blocked'));

@@ -11,7 +11,7 @@ Deno.serve(async req=>{
   const raw=await req.text();if(raw.length>4096)return json({error:'คำขอใหญ่เกินไป'},413);const input=JSON.parse(raw),db=adminDb();
   if(input.action==='security-config')return json(captchaConfig());
   await protectAccountRequest(db,req,input);
-  if(input.action==='forgot'){
+  if(input.action==='forgot'||input.action==='resend-otp'){
    if(typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id))return json({error:'กรุณาระบุรหัสนักศึกษาให้ถูกต้อง'},400);
    const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1)!.trim();
    const code=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');

@@ -1,12 +1,13 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),esbuild=require('esbuild');
 let handler,inviteState='pending',createdPassword='',updatedPassword='',updatedUser='',finishFails=false,deleteCount=0;
-let recoveryResult={id:'otp-row',profile_id:'member-user',line_user_id:'LINE-USER'},verifyValid=false,checkValid=false,requestArgs=null,verifyArgs=null,checkArgs=null,linePushes=[];
+let recoveryResult={id:'otp-row',profile_id:'member-user',line_user_id:'LINE-USER'},verifyValid=false,checkValid=false,requestArgs=null,verifyArgs=null,checkArgs=null,linePushes=[],revokedUsers=[];
 const reserve={student_id:'670111',name_prefix:'นาย',first_name:'Fixed',last_name:'Identity',year:'1'};
 const db={
  rpc:async(name,args)=>{
   if(name==='request_line_recovery_otp'){requestArgs=args;return {data:recoveryResult}}
   if(name==='verify_line_recovery_otp'){verifyArgs=args;return {data:verifyValid?'member-user':null}}
   if(name==='check_line_recovery_otp'){checkArgs=args;return {data:checkValid}}
+  if(name==='revoke_user_auth_sessions'){revokedUsers.push(args.p_user_id);return {data:4}}
   if(name==='claim_member_invite'){if(inviteState!=='pending')return {error:{message:'used'}};inviteState='processing';return {data:reserve}}
   if(name==='finish_member_invite'){inviteState='used';if(finishFails)return {error:{message:'lost response'}};return {data:null}}
   return {data:null}
@@ -21,7 +22,7 @@ const db={
   const q={
    select(){return q},eq(){return q},gt(){return q},limit(){return q},
    update(value){patch=value;return q},
-   maybeSingle(){return Promise.resolve({data:table==='member_invites'&&inviteState==='pending'?reserve:null})},
+   maybeSingle(){return Promise.resolve({data:table==='member_invites'&&inviteState==='pending'?reserve:table==='line_accounts'?{line_user_id:'LINE-USER'}:null})},
    single(){return Promise.resolve({data:table==='member_invites'?{status:inviteState}:{id:'otp-row'}})},
    then(resolve,reject){if(patch&&table==='member_invites')inviteState=patch.status;return Promise.resolve({data:null}).then(resolve,reject)}
   };
@@ -84,8 +85,18 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  verifyValid=true;
  r=await handler(request({action:'verify-otp',student_id:'670111',otp:'123456',password:'NewPass123'}));
  assert.equal(r.status,200);
+ const passwordReset=await r.json();
  assert.equal(updatedUser,'member-user');
  assert.equal(updatedPassword,'NewPass123');
+ assert.equal(revokedUsers.length,1,'password recovery revokes all auth sessions');
+ assert.equal(revokedUsers[0],'member-user');
+ assert.equal(passwordReset.sessions_revoked,true);
+ assert.equal(passwordReset.notification_sent,true);
+ assert.equal(linePushes.length,3,'successful password recovery sends a LINE security alert');
+ const securityNotice=JSON.parse(linePushes[2].options.body);
+ assert.equal(securityNotice.to,'LINE-USER');
+ assert.match(securityNotice.messages[0].text,/เปลี่ยนรหัสผ่านบัญชีของคุณสำเร็จ/);
+ assert.match(securityNotice.messages[0].text,/วันที่และเวลา/);
 
  r=await handler(request({action:'invite-preview',token:'a'.repeat(64)}));
  assert.equal(r.status,200);

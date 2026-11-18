@@ -106,7 +106,7 @@ function applyClayPresentation() {
   // Re-evaluate after the dock exists; this also runs on every later render.
   if (backButton) {
     const hideMobileAdminHomeAction = user.role === 'admin' && window.matchMedia('(max-width: 720px)').matches && view !== 'payment';
-    backButton.hidden = hideMobileAdminHomeAction || (!isPaymentView && clayIsMainMenuView(layout));
+    backButton.hidden = hideMobileAdminHomeAction || (view !== 'payment' && clayIsMainMenuView(layout));
     backButton.setAttribute('aria-hidden', String(backButton.hidden));
     topbar.dataset.backHidden = String(backButton.hidden);
   }

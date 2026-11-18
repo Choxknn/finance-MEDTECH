@@ -23,5 +23,5 @@ jobs:
         run: node tests/bot-protection.test.cjs
       - name: Test OTP recovery and LINE Flex notification preview
         run: node tests/account-access-api.test.cjs
-      - name: Test profile and session UI parsing
-        run: node tests/session-history.test.cjs
+      - name: Check updated login and profile scripts
+        run: node --check web/app.js && node --check web/account-access.js

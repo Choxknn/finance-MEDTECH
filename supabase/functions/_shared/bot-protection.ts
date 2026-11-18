@@ -4,7 +4,7 @@ export async function limitRequest(db:any,key:string,limit:number,seconds:number
 export async function protectAccountRequest(db:any,req:Request,input:any){
  const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1)!.trim();
  await limitRequest(db,'account-ip:'+ip,120,60);
- const sensitive=['batch-start','batch-accept','invite-accept','forgot','verify-otp','check-otp'].includes(input.action);
+ const sensitive=['batch-start','batch-accept','invite-accept','forgot','resend-otp','verify-otp','check-otp'].includes(input.action);
  if(sensitive)await limitRequest(db,'account-sensitive:'+ip+':'+String(input.student_id||input.token||'').slice(0,100),12,900);
  // Turnstile is checked when requesting the OTP (and during registration).
  // Subsequent OTP checks are protected by strict per-IP/per-student rate limits

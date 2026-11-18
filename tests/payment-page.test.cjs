@@ -5,7 +5,7 @@ w.FINANCE_CONFIG={mode:'demo',bankName:'ธนาคารตัวอย่า�
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true};
 w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
 w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.scrollTo=()=>{};
-for(const name of ['app.js','management.js','records.js','fund.js','payment-qrs.js','session-history.js','bills.js','experience.js','operations.js','layout-polish.js','fund-evidence.js','flex-templates.js','flex-preview.js','line-messages.js','communications.js','mobile-refinement.js','detail-polish.js','individual-bills.js','record-modals.js','payment-page.js'])vm.runInContext(fs.readFileSync(root+'/web/'+name,'utf8'),ctx);
+for(const name of ['app.js','management.js','records.js','fund.js','payment-qrs.js','session-history.js','bills.js','experience.js','operations.js','layout-polish.js','fund-evidence.js','flex-templates.js','flex-preview.js','line-messages.js','communications.js','payment-status.js','mobile-refinement.js','detail-polish.js','individual-bills.js','record-modals.js','payment-page.js'])vm.runInContext(fs.readFileSync(root+'/web/'+name,'utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx);
 run("demoLogin('member');paymentWindowOpen=()=>true;nav('bills');payModal('c1')");
 const app=w.document.getElementById('app'),dialog=w.document.getElementById('dialog');
@@ -42,4 +42,18 @@ assert.match(safetyCss,/#slip-scroll-cue\s*\{[^}]*position:fixed/s,'the slip rem
 assert.match(safetyCss,/#slip-scroll-cue\.is-visible\s*\{[^}]*opacity:1/s,'the reminder has a separate visible animation state');
 assert.match(safetyJs,/cue\.classList\.toggle\('is-visible',show\)/,'the reminder shows and hides without toggling display or document flow');
 assert.match(safetyJs,/observe\(app,\{childList:true,subtree:true\}\)/,'the slip reminder also works on the full-page app payment route');
-setImmediate(()=>{w.close();console.log('Full-page payment route, regular site header, bank/QR method selection, existing QR, slip form, return navigation and floating non-layout reminder passed')});
+
+run("payModal('c1')");
+app.querySelector('[data-payment-method="bank"]').click();
+const beforeUpload=run('db.payments.length'),upload=app.querySelector('#slip-file'),testFile=new w.File(['demo slip'],'slip.png',{type:'image/png'});
+Object.defineProperty(upload,'files',{value:[testFile],configurable:true});
+upload.dispatchEvent(new w.Event('change',{bubbles:true}));
+setImmediate(()=>setImmediate(()=>{
+  assert.equal(run('db.payments.length'),beforeUpload+1,'choosing a slip automatically submits one payment');
+  assert.equal(run('view'),'bills','successful slip submission returns to the page where payment started');
+  assert.equal(app.querySelector('.payment-page'),null,'the payment route closes after a successful slip submission');
+  assert.ok(w.document.getElementById('payment-status-dialog')?.open,'the existing payment result notification is preserved');
+  w.close();
+  console.log('Full-page payment route, regular site header, bank/QR selection, QR display, automatic slip submission, return navigation and floating reminder passed');
+}));
+

@@ -44,7 +44,19 @@ Deno.serve(async req=>{
    if(!profileId)return json({error:'รหัส OTP ไม่ถูกต้อง หมดอายุ หรือถูกใช้แล้ว กรุณาขอรหัสใหม่'},400);
    const changed=await db.auth.admin.updateUserById(profileId,{password:input.password});
    if(changed.error)throw Error('เปลี่ยนรหัสผ่านไม่สำเร็จ กรุณาขอ OTP ใหม่');
-   return json({message:'ตั้งรหัสผ่านใหม่สำเร็จ'});
+   await query(db.rpc('revoke_user_auth_sessions',{p_user_id:profileId}));
+   let notificationSent=false;
+   const lineAccount=await query(db.from('line_accounts').select('line_user_id').eq('profile_id',profileId).maybeSingle());
+   if(lineAccount?.line_user_id){
+    try{
+     const stamp=new Intl.DateTimeFormat('th-TH',{dateStyle:'long',timeStyle:'short',hourCycle:'h23',timeZone:'Asia/Bangkok'}).format(new Date());
+     const notice='finance MEDTECH\\nแจ้งเตือนความปลอดภัย\\nมีการเปลี่ยนรหัสผ่านบัญชีของคุณสำเร็จ\\nวันที่และเวลา: '+stamp+' น.\\n\\nหากคุณไม่ได้เป็นผู้ดำเนินการ กรุณาติดต่อผู้ดูแลระบบทันที';
+     const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:lineAccount.line_user_id,messages:[{type:'text',text:notice}]}),signal:AbortSignal.timeout(10000)});
+     if(!sent.ok)throw Error('LINE HTTP '+sent.status);
+     notificationSent=true;
+    }catch(error){console.warn('Password reset LINE security notification failed');}
+   }
+   return json({message:'ตั้งรหัสผ่านใหม่สำเร็จ',sessions_revoked:true,notification_sent:notificationSent});
   }
   if(!['invite-preview','invite-accept','batch-start','batch-state','batch-accept','batch-reset-line'].includes(input.action)||typeof input.token!=='string'||!/^[0-9a-f]{64}$/.test(input.token))return json({error:'ลิงก์ไม่ถูกต้อง'},400);
   let tokenHash=await hash(input.token);

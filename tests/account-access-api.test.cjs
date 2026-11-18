@@ -55,6 +55,12 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  assert.match(requestArgs.p_code_hash,/service-secret/);
  assert.ok(!JSON.stringify(generic).includes('123456'),'OTP is never returned to the browser');
 
+ r=await handler(request({action:'resend-otp',student_id:'670111'}));
+ assert.equal(r.status,200);
+ assert.match((await r.json()).message,/ส่งรหัส OTP/);
+ assert.equal(linePushes.length,2,'resend action issues a replacement LINE OTP');
+ assert.equal(requestArgs.p_student,'670111');
+ 
  recoveryResult=null;
  r=await handler(request({action:'forgot',student_id:'999999'}));
  assert.deepEqual(await r.json(),generic,'Do not disclose whether an account or LINE link exists');

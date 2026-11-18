@@ -13,7 +13,7 @@ Deno.serve(async req=>{
   if(input.action==='security-config')return json(captchaConfig());
   const securityContext=await protectAccountRequest(db,req,input);
   if(input.action==='login'){
-   if(typeof input.student_id!=='string'||!/^[A-Za-z0-9_-]{3,20}$/.test(input.student_id)||typeof input.password!=='string'||!input.password||input.password.length>128)
+   if(typeof input.student_id!=='string'||!/^[A-Za-z0-9_-]{3,20}$/.test(input.student_id)||typeof input.password!=='string'||!input.password||input.password.length>1024)
     return json({error:'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง'},400);
    const domain=Deno.env.get('STUDENT_EMAIL_DOMAIN')||'students.finance-medtech.invalid';
    const email=input.student_id.toLowerCase()+'@'+domain;

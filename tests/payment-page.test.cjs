@@ -7,9 +7,8 @@ w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEven
 w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};
 for(const name of ['app.js','management.js','records.js','fund.js','payment-qrs.js','session-history.js','bills.js','experience.js','operations.js','layout-polish.js','fund-evidence.js','flex-templates.js','flex-preview.js','line-messages.js','communications.js','mobile-refinement.js','detail-polish.js','individual-bills.js','record-modals.js','payment-page.js'])vm.runInContext(fs.readFileSync(root+'/web/'+name,'utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx);
-run("demoLogin('member');payModal('c1')");
+run("demoLogin('member');paymentWindowOpen=()=>true;payModal('c1')");
 const dialog=w.document.getElementById('dialog');
-console.log('payment-page diagnostic', {open:dialog.open, html:dialog.innerHTML.slice(0,1200), hasForm:!!dialog.querySelector('#pay-form'), paymentClass:dialog.className, handler:String(run('payModal')).slice(0,220)});
 assert.equal(dialog.open,true,'payment page is shown in the shared top-layer dialog');
 assert.ok(dialog.classList.contains('payment-page-dialog'),'bill payment opens as a full-page surface');
 assert.ok(dialog.querySelector('.payment-page-header'),'page header with back control is present');

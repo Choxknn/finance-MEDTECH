@@ -56,6 +56,7 @@ const request=(action='forgot')=>new Request('https://example.test',{headers:{'x
  assert.ok(blockedDb.events.some(event=>event.event_type==='rate_limit_exceeded'));
  assert.ok(blockedDb.events.some(event=>event.event_type==='ip_temporarily_blocked'));
  assert.equal(blockedDb.blocks.length,1,'three abnormal rate-limit events temporarily block the IP');
+ assert.equal(blockedDb.blocks[0].target_hash,'0'.repeat(64),'network-wide anomalies create an IP-wide block');
 
  const existingBlock=makeDb({blocked:true});
  await assert.rejects(()=>protectAccountRequest(existingBlock,request(),{action:'forgot',student_id:'670111'}),error=>error.status===429);
@@ -63,6 +64,13 @@ const request=(action='forgot')=>new Request('https://example.test',{headers:{'x
  const otpDb=makeDb();
  for(let i=0;i<5;i++)await recordAccountSecurityEvent(otpDb,context,{type:'otp_verification_failed',severity:'warning',message:'กรอกรหัส OTP ไม่ถูกต้อง'});
  assert.ok(otpDb.blocks.length===1,'five failed OTP checks for one target temporarily block the source IP');
+ assert.equal(otpDb.blocks[0].target_hash,context.targetHash,'OTP failures block only this account on this network');
  assert.ok(otpDb.events.some(event=>event.event_type==='ip_temporarily_blocked'));
+
+ const loginDb=makeDb();
+ for(let i=0;i<5;i++)await recordAccountSecurityEvent(loginDb,context,{type:'login_failed',severity:'warning',message:'เข้าสู่ระบบไม่สำเร็จ'});
+ assert.equal(loginDb.blocks.length,1,'five failed password logins trigger a temporary account block');
+ assert.equal(loginDb.blocks[0].target_hash,context.targetHash,'password failures do not block other accounts behind the same router');
+
  console.log('Account protection: request rate limits, IP anomaly blocking, repeated OTP failure blocking and security event recording passed');
 })().catch(error=>{console.error(error);process.exitCode=1});

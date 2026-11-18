@@ -43,7 +43,8 @@ vm.runInNewContext(esbuild.transformSync(source,{loader:'ts',format:'esm'}).code
  hash:async value=>'digest:'+value,
  secret:key=>key==='SUPABASE_SERVICE_ROLE_KEY'?'service-secret':'line-secret',
  captchaConfig:()=>({site_key:'',enabled:false}),
- protectAccountRequest:async()=>{},
+ protectAccountRequest:async()=>({ipHash:'a'.repeat(64),targetHash:'b'.repeat(64),action:'test'}),
+ recordAccountSecurityEvent:async(_db,context,event)=>securityEvents.push({context,event}),
  Response,Request,URL,Date,JSON,Error,AbortSignal,crypto:{getRandomValues:array=>{array[0]=123456;return array}},
  fetch:async(url,options)=>{linePushes.push({url,options});return {ok:true,status:200}},
  console:{warn:()=>{}},accountOtpFlex,passwordChangedFlex

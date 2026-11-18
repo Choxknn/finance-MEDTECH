@@ -21,7 +21,7 @@ Deno.serve(async req=>{
    const request=await query(db.rpc('request_line_recovery_otp',{p_student:input.student_id,p_student_hash:await hash(input.student_id),p_ip_hash:await hash(ip),p_code_hash:codeHash}));
    if(request?.id&&request?.line_user_id){
     try{
-     const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:request.line_user_id,messages:[accountOtpFlex(code)],signal:AbortSignal.timeout(15000)});
+     const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:request.line_user_id,messages:[accountOtpFlex(code)]}),signal:AbortSignal.timeout(15000)});
      if(!sent.ok)throw Error('LINE HTTP '+sent.status);
     }catch(error){
      await query(db.from('password_recovery_otps').delete().eq('id',request.id));

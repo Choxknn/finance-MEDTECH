@@ -2358,3 +2358,52 @@ html body .workspace > .topbar .admin-search-field .admin-camera-button:focus-vi
     pointer-events:none !important;
   }
 }
+
+/* Floating overdue reminder: it stays below the fixed header while the page scrolls. */
+html body .workspace > .overdue-page-banner {
+  position: sticky !important;
+  top: calc(84px + env(safe-area-inset-top, 0px)) !important;
+  z-index: 149 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: 1440px !important;
+  margin: calc(76px + env(safe-area-inset-top, 0px)) 24px 0 !important;
+  padding: 13px 17px !important;
+  border: 1px solid rgba(255, 255, 255, .25) !important;
+  border-radius: 15px !important;
+  background: #d92340 !important;
+  color: #fff !important;
+  box-shadow: 0 8px 24px rgba(142, 20, 42, .24) !important;
+  transition: box-shadow .2s ease, background-color .2s ease !important;
+}
+
+html body .workspace > .overdue-page-banner strong,
+html body .workspace > .overdue-page-banner svg,
+html body .workspace > .overdue-page-banner .icon {
+  color: #fff !important;
+  stroke: currentColor !important;
+}
+
+html body .workspace:has(> .overdue-page-banner) > main {
+  padding-top: 18px !important;
+}
+
+@media (max-width: 720px) {
+  html body .workspace > .overdue-page-banner {
+    margin-right: 14px !important;
+    margin-left: 14px !important;
+    padding: 11px 13px !important;
+    border-radius: 13px !important;
+  }
+}
+
+/* The full-width frosted strip is for the app header only, not the login screen. */
+html body:has(.login-page)::before {
+  content: none !important;
+  display: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}

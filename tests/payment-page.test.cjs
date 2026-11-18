@@ -15,6 +15,7 @@ assert.ok(app.querySelector('.layout .workspace > .topbar [data-topbar-back]'),'
 assert.equal(app.querySelector('.layout .workspace > .topbar [data-topbar-back]').getAttribute('aria-label'),'กลับหน้าหลัก','the method selector back control is labelled as home');
 assert.ok(w.scrollCalls>0,'opening the payment route scrolls the page to the top');
 assert.ok(app.querySelector('.layout main > .payment-page'),'payment occupies the normal full-page workspace');
+assert.ok(app.querySelector('.payment-page.payment-page-entering'),'new payment page enters with a dedicated slide animation');
 assert.equal(app.querySelector('.payment-page-header'),null,'payment does not create a separate replacement top bar');
 assert.equal(run('view'),'payment','opening a bill navigates to the dedicated payment page');
 assert.equal(app.querySelector('.payment-page-bill-title').textContent.trim(),'เงินกองกลางประจำเดือน');
@@ -52,6 +53,8 @@ app.querySelector('.layout .workspace > .topbar [data-topbar-back]').click();
 assert.equal(run('view'),'dashboard','the payment-method selector back control returns to the home page');
 assert.equal(app.querySelector('.payment-page'),null,'leaving payment removes the dedicated payment page');
 const safetyCss=fs.readFileSync(root+'/web/payment-safety.css','utf8'),safetyJs=fs.readFileSync(root+'/web/payment-safety.js','utf8');
+assert.match(fs.readFileSync(root+'/web/payment-page.css','utf8'),/\.payment-page-entering\s*\{[^}]*animation:\s*payment-page-slide-in/s,'the payment page uses a dedicated entrance animation');
+assert.match(fs.readFileSync(root+'/web/payment-page.css','utf8'),/@keyframes\s+payment-page-slide-in\s*\{[^}]*translate3d\(100%,0,0\)[^}]*translate3d\(0,0,0\)/s,'the payment page animates from right to left');
 assert.match(safetyCss,/#slip-scroll-cue\s*\{[^}]*position:fixed/s,'the slip reminder floats at the bottom without taking layout space');
 assert.match(safetyCss,/#slip-scroll-cue\.is-visible\s*\{[^}]*opacity:1/s,'the reminder has a separate visible animation state');
 assert.match(safetyJs,/reminderCue\.classList\.toggle\('is-visible',show\)/,'the reminder shows and hides without toggling display or document flow');

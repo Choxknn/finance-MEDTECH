@@ -2,6 +2,7 @@
 
 (() => {
   let paymentPageState = null;
+  let paymentPageEntrancePending = false;
   const baseContent = content;
   const baseNav = nav;
 
@@ -162,6 +163,7 @@
     const charge = db?.charges?.find(item => item.id === id);
     if (!charge || charge.profile_id !== user?.id) return;
     paymentPageState = {id: id, method: '', returnView: view};
+    paymentPageEntrancePending = true;
     view = 'payment';
     render();
     scrollPaymentPageToTop();
@@ -189,6 +191,16 @@
   const baseRender = render;
   render = function () {
     baseRender();
+    if (view === 'payment' && paymentPageEntrancePending) {
+      const page = document.querySelector('.payment-page');
+      if (page) {
+        page.classList.add('payment-page-entering');
+        page.addEventListener('animationend', event => {
+          if (event.animationName === 'payment-page-slide-in') page.classList.remove('payment-page-entering');
+        }, {once:true});
+        paymentPageEntrancePending = false;
+      }
+    }
     if (view === 'payment' && typeof updatePaymentQr === 'function' && paymentPageState?.method === 'qr') {
       updatePaymentQr();
       const qr = document.getElementById('payment-qr');

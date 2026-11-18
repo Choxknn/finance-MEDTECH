@@ -83,3 +83,35 @@ export function financeFlex(title:string,body:string,kind='message',actionUrl=''
  return {type:'flex',altText:(({new_bill:'มีบิลใหม่สำหรับคุณ',payment_success:'ยืนยันการชำระเงินเรียบร้อยแล้ว',bill_updated:'มีการปรับยอดบิล กรุณาตรวจสอบ',reminder:'แจ้งเตือนกำหนดชำระเงิน',correction:'กรุณาตรวจสอบและแก้ไขหลักฐาน'} as Record<string,string>)[k]||((heading.trim().startsWith(labels[k])?heading.trim():(labels[k]+' · '+heading)).slice(0,400))),contents:{type:'bubble',size:'mega',styles:{header:{backgroundColor:'#FFFFFF'},body:{backgroundColor:'#FFFFFF'},footer:{backgroundColor:'#FFFFFF'}},header,body:content,footer:foot}};
 }
 export function automaticTitle(body:string){return /กรุณาแก้ไข/.test(body)?'กรุณาแก้ไขหลักฐาน':/ยอดค้าง/.test(body)?'แจ้งเตือนยอดค้างชำระ':'ข้อความจาก finance MEDTECH'}
+
+
+export function accountOtpFlex(code:string){
+ const header=box([
+  txt('FINANCE / ACCOUNT SECURITY','xxs','#BDE4EF',{weight:'bold'}),
+  txt('ยืนยันตัวตน','xl','#FFFFFF',{weight:'bold'}),
+  txt('รหัสสำหรับตั้งรหัสผ่านใหม่','sm','#D9EDF2')
+ ],{paddingAll:'24px',backgroundColor:'#164E63',spacing:'sm'});
+ const content=box([
+  txt('รหัส OTP ของคุณ','sm','#547184',{weight:'bold',align:'center'}),
+  box([txt(code,'xxl','#0E536C',{weight:'bold',align:'center'})],{paddingAll:'20px',backgroundColor:'#E6F5FA',cornerRadius:'16px',alignItems:'center'}),
+  box([txt('หมดอายุภายใน 5 นาที','md','#A45A12',{weight:'bold',align:'center'}),txt('รหัสนี้ใช้ได้เพียงครั้งเดียว และไม่ควรส่งต่อให้ผู้อื่น','xs','#815C3A',{align:'center'})],{paddingAll:'14px',backgroundColor:'#FFF5E8',cornerRadius:'12px',spacing:'xs'}),
+  txt('หากคุณไม่ได้เป็นผู้ขอเปลี่ยนรหัสผ่าน สามารถละเว้นข้อความนี้ได้','xs','#718096',{align:'center'})
+ ],{paddingAll:'22px',spacing:'lg',backgroundColor:'#FFFFFF'});
+ const footerBox=box([txt('FINANCE · MEDTECH','xxs','#94A3B8',{weight:'bold',align:'center'})],{paddingAll:'16px',backgroundColor:'#FFFFFF'});
+ return {type:'flex',altText:'รหัส OTP สำหรับตั้งรหัสผ่านใหม่ของ finance MEDTECH',contents:{type:'bubble',size:'mega',styles:{header:{backgroundColor:'#164E63'},body:{backgroundColor:'#FFFFFF'},footer:{backgroundColor:'#FFFFFF'}},header,body:content,footer:footerBox}};
+}
+
+export function passwordChangedFlex(stamp:string){
+ const header=box([
+  txt('FINANCE / SECURITY ALERT','xxs','#C8F1DB',{weight:'bold'}),
+  txt('เปลี่ยนรหัสผ่านสำเร็จ','xl','#FFFFFF',{weight:'bold'}),
+  txt('ระบบได้ยกเลิกเซสชันเดิมทุกอุปกรณ์แล้ว','sm','#DDF8E8')
+ ],{paddingAll:'24px',backgroundColor:'#116B4E',spacing:'sm'});
+ const content=box([
+  box([txt('สถานะบัญชี','xs','#628472',{weight:'bold'}),box([txt('✓','lg','#0E8055',{weight:'bold'}),txt('รหัสผ่านได้รับการอัปเดตแล้ว','md','#173E2E',{weight:'bold'})],{layout:'horizontal',alignItems:'center',spacing:'sm'})],{paddingAll:'16px',backgroundColor:'#E6F6EC',cornerRadius:'14px',spacing:'sm'}),
+  box([txt('วันที่และเวลาที่เปลี่ยน','xs','#628472',{weight:'bold'}),txt(stamp+' น.','lg','#173E2E',{weight:'bold'})],{paddingAll:'16px',backgroundColor:'#F2F8F4',cornerRadius:'14px',spacing:'xs'}),
+  box([txt('หากไม่ใช่คุณที่ดำเนินการ','sm','#9B3B35',{weight:'bold'}),txt('กรุณาติดต่อผู้ดูแลระบบทันที เพื่อตรวจสอบความปลอดภัยของบัญชี','sm','#744744')],{paddingAll:'16px',backgroundColor:'#FFF0EE',cornerRadius:'14px',spacing:'sm'})
+ ],{paddingAll:'22px',spacing:'md',backgroundColor:'#FFFFFF'});
+ const footerBox=box([txt('FINANCE · MEDTECH','xxs','#94A3B8',{weight:'bold',align:'center'})],{paddingAll:'16px',backgroundColor:'#FFFFFF'});
+ return {type:'flex',altText:'เปลี่ยนรหัสผ่านสำเร็จ · แจ้งเตือนความปลอดภัย finance MEDTECH',contents:{type:'bubble',size:'mega',styles:{header:{backgroundColor:'#116B4E'},body:{backgroundColor:'#FFFFFF'},footer:{backgroundColor:'#FFFFFF'}},header,body:content,footer:footerBox}};
+}

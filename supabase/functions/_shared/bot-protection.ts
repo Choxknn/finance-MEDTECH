@@ -39,7 +39,7 @@ export async function recordAccountSecurityEvent(db:any,context:AccountSecurityC
     .eq('ip_hash',context.ipHash).eq('target_hash',context.targetHash)
     .eq('event_type',event.type).gte('created_at',since);
    if(!counted.error&&Number(counted.count||0)>=5)
-    await blockSuspiciousIp(db,context.ipHash,event.type==='login_failed'?'เข้าสู่ระบบไม่สำเร็จซ้ำหลายครั้ง':'กรอกรหัส OTP ผิดซ้ำหลายครั้ง');
+    await blockSuspiciousIp(db,context.ipHash,event.type==='login_failed'?'เข้าสู่ระบบไม่สำเร็จซ้ำหลายครั้ง':'กรอกรหัส OTP ผิดซ้ำหลายครั้ง',context.targetHash);
   }
  }catch(error){console.warn('Account security event logging failed');}
 }

@@ -418,3 +418,50 @@
 @media(prefers-reduced-motion:reduce) {
   .payment-page-method-choice {transition:none!important}
 }
+
+
+/* Compact payment headings and account copy action. */
+.payment-page-main-title {
+  margin: 0 0 20px;
+  color: #382b33;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 750;
+  line-height: 1.35;
+}
+.payment-page-section-heading h2 { margin: 0; }
+.payment-page-section-heading { margin-bottom: 17px; }
+.payment-page-card-heading>div>span,
+.payment-page-card-heading h2+span { display: none; }
+.payment-page-account-copy {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+.payment-page-copy-account {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 7px 12px !important;
+  border: 1px solid #ead3dc !important;
+  border-radius: 9px !important;
+  background: #fff7fa !important;
+  color: #922b4c !important;
+  font-size: 12px;
+  box-shadow: none !important;
+}
+.payment-page-copy-account:hover { background: #f9eaf0 !important; }
+.payment-page-selected-method { justify-content: flex-start; }
+.payment-page-selected-method strong { display: flex; align-items: center; gap: 8px; }
+.payment-page-selected-method strong svg { width: 18px; height: 18px; }
+.payment-page-upload-heading { margin-bottom: 15px; }
+.payment-page-upload-copy span { display: none; }
+@media(max-width:720px) {
+  .payment-page-main-title { font-size: 24px; margin-bottom: 16px; }
+  .payment-page-account-number { align-items: flex-start; }
+  .payment-page-account-copy { flex-wrap: wrap; justify-content: flex-start; }
+  .payment-page-account-copy strong { font-size: 20px; }
+}

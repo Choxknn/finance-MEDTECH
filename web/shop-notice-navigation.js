@@ -100,6 +100,22 @@
    }
   },140);
  }
+ // Restore both mobile navigation bars after leaving a full-screen surface.
+ // Keep the page's current scroll position, but start the next scroll gesture
+ // with fresh thresholds so stale hide/compact state cannot carry over.
+ function resetMobileNavigationBars(){
+  clearTimeout(mobileTopExpandTimer);mobileTopExpandTimer=null;
+  clearTimeout(mobileRouteExpandTimer);mobileRouteExpandTimer=null;
+  mobileDockCompactByNavigation=false;
+  const layout=document.querySelector('.layout');
+  const root=document.scrollingElement||document.documentElement;
+  mobileLastScrollY=Math.max(Number(window.scrollY)||0,Number(root?.scrollTop)||0);
+  mobileDownDistance=0;mobileUpDistance=0;
+  layout?.classList.remove('mobile-header-hidden');
+  setMobileDockCompact(layout,false);
+  updateMobileDockVisibility();
+ }
+ window.resetMobileNavigationBars=resetMobileNavigationBars;
  const oldRender=render;render=function(){
   const app=document.getElementById('app');
   const previousLayout=document.querySelector('.layout');

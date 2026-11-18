@@ -1,5 +1,5 @@
 import {captchaConfig,protectAccountRequest} from '../_shared/bot-protection.ts';
-import {adminDb,query,hash,deliverNotification} from '../_shared/services.ts';
+import {adminDb,query,hash,secret} from '../_shared/services.ts';
 Deno.serve(async req=>{
  const origin=req.headers.get('origin')||'',allowed=(Deno.env.get('ALLOWED_ORIGINS')||'').split(',').map(s=>s.trim());
  const headers={'Access-Control-Allow-Origin':allowed.includes(origin)?origin:'null','Access-Control-Allow-Headers':'apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS','Cache-Control':'no-store','Vary':'Origin'};
@@ -14,9 +14,37 @@ Deno.serve(async req=>{
   if(input.action==='forgot'){
    if(typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id))return json({error:'กรุณาระบุรหัสนักศึกษาให้ถูกต้อง'},400);
    const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1)!.trim();
-   const nId=await query(db.rpc('request_line_recovery',{p_student:input.student_id,p_student_hash:await hash(input.student_id),p_ip_hash:await hash(ip)}));
-   if(nId){const n=await query(db.from('notifications').select('*').eq('id',nId).single());await deliverNotification(db,n)}
-   return json({message:'หากรหัสนักศึกษานี้เชื่อม LINE ไว้ ระบบจะส่งลิงก์ตั้งรหัสผ่านให้ กรุณาตรวจสอบแชต LINE OA หากไม่ได้รับข้อความหรือยังไม่เชื่อม LINE ให้ติดต่อผู้ดูแลระบบ'});
+   const code=String(crypto.getRandomValues(new Uint32Array(1))[0]%1000000).padStart(6,'0');
+   const pepper=secret('SUPABASE_SERVICE_ROLE_KEY');
+   const codeHash=await hash(pepper+':finance-medtech-password-recovery:'+input.student_id+':'+code);
+   const request=await query(db.rpc('request_line_recovery_otp',{p_student:input.student_id,p_student_hash:await hash(input.student_id),p_ip_hash:await hash(ip),p_code_hash:codeHash}));
+   if(request?.id&&request?.line_user_id){
+    try{
+     const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:request.line_user_id,messages:[{type:'text',text:'รหัส OTP สำหรับตั้งรหัสผ่านใหม่ของ finance MEDTECH คือ '+code+'\nรหัสมีอายุ 5 นาทีและใช้ได้ครั้งเดียว หากไม่ได้เป็นผู้ขอ สามารถละเว้นข้อความนี้ได้'}]}),signal:AbortSignal.timeout(15000)});
+     if(!sent.ok)throw Error('LINE HTTP '+sent.status);
+    }catch(error){
+     await query(db.from('password_recovery_otps').update({consumed_at:new Date().toISOString()}).eq('id',request.id));
+     console.warn('Password recovery OTP delivery failed');
+    }
+   }
+   return json({message:'หากรหัสนักศึกษานี้มีบัญชีและเชื่อม LINE ไว้ ระบบจะส่งรหัส OTP ไปยัง LINE ที่ผูกบัญชี กรุณาตรวจสอบแชต LINE'});
+  }
+  if(input.action==='check-otp'){
+   if(typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id)||typeof input.otp!=='string'||!/^\d{6}$/.test(input.otp))return json({valid:false});
+   const pepper=secret('SUPABASE_SERVICE_ROLE_KEY');
+   const codeHash=await hash(pepper+':finance-medtech-password-recovery:'+input.student_id+':'+input.otp);
+   const valid=await query(db.rpc('check_line_recovery_otp',{p_student:input.student_id,p_code_hash:codeHash}));
+   return json({valid:valid===true});
+  }
+  if(input.action==='verify-otp'){
+   if(typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id)||typeof input.otp!=='string'||!/^\d{6}$/.test(input.otp)||typeof input.password!=='string'||input.password.length<6||input.password.length>128)return json({error:'กรุณาตรวจสอบรหัสนักศึกษา รหัส OTP และรหัสผ่านใหม่'},400);
+   const pepper=secret('SUPABASE_SERVICE_ROLE_KEY');
+   const codeHash=await hash(pepper+':finance-medtech-password-recovery:'+input.student_id+':'+input.otp);
+   const profileId=await query(db.rpc('verify_line_recovery_otp',{p_student:input.student_id,p_code_hash:codeHash}));
+   if(!profileId)return json({error:'รหัส OTP ไม่ถูกต้อง หมดอายุ หรือถูกใช้แล้ว กรุณาขอรหัสใหม่'},400);
+   const changed=await db.auth.admin.updateUserById(profileId,{password:input.password});
+   if(changed.error)throw Error('เปลี่ยนรหัสผ่านไม่สำเร็จ กรุณาขอ OTP ใหม่');
+   return json({message:'ตั้งรหัสผ่านใหม่สำเร็จ'});
   }
   if(!['invite-preview','invite-accept','batch-start','batch-state','batch-accept','batch-reset-line'].includes(input.action)||typeof input.token!=='string'||!/^[0-9a-f]{64}$/.test(input.token))return json({error:'ลิงก์ไม่ถูกต้อง'},400);
   let tokenHash=await hash(input.token);

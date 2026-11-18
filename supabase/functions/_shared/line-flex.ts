@@ -98,7 +98,7 @@ export function accountOtpFlex(code:string){
   txt('หากคุณไม่ได้เป็นผู้ขอเปลี่ยนรหัสผ่าน สามารถละเว้นข้อความนี้ได้','xs','#718096',{align:'center'})
  ],{paddingAll:'22px',spacing:'lg',backgroundColor:'#FFFFFF'});
  const footerBox=box([txt('FINANCE · MEDTECH','xxs','#94A3B8',{weight:'bold',align:'center'})],{paddingAll:'16px',backgroundColor:'#FFFFFF'});
- return {type:'flex',altText:'รหัส OTP สำหรับตั้งรหัสผ่านใหม่ของ finance MEDTECH',contents:{type:'bubble',size:'mega',styles:{header:{backgroundColor:'#164E63'},body:{backgroundColor:'#FFFFFF'},footer:{backgroundColor:'#FFFFFF'}},header,body:content,footer:footerBox}};
+ return {type:'flex',altText:'รหัส OTP : '+code,contents:{type:'bubble',size:'mega',styles:{header:{backgroundColor:'#164E63'},body:{backgroundColor:'#FFFFFF'},footer:{backgroundColor:'#FFFFFF'}},header,body:content,footer:footerBox}};
 }
 
 export function passwordChangedFlex(stamp:string){

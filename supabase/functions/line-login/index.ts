@@ -55,7 +55,7 @@ Deno.serve(async req=>{
   if(input.action==='status')return json({enabled:configured});
   if(!configured)return json({error:'ยังไม่ได้ตั้งค่า LINE Login กรุณาใช้รหัสนักศึกษาเข้าสู่ระบบก่อน'},503);
   const db=adminDb();
-  if(input.action==='start'&&input.mode==='login')lineSecurityContext=await protectAccountRequest(db,req,{action:'login',student_id:'LINE_LOGIN'});
+  if(input.action==='start'&&input.mode==='login')lineSecurityContext=await protectAccountRequest(db,req,{action:'line-login',token:input.challenge});
 
   if(input.action==='friendship-audit'){
    const actor=await activeProfile(db,req);
@@ -164,7 +164,7 @@ Deno.serve(async req=>{
    const signed=await signState(state),url=new URL('https://access.line.me/oauth2/v2.1/authorize');const params=new URLSearchParams({response_type:'code',client_id:clientId!,redirect_uri:callback,state:signed,scope:'openid profile',nonce:state.nonce,code_challenge:state.challenge,code_challenge_method:'S256'});if(input.mode==='signup'){params.set('prompt','consent');params.set('bot_prompt','normal')}else if(input.mode==='link'){params.set('bot_prompt','normal')}url.search=params.toString();return json({url:url.href,state:signed});
   }
   if(input.action!=='finish')throw Error('คำขอไม่ถูกต้อง');const state=await readState(input.state);
-  if(state.mode==='login'){lineSecurityPending=true;lineSecurityContext=await protectAccountRequest(db,req,{action:'login',student_id:'LINE_LOGIN'});}
+  if(state.mode==='login'){lineSecurityPending=true;lineSecurityContext=await protectAccountRequest(db,req,{action:'line-login',token:input.state});}
   if(typeof input.verifier!=='string'||!/^[A-Za-z0-9_-]{43,128}$/.test(input.verifier)||base64url(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(input.verifier))))!==state.challenge)throw Error('ไม่พบคำขอจากเบราว์เซอร์นี้ กรุณาเริ่มใหม่');
   if(state.mode==='link'&&(await activeProfile(db,req)).id!==state.profile)throw Error('บัญชีที่เชื่อมไม่ตรงกัน');
   if(typeof input.code!=='string'||!input.code||input.code.length>2000)throw Error('ไม่ได้รับรหัสยืนยันจาก LINE');

@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),esbuild=require('esbuild');
 let handler,inviteState='pending',createdPassword='',updatedPassword='',updatedUser='',finishFails=false,deleteCount=0;
-let recoveryResult={id:'otp-row',profile_id:'member-user',line_user_id:'LINE-USER'},verifyValid=false,checkValid=false,requestArgs=null,verifyArgs=null,checkArgs=null,linePushes=[],revokedUsers=[];
+let recoveryResult={id:'otp-row',profile_id:'member-user',line_user_id:'LINE-USER'},verifyValid=false,checkValid=false,requestArgs=null,verifyArgs=null,checkArgs=null,linePushes=[],revokedUsers=[],securityEvents=[];
 const reserve={student_id:'670111',name_prefix:'นาย',first_name:'Fixed',last_name:'Identity',year:'1'};
 const db={
  rpc:async(name,args)=>{
@@ -57,7 +57,7 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  assert.equal(push.to,'LINE-USER');
  assert.equal(push.messages[0].type,'flex','OTP must be sent as a LINE Flex Message');
  assert.match(JSON.stringify(push.messages[0]),/123456/);
- assert.match(push.messages[0].altText,/OTP/);
+ assert.equal(push.messages[0].altText,'รหัส OTP : 123456','LINE notification preview must show OTP, not the Flex card title');
  assert.equal(requestArgs.p_student,'670111');
  assert.match(requestArgs.p_code_hash,/service-secret/);
  assert.ok(!JSON.stringify(generic).includes('123456'),'OTP is never returned to the browser');
@@ -69,6 +69,7 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  const resendPush=JSON.parse(linePushes[1].options.body);
  assert.equal(resendPush.to,'LINE-USER');
  assert.equal(resendPush.messages[0].type,'flex','resent OTP must be sent as a LINE Flex Message');
+ assert.equal(resendPush.messages[0].altText,'รหัส OTP : 123456');
  assert.match(JSON.stringify(resendPush.messages[0]),/123456/);
  assert.equal(requestArgs.p_student,'670111');
  
@@ -106,6 +107,8 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  assert.match(securityNotice.messages[0].altText,/เปลี่ยนรหัสผ่านสำเร็จ/);
  assert.match(JSON.stringify(securityNotice.messages[0]),/วันที่และเวลาที่เปลี่ยน/);
  assert.match(JSON.stringify(securityNotice.messages[0]),/หากไม่ใช่คุณที่ดำเนินการ/);
+ const loggedTypes=securityEvents.map(item=>item.event.type);
+ for(const eventType of ['otp_requested','otp_sent','otp_verification_failed','otp_verified','password_changed','sessions_revoked'])assert.ok(loggedTypes.includes(eventType),'security history records '+eventType);
 
  r=await handler(request({action:'invite-preview',token:'a'.repeat(64)}));
  assert.equal(r.status,200);

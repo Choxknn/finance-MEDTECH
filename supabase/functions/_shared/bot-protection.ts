@@ -86,19 +86,3 @@ export async function protectAccountRequest(db:any,req:Request,input:any):Promis
  }
  return context;
 }
-
- const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1)!.trim();
- await limitRequest(db,'account-ip:'+ip,120,60);
- const sensitive=['batch-start','batch-accept','invite-accept','forgot','resend-otp','verify-otp','check-otp'].includes(input.action);
- if(sensitive)await limitRequest(db,'account-sensitive:'+ip+':'+String(input.student_id||input.token||'').slice(0,100),12,900);
- // Turnstile is checked when requesting the OTP (and during registration).
- // Subsequent OTP checks are protected by strict per-IP/per-student rate limits
- // plus the server-side five-attempt OTP limit, so they do not require another widget.
- const needsCaptcha=['batch-start','batch-accept','invite-accept','forgot'].includes(input.action);
- if(needsCaptcha&&captchaConfig().enabled){
-  if(typeof input.captcha_token!=='string'||!input.captcha_token)throw Error('กรุณายืนยันว่าไม่ใช่บอท');
-  const response=await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:Deno.env.get('TURNSTILE_SECRET_KEY'),response:input.captcha_token}),signal:AbortSignal.timeout(10000)});
-  const result=await response.json(),hosts=(Deno.env.get('ALLOWED_ORIGINS')||'').split(',').map(s=>{try{return new URL(s.trim()).hostname}catch{return ''}}).filter(Boolean);
-  if(!response.ok||!result.success||!hosts.includes(result.hostname))throw Error('ยืนยันความปลอดภัยไม่สำเร็จ กรุณาลองใหม่');
- }
-}

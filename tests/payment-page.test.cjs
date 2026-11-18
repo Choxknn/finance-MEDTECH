@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..'),dom=new JSDOM('<div id="app"></div><dial
 w.FINANCE_CONFIG={mode:'demo',bankName:'ธนาคารตัวอย่าง',accountName:'บัญชี MEDTECH',accountNumber:'123-4-56789-0',paymentQrUrl:'https://example.test/main.png'};
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true};
 w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
-w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.scrollCalls=0;w.scrollTo=()=>{w.scrollCalls++};w.matchMedia=()=>({matches:false,addListener(){},removeListener(){}});w.document.execCommand=()=>true;
+w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.scrollCalls=0;w.scrollTo=()=>{w.scrollCalls++};w.matchMedia=()=>({matches:false,addListener(){},removeListener(){}});w.document.execCommand=()=>true;Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async value=>{w.copiedAccount=value}},configurable:true});
 for(const name of ['app.js','management.js','records.js','fund.js','payment-qrs.js','session-history.js','bills.js','experience.js','operations.js','layout-polish.js','fund-evidence.js','flex-templates.js','flex-preview.js','line-messages.js','communications.js','payment-status.js','mobile-refinement.js','detail-polish.js','individual-bills.js','record-modals.js','clay-theme.js','payment-page.js'])vm.runInContext(fs.readFileSync(root+'/web/'+name,'utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx);
 run("demoLogin('member');paymentWindowOpen=()=>true;nav('bills');payModal('c1')");
@@ -31,7 +31,7 @@ assert.equal(app.querySelector('.layout .workspace > .topbar [data-topbar-back]'
 assert.ok(app.querySelector('.payment-page-bank-details').textContent.includes('123-4-56789-0'),'bank account details are shown for the selected bank method');
 assert.equal(app.querySelector('[data-copy-account]').dataset.copyAccount,'123-4-56789-0','the account copy button carries the configured account number');
 app.querySelector('[data-copy-account]').click();
-assert.ok(w.document.getElementById('toast').textContent.includes('คัดลอกเลขบัญชีแล้ว'),'copying the bank account shows a Thai confirmation');
+assert.equal(w.copiedAccount,'123-4-56789-0','the configured account number is copied exactly');
 assert.ok(app.querySelector('#pay-form'),'selecting a payment method opens the payment and slip page');
 assert.equal(app.querySelector('#pay-amount').value,'200');
 assert.equal(app.querySelector('#slip-file').required,true);

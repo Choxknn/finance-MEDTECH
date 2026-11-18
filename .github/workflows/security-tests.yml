@@ -20,7 +20,7 @@ jobs:
       - name: Install pinned test dependencies
         run: npm ci
       - name: Test full-page bill payment experience
-        run: node tests/payment-page.test.cjs && node --check web/payment-page.js
+        run: node tests/payment-page.test.cjs && node --check web/payment-page.js && node --check web/payment-safety.js && node --check web/mobile-refinement.js
       - name: Test abnormal request detection and temporary blocking
         run: node tests/bot-protection.test.cjs
       - name: Test OTP recovery and LINE Flex notification preview

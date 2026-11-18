@@ -161,4 +161,4 @@ html body.signup-page .signup-footer-actions[hidden]{display:none!important}
 #forgot-line-form .otp-state.is-valid{color:#168052;font-weight:700}
 #forgot-line-form .otp-state.is-invalid{color:#c6283b;font-weight:700}
 @media(max-width:420px){#forgot-line-form .otp-slots{gap:6px}#forgot-line-form .otp-slot{height:52px!important;min-height:52px!important;border-radius:11px!important;font-size:22px!important}}
-
+#forgot-line-form .actions[hidden],#forgot-line-form #forgot-submit[hidden]{display:none!important}

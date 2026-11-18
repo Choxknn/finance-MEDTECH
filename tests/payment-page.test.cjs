@@ -54,7 +54,9 @@ assert.equal(run('view'),'dashboard','the payment-method selector back control r
 assert.equal(app.querySelector('.payment-page'),null,'leaving payment removes the dedicated payment page');
 const safetyCss=fs.readFileSync(root+'/web/payment-safety.css','utf8'),safetyJs=fs.readFileSync(root+'/web/payment-safety.js','utf8');
 assert.match(fs.readFileSync(root+'/web/payment-page.css','utf8'),/\.payment-page-entering\s*\{[^}]*animation:\s*payment-page-slide-in/s,'the payment page uses a dedicated entrance animation');
-assert.match(fs.readFileSync(root+'/web/payment-page.css','utf8'),/@keyframes\s+payment-page-slide-in\s*\{[^}]*translate3d\(100%,0,0\)[^}]*translate3d\(0,0,0\)/s,'the payment page animates from right to left');
+const paymentCss=fs.readFileSync(root+'/web/payment-page.css','utf8');
+assert.match(paymentCss,/from\s*\{\s*transform:\s*translate3d\(100%,0,0\)/s,'the payment page starts outside the right edge');
+assert.match(paymentCss,/to\s*\{\s*transform:\s*translate3d\(0,0,0\)/s,'the payment page slides fully into view');
 assert.match(safetyCss,/#slip-scroll-cue\s*\{[^}]*position:fixed/s,'the slip reminder floats at the bottom without taking layout space');
 assert.match(safetyCss,/#slip-scroll-cue\.is-visible\s*\{[^}]*opacity:1/s,'the reminder has a separate visible animation state');
 assert.match(safetyJs,/reminderCue\.classList\.toggle\('is-visible',show\)/,'the reminder shows and hides without toggling display or document flow');

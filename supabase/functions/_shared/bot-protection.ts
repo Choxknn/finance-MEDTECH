@@ -2,12 +2,14 @@ import {query,hash,secret} from './services.ts';
 export function captchaConfig(){const site=Deno.env.get('TURNSTILE_SITE_KEY')||'',secret=Deno.env.get('TURNSTILE_SECRET_KEY')||'';return {site_key:site&&secret?site:'',enabled:!!(site&&secret)}}
 export async function limitRequest(db:any,key:string,limit:number,seconds:number){if(!await query(db.rpc('allow_finance_request',{p_key:await hash(key),p_limit:limit,p_seconds:seconds})))throw Object.assign(Error('ทำรายการถี่เกินไป กรุณารอสักครู่แล้วลองใหม่'),{status:429})}
 export type AccountSecurityContext={ipHash:string;targetHash:string|null;action:string};
+const ACCOUNT_WIDE_BLOCK='0'.repeat(64);
 const securityPepper=()=>secret('SUPABASE_SERVICE_ROLE_KEY');
-async function blockSuspiciousIp(db:any,ipHash:string,reason:string){
+async function blockSuspiciousIp(db:any,ipHash:string,reason:string,targetHash:string|null=null){
  const now=new Date(),until=new Date(now.getTime()+30*60*1000).toISOString();
+ const target=targetHash||ACCOUNT_WIDE_BLOCK;
  const result=await db.from('account_security_blocks').upsert({
-  ip_hash:ipHash,reason,blocked_until:until,updated_at:now.toISOString()
- },{onConflict:'ip_hash'});
+  ip_hash:ipHash,target_hash:target,reason,blocked_until:until,updated_at:now.toISOString()
+ },{onConflict:'ip_hash,target_hash'});
  if(result.error)throw result.error;
  const logged=await db.from('account_security_events').insert({
   event_type:'ip_temporarily_blocked',severity:'high',
@@ -45,13 +47,17 @@ export async function protectAccountRequest(db:any,req:Request,input:any):Promis
  const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1)!.trim();
  const pepper=securityPepper();
  const ipHash=await hash(pepper+':finance-medtech:ip:'+ip);
- const rawTarget=typeof input.student_id==='string'?'student:'+input.student_id:
+ const rawTarget=typeof input.student_id==='string'?'student:'+input.student_id.toLowerCase():
   typeof input.token==='string'?'token:'+input.token:'action:'+String(input.action||'unknown');
  const targetHash=await hash(pepper+':finance-medtech:target:'+rawTarget);
  const context={ipHash,targetHash,action:String(input.action||'unknown')};
- const activeBlock=await query(db.from('account_security_blocks').select('blocked_until')
-  .eq('ip_hash',ipHash).gt('blocked_until',new Date().toISOString()).maybeSingle());
- if(activeBlock)throw Object.assign(Error('คำขอจากเครือข่ายนี้ถูกระงับชั่วคราว กรุณาลองใหม่ภายหลัง'),{status:429});
+ const blockQuery=()=>db.from('account_security_blocks').select('blocked_until')
+  .eq('ip_hash',ipHash).gt('blocked_until',new Date().toISOString());
+ const [networkBlock,accountBlock]=await Promise.all([
+  query(blockQuery().eq('target_hash',ACCOUNT_WIDE_BLOCK).maybeSingle()),
+  query(blockQuery().eq('target_hash',targetHash||ACCOUNT_WIDE_BLOCK).maybeSingle())
+ ]);
+ if(networkBlock||accountBlock)throw Object.assign(Error('คำขอจากเครือข่ายนี้ถูกระงับชั่วคราว กรุณาลองใหม่ภายหลัง'),{status:429});
  const guardedLimit=async(key:string,limit:number,seconds:number)=>{
   try{await limitRequest(db,key,limit,seconds)}
   catch(error){
@@ -67,7 +73,7 @@ export async function protectAccountRequest(db:any,req:Request,input:any):Promis
  if(sensitive){
   // Detect one network probing many student IDs, not only repeated attempts against one ID.
   await guardedLimit('account-sensitive-ip:'+ip,40,900);
-  await guardedLimit('account-sensitive:'+ip+':'+String(input.student_id||input.token||'').slice(0,100),12,900);
+  await guardedLimit('account-sensitive:'+ip+':'+String(input.student_id||input.token||'').toLowerCase().slice(0,100),12,900);
  }
  // Turnstile is checked when requesting the OTP (and during registration).
  // OTP checks also use the database five-attempt limit and network anomaly detection.

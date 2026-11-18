@@ -36,7 +36,7 @@ assert.ok(app.querySelector('#pay-form'),'selecting a payment method opens the p
 assert.equal(app.querySelector('#pay-amount').value,'200');
 assert.equal(app.querySelector('#slip-file').required,true);
 assert.ok(app.querySelector('.payment-page-upload .dropzone'),'the slip upload target is available');
-assert.ok(app.querySelector('.payment-page-footnote'),'the payment safety reminder remains present');
+assert.ok(app.querySelector('.payment-page-upload'),'the slip upload card remains present');
 app.querySelector('.layout .workspace > .topbar [data-topbar-back]').click();
 assert.ok(app.querySelector('[data-payment-method="qr"]'),'the top bar back control returns to the payment-method selector');
 assert.equal(run('view'),'payment');

@@ -50,7 +50,12 @@ Deno.serve(async req=>{
    if(lineAccount?.line_user_id){
     try{
      const stamp=new Intl.DateTimeFormat('th-TH',{dateStyle:'long',timeStyle:'short',hourCycle:'h23',timeZone:'Asia/Bangkok'}).format(new Date());
-     const notice='finance MEDTECH\\nแจ้งเตือนความปลอดภัย\\nมีการเปลี่ยนรหัสผ่านบัญชีของคุณสำเร็จ\\nวันที่และเวลา: '+stamp+' น.\\n\\nหากคุณไม่ได้เป็นผู้ดำเนินการ กรุณาติดต่อผู้ดูแลระบบทันที';
+     const notice=`finance MEDTECH
+แจ้งเตือนความปลอดภัย
+มีการเปลี่ยนรหัสผ่านบัญชีของคุณสำเร็จ
+วันที่และเวลา: ${stamp} น.
+
+หากคุณไม่ได้เป็นผู้ดำเนินการ กรุณาติดต่อผู้ดูแลระบบทันที`;
      const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:lineAccount.line_user_id,messages:[{type:'text',text:notice}]}),signal:AbortSignal.timeout(10000)});
      if(!sent.ok)throw Error('LINE HTTP '+sent.status);
      notificationSent=true;

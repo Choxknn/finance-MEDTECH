@@ -221,7 +221,11 @@ Deno.serve(async req=>{
     }
     return json({events:events.map((event:any)=>({...event,member:event.profile_id?(people.get(event.profile_id)||null):null}))});
    }
-   case 'presence':{await query(db.from('profiles').update({last_seen_at:input.online===false?null:new Date().toISOString()}).eq('id',profile.id));return json({ok:true});}
+   case 'presence':{
+    if(input.online===false)await query(db.from('account_security_events').insert({profile_id:profile.id,event_type:'session_ended',severity:'info',message:'ออกจากระบบจากอุปกรณ์นี้'}));
+    await query(db.from('profiles').update({last_seen_at:input.online===false?null:new Date().toISOString()}).eq('id',profile.id));
+    return json({ok:true});
+   }
    case 'admin-payment-records':{
     requireAdmin();
     const payments=await query(db.from('payments').select('id,profile_id,charge_id,amount,status,drive_file_id,trans_ref,source,note,verification,verification_method,reviewed_by,reviewed_at,created_at,deleted_at,charge_snapshot,member_snapshot').order('created_at',{ascending:false}).limit(500));

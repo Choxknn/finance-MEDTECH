@@ -116,6 +116,13 @@
   updateMobileDockVisibility();
  }
  window.resetMobileNavigationBars=resetMobileNavigationBars;
+ // Reset the navigation bars whenever any native window used by the app closes.
+ // This covers payment, record details, forms and the shared loading surface.
+ document.addEventListener('close',event=>{
+  const closedWindow=event.target;
+  if(!(closedWindow instanceof HTMLDialogElement)||closedWindow.open)return;
+  resetMobileNavigationBars();
+ },true);
  const oldRender=render;render=function(){
   const app=document.getElementById('app');
   const previousLayout=document.querySelector('.layout');

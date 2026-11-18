@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..'),dom=new JSDOM('<div id="app"></div><dial
 w.FINANCE_CONFIG={mode:'demo',bankName:'ธนาคารตัวอย่าง',accountName:'บัญชี MEDTECH',accountNumber:'123-4-56789-0',paymentQrUrl:'https://example.test/main.png'};
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true};
 w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
-w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};
+w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.scrollTo=()=>{};
 for(const name of ['app.js','management.js','records.js','fund.js','payment-qrs.js','session-history.js','bills.js','experience.js','operations.js','layout-polish.js','fund-evidence.js','flex-templates.js','flex-preview.js','line-messages.js','communications.js','mobile-refinement.js','detail-polish.js','individual-bills.js','record-modals.js','payment-page.js'])vm.runInContext(fs.readFileSync(root+'/web/'+name,'utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx);
 run("demoLogin('member');paymentWindowOpen=()=>true;payModal('c1')");
@@ -26,4 +26,4 @@ assert.ok(dialog.querySelector('.payment-page-footnote'),'the safety reminder is
 dialog.querySelector('.payment-page-back').click();
 assert.equal(dialog.open,false,'back button closes the payment page');
 assert.equal(dialog.classList.contains('payment-page-dialog'),false,'dialog returns to its standard style after closing');
-w.close();console.log('Full-page bill payment structure, bank details, QR, preserved slip form and back navigation passed');
+setImmediate(()=>{w.close();console.log('Full-page bill payment structure, bank details, QR, preserved slip form and back navigation passed')});

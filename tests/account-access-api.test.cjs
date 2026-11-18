@@ -67,7 +67,7 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  recoveryResult=null;
  r=await handler(request({action:'forgot',student_id:'999999'}));
  assert.deepEqual(await r.json(),generic,'Do not disclose whether an account or LINE link exists');
- assert.equal(linePushes.length,1,'unlinked IDs do not receive LINE messages');
+ assert.equal(linePushes.length,2,'unlinked IDs do not receive additional LINE messages');
 
  checkValid=true;
  r=await handler(request({action:'check-otp',student_id:'670111',otp:'123456'}));

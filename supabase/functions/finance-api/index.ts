@@ -86,6 +86,17 @@ Deno.serve(async req=>{
   }
   const bearer=req.headers.get('authorization')?.replace(/^Bearer /,'');if(!bearer)return json({error:'กรุณาเข้าสู่ระบบ'},401);
   const auth=await db.auth.getUser(bearer);if(auth.error||!auth.data.user)return json({error:'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่'},401);
+  let claims:any;
+  try{
+   const encoded=bearer.split('.')[1];if(!encoded)throw Error('Missing JWT payload');
+   const normalized=encoded.replace(/-/g,'+').replace(/_/g,'/');
+   const binary=atob(normalized.padEnd(Math.ceil(normalized.length/4)*4,'='));
+   claims=JSON.parse(new TextDecoder().decode(Uint8Array.from(binary,c=>c.charCodeAt(0))));
+  }catch{return json({error:'เซสชันไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่'},401);}
+  const sessionId=String(claims?.session_id||'');
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId))return json({error:'ไม่พบเซสชันการเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่'},401);
+  const sessionActive=await query(db.rpc('is_auth_session_active',{p_user_id:auth.data.user.id,p_session_id:sessionId}));
+  if(sessionActive!==true)return json({error:'เซสชันนี้ถูกยกเลิกแล้ว กรุณาเข้าสู่ระบบใหม่'},401);
   const profile=await query(db.from('profiles').select('*').eq('id',auth.data.user.id).eq('active',true).is('deleted_at',null).single());
   const isAdmin=profile.role==='admin';const requireAdmin=()=>{if(!isAdmin)throw new Error('ไม่มีสิทธิ์ดำเนินการ')};
   if(req.method==='GET'){

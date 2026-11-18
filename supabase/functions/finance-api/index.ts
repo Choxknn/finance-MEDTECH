@@ -207,6 +207,20 @@ Deno.serve(async req=>{
     const jobs=await query(db.rpc('claim_campaign',{p_id:id,p_actor:profile.id}));for(let i=0;i<jobs.length;i+=5)await Promise.all(jobs.slice(i,i+5).map((n:any)=>deliverNotification(db,n)));
     const summary=await query(db.rpc('campaign_summary',{p_actor:profile.id,p_id:id}));if(!summary.length)throw Error('ไม่พบชุดข้อความ');return json({campaign:summary[0],processed:jobs.length});
    }
+   case 'account-security-history':{
+    let request=db.from('account_security_events').select('id,profile_id,event_type,severity,message,created_at').order('created_at',{ascending:false}).limit(isAdmin?100:50);
+    if(!isAdmin)request=request.eq('profile_id',profile.id);
+    const events=await query(request);
+    let people=new Map();
+    if(isAdmin){
+     const ids=[...new Set(events.map((event:any)=>event.profile_id).filter(Boolean))];
+     if(ids.length){
+      const rows=await query(db.from('profiles').select('id,name,student_id').in('id',ids));
+      people=new Map(rows.map((person:any)=>[person.id,{name:person.name,student_id:person.student_id}]));
+     }
+    }
+    return json({events:events.map((event:any)=>({...event,member:event.profile_id?(people.get(event.profile_id)||null):null}))});
+   }
    case 'presence':{await query(db.from('profiles').update({last_seen_at:input.online===false?null:new Date().toISOString()}).eq('id',profile.id));return json({ok:true});}
    case 'admin-payment-records':{
     requireAdmin();

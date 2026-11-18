@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),esbuild=require('esbuild');
 let handler,inviteState='pending',createdPassword='',updatedPassword='',updatedUser='',finishFails=false,deleteCount=0;
-let recoveryResult={id:'otp-row',profile_id:'member-user',line_user_id:'LINE-USER'},verifyValid=false,checkValid=false,requestArgs=null,verifyArgs=null,checkArgs=null,linePushes=[],revokedUsers=[],securityEvents=[];
+let recoveryResult={id:'otp-row',profile_id:'member-user',line_user_id:'LINE-USER'},verifyValid=false,checkValid=false,loginValid=true,requestArgs=null,verifyArgs=null,checkArgs=null,linePushes=[],revokedUsers=[],securityEvents=[];
 const reserve={student_id:'670111',name_prefix:'นาย',first_name:'Fixed',last_name:'Identity',year:'1'};
 const db={
  rpc:async(name,args)=>{
@@ -12,7 +12,9 @@ const db={
   if(name==='finish_member_invite'){inviteState='used';if(finishFails)return {error:{message:'lost response'}};return {data:null}}
   return {data:null}
  },
- auth:{admin:{
+ auth:{
+  signInWithPassword:async({email,password})=>loginValid?{data:{user:{id:'member-user'},session:{access_token:'login-access',refresh_token:'login-refresh',expires_at:1900000000,expires_in:3600,token_type:'bearer'}},error:null}:{data:{user:null,session:null},error:{message:'Invalid login credentials'}},
+  admin:{
   createUser:async data=>{createdPassword=data.password;assert.equal(data.email,'670111@students.finance-medtech.invalid');return {data:{user:{id:'new-user'}}}},
   deleteUser:async()=>{deleteCount++;return {}},
   updateUserById:async(id,data)=>{updatedUser=id;updatedPassword=data.password;return {data:{user:{id}}}}
@@ -48,7 +50,19 @@ vm.runInNewContext(esbuild.transformSync(source,{loader:'ts',format:'esm'}).code
 });
 const request=data=>new Request('https://project.test/functions/v1/account-access',{method:'POST',headers:{origin:'https://example.test','content-type':'application/json'},body:JSON.stringify(data)});
 (async()=>{
- let r=await handler(request({action:'forgot',student_id:'670111'}));
+ let r=await handler(request({action:'login',student_id:'670111',password:'CorrectPassword'}));
+ assert.equal(r.status,200,'valid student credentials should create a session');
+ const loginSession=await r.json();
+ assert.equal(loginSession.access_token,'login-access');
+ assert.equal(loginSession.refresh_token,'login-refresh');
+ assert.ok(securityEvents.some(item=>item.event.type==='login_succeeded'),'successful login is written to security history');
+ loginValid=false;
+ r=await handler(request({action:'login',student_id:'670111',password:'WrongPassword'}));
+ assert.equal(r.status,401,'invalid credentials must be rejected');
+ assert.equal((await r.json()).error,'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง');
+ assert.ok(securityEvents.some(item=>item.event.type==='login_failed'),'failed login is written to security history');
+ loginValid=true;
+ r=await handler(request({action:'forgot',student_id:'670111'}));
  const generic=await r.json();
  assert.equal(r.status,200);
  assert.match(generic.message,/ส่งรหัส OTP/);
@@ -108,7 +122,7 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  assert.match(JSON.stringify(securityNotice.messages[0]),/วันที่และเวลาที่เปลี่ยน/);
  assert.match(JSON.stringify(securityNotice.messages[0]),/หากไม่ใช่คุณที่ดำเนินการ/);
  const loggedTypes=securityEvents.map(item=>item.event.type);
- for(const eventType of ['otp_requested','otp_sent','otp_verification_failed','otp_verified','password_changed','sessions_revoked'])assert.ok(loggedTypes.includes(eventType),'security history records '+eventType);
+ for(const eventType of ['login_succeeded','login_failed','otp_requested','otp_sent','otp_verification_failed','otp_verified','password_changed','sessions_revoked'])assert.ok(loggedTypes.includes(eventType),'security history records '+eventType);
 
  r=await handler(request({action:'invite-preview',token:'a'.repeat(64)}));
  assert.equal(r.status,200);

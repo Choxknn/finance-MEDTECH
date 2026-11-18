@@ -135,3 +135,34 @@ html body.signup-page .signup-footer-actions>a:hover{background:#f3eaf0;border-c
 html body.signup-page .signup-footer-actions>#register-support:hover{background:#dff2e7;border-color:#b3d9c2}
 @media(max-width:360px){html body.signup-page .signup-footer-actions{gap:7px}html body.signup-page .signup-footer-actions>a,html body.signup-page .signup-footer-actions>#register-support{font-size:11px;gap:5px}}
 html body.signup-page .signup-footer-actions[hidden]{display:none!important}
+
+/* LINE OTP password-recovery modal. */
+#forgot-line-form .recovery-progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0 0 20px}
+#forgot-line-form .recovery-progress span{padding:8px 5px;border-radius:10px;background:#f4f0f2;color:#968991;text-align:center;font-size:11px;line-height:1.4}
+#forgot-line-form .recovery-progress span.active{background:#fde8ed;color:#b52343;font-weight:700}
+#forgot-line-form .recovery-step[hidden]{display:none!important}
+#forgot-line-form .recovery-step>p{margin:0 0 14px;color:#766a70;font-size:13px;line-height:1.7}
+#forgot-line-form .recovery-step label{display:block;margin:14px 0 7px;color:#65545c;font-size:13px;font-weight:600}
+#forgot-line-form .recovery-step input{width:100%;min-height:48px;border:1px solid #eadfe3;border-radius:13px;background:#faf7f8;padding:12px 14px;color:#35272e;font-size:16px}
+#forgot-line-form .recovery-step input:focus{border-color:#c13c55;outline:1px solid #c13c55;outline-offset:0;background:#fff}
+#forgot-line-form .recovery-step>[data-forgot-back]{margin-top:13px}
+#forgot-line-form .actions{margin-top:18px}
+#forgot-line-form .form-error{margin-top:12px;color:#a5233e;font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.recovery-success{text-align:center;padding:12px 4px 8px}
+.recovery-success>p{margin:12px 0;color:#65545c}
+.recovery-success .help{font-size:12px;line-height:1.8}
+.recovery-success-mark{display:grid;place-items:center;width:56px;height:56px;margin:0 auto 10px;border-radius:50%;background:#e9f7ee;color:#21834b;font-size:28px;font-weight:700}
+@media(max-width:420px){#forgot-line-form .recovery-progress{gap:4px}#forgot-line-form .recovery-progress span{font-size:10px;padding:7px 3px}}
+
+/* Six individual OTP boxes with live validation states. */
+#forgot-line-form .otp-entry{margin:12px 0 4px}
+#forgot-line-form .otp-slots{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;max-width:390px;margin:8px auto 0}
+#forgot-line-form .otp-slot{box-sizing:border-box!important;width:100%!important;min-width:0!important;height:58px!important;min-height:58px!important;padding:0!important;border:1.5px solid #e4d8dd!important;border-radius:13px!important;background:linear-gradient(180deg,#fff 0%,#faf6f8 100%)!important;color:#33232b!important;text-align:center!important;font-size:25px!important;font-weight:700!important;font-variant-numeric:tabular-nums!important;box-shadow:0 3px 9px rgba(69,35,49,.05)!important;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease,transform .18s ease!important}
+#forgot-line-form .otp-slot:focus{outline:none!important;border-color:#bd3554!important;background:#fff!important;box-shadow:0 0 0 3px rgba(189,53,84,.12),0 4px 12px rgba(69,35,49,.07)!important;transform:translateY(-1px)}
+#forgot-line-form .otp-slot.is-valid{border-color:#22a06b!important;background:#eaf8f0!important;color:#147447!important;box-shadow:0 0 0 2px rgba(34,160,107,.1)!important}
+#forgot-line-form .otp-slot.is-invalid{border-color:#dc3545!important;background:#fff0f1!important;color:#b42332!important;box-shadow:0 0 0 2px rgba(220,53,69,.1)!important}
+#forgot-line-form .otp-state{min-height:20px;margin:10px 0 0;text-align:center;color:#8c7c83;font-size:12px}
+#forgot-line-form .otp-state.is-valid{color:#168052;font-weight:700}
+#forgot-line-form .otp-state.is-invalid{color:#c6283b;font-weight:700}
+@media(max-width:420px){#forgot-line-form .otp-slots{gap:6px}#forgot-line-form .otp-slot{height:52px!important;min-height:52px!important;border-radius:11px!important;font-size:22px!important}}
+

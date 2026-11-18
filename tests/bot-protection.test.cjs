@@ -17,7 +17,7 @@ function makeDb({failLimitAt=0,blocked=false,countOverride=null}={}){
     gte(k,v){filters[k]={gte:v};return q},
     in(k,v){filters[k]={in:v};return q},
     maybeSingle(){return Promise.resolve({data:table==='account_security_blocks'&&blocked?{blocked_until:new Date(Date.now()+60000).toISOString()}:null,error:null})},
-    insert(row){if(table==='account_security_events')events.push(row);return Promise.resolve({data:null,error:null})},
+    insert(row){if(table==='account_security_events')events.push({...row,created_at:new Date().toISOString()});return Promise.resolve({data:null,error:null})},
     upsert(row){if(table==='account_security_blocks')blocks.push(row);return Promise.resolve({data:null,error:null})},
     then(resolve,reject){
      const matching=events.filter(row=>Object.entries(filters).every(([key,value])=>{

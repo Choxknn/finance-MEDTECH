@@ -210,4 +210,13 @@
     scrollPaymentPageToTop();
     return true;
   };
+
+  // Intercept the shared header before other delegated navigation handlers.
+  window.addEventListener('click', event => {
+    const button = event.target?.closest?.('[data-topbar-back]');
+    if (!button || view !== 'payment') return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.paymentPageHandleTopbarBack();
+  }, true);
 })();

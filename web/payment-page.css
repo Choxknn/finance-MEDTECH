@@ -465,3 +465,26 @@
   .payment-page-account-copy { flex-wrap: wrap; justify-content: flex-start; }
   .payment-page-account-copy strong { font-size: 20px; }
 }
+
+
+/* Slide the payment page in from the right without moving the shared bars. */
+.workspace > main:has(> .payment-page) {
+  overflow-x: clip;
+}
+.payment-page-entering {
+  animation: payment-page-slide-in .48s cubic-bezier(.22,.78,.22,1) both;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+@keyframes payment-page-slide-in {
+  from { transform: translate3d(100%,0,0); opacity: .96; }
+  to { transform: translate3d(0,0,0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .payment-page-entering {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    will-change: auto;
+  }
+}

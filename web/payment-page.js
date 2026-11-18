@@ -197,22 +197,17 @@
     }
   };
 
-  if (typeof window.clayNavigateBack === 'function') {
-    const baseClayNavigateBack = window.clayNavigateBack;
-    window.clayNavigateBack = function () {
-      if (view === 'payment') {
-        if (paymentPageState?.method) {
-          paymentPageState.method = '';
-          render();
-          scrollPaymentPageToTop();
-          return;
-        }
-        paymentPageState = null;
-        nav('dashboard');
-        scrollPaymentPageToTop();
-        return;
-      }
-      return baseClayNavigateBack();
-    };
-  }
+  window.paymentPageHandleTopbarBack = function () {
+    if (view !== 'payment' || !paymentPageState) return false;
+    if (paymentPageState.method) {
+      paymentPageState.method = '';
+      render();
+      scrollPaymentPageToTop();
+      return true;
+    }
+    paymentPageState = null;
+    nav('dashboard');
+    scrollPaymentPageToTop();
+    return true;
+  };
 })();

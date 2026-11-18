@@ -26,11 +26,10 @@
     const feeAmount = Number(charge.fee_amount || 0);
     const due = bill.due_date ? recordTime(bill, 'due_date') : 'ไม่ระบุวันครบกำหนด';
     return '<section class="payment-page-overview" aria-label="สรุปรายการชำระเงิน">' +
-      '<div class="payment-page-heading"><span class="payment-page-eyebrow">BILL PAYMENT</span>' +
+      '<div class="payment-page-heading">' +
       '<h1 class="payment-page-bill-title">' + esc(bill.title || 'รายการชำระเงิน') + '</h1>' +
-      '<p class="payment-page-description">' + esc(bill.description || 'ตรวจสอบยอดและเลือกช่องทางชำระเงิน') + '</p>' +
       '<div class="payment-page-due"><span class="payment-page-due-mark"></span><span>ครบกำหนด</span><strong>' + esc(due) + '</strong></div></div>' +
-      '<aside class="payment-page-total"><div class="payment-page-total-label"><span>ยอดที่ต้องชำระ</span><span>THB</span></div>' +
+      '<aside class="payment-page-total"><div class="payment-page-total-label"><span>ยอดที่ต้องชำระ</span></div>' +
       '<strong class="payment-page-total-value">฿' + money(amount) + '</strong><div class="payment-page-total-divider"></div>' +
       '<div class="payment-page-total-line"><span>ยอดบิล</span><b>฿' + money(charge.amount) + '</b></div>' +
       (feeAmount > 0 ? '<div class="payment-page-total-line"><span>ค่าปรับ</span><b>฿' + money(feeAmount) + '</b></div>' : '') +
@@ -38,23 +37,17 @@
       '</aside></section>';
   }
 
-  function paymentPageTopline(stepTitle, stepDescription) {
-    return '<div class="payment-page-titlebar"><div><span class="payment-page-eyebrow">FINANCE MEDTECH · SECURE PAYMENT</span>' +
-      '<h1>' + stepTitle + '</h1><p>' + stepDescription + '</p></div>' +
-      '<button type="button" class="payment-page-back" data-payment-page-back aria-label="กลับหน้าก่อน">' + paymentPageIcon('arrow') + '<span>กลับ</span></button></div>';
-  }
-
   function paymentPageMethodChoice(name, title, description, note, icon, disabled) {
     return '<button type="button" class="payment-page-method-choice" data-payment-method="' + name + '"' +
       (disabled ? ' disabled aria-disabled="true"' : '') + '><span class="payment-page-method-symbol">' + paymentPageIcon(icon) + '</span>' +
-      '<span class="payment-page-method-copy"><strong>' + title + '</strong><small>' + description + '</small><em>' + note + '</em></span>' +
+      '<span class="payment-page-method-copy"><strong>' + title + '</strong></span>' +
       '<span class="payment-page-method-arrow">' + paymentPageIcon('arrow') + '</span></button>';
   }
 
   function paymentPageMarkup() {
     const charge = paymentPageCharge();
     if (!charge) {
-      return '<section class="payment-page"><div class="payment-page-content"><div class="payment-page-empty">ไม่พบรายการที่ต้องชำระ หรือรายการนี้ไม่สามารถชำระได้แล้ว<button type="button" data-payment-page-back>กลับ</button></div></div></section>';
+      return '<section class="payment-page"><div class="payment-page-content"><div class="payment-page-empty">ไม่พบรายการที่ต้องชำระ หรือรายการนี้ไม่สามารถชำระได้แล้ว<button type="button" data-payment-page-back>กลับหน้าหลัก</button></div></div></section>';
     }
 
     const bill = round(charge.round_id);
@@ -65,43 +58,42 @@
 
     if (!paymentPageState.method) {
       return contentStart +
-        paymentPageTopline('เลือกวิธีการชำระเงิน', 'เลือกช่องทางที่สะดวก แล้วไปยังรายละเอียดสำหรับชำระเงิน') +
+        '<h1 class="payment-page-main-title">เลือกวิธีชำระ</h1>' +
         summary +
-        '<section class="payment-page-method-section"><div class="payment-page-section-heading"><div><span>PAYMENT METHOD</span><h2>ช่องทางชำระเงิน</h2><p>เลือกหนึ่งช่องทางเพื่อดูรายละเอียดและแนบสลิป</p></div><span class="payment-page-step">01 / 02</span></div>' +
+        '<section class="payment-page-method-section"><div class="payment-page-section-heading"><h2>เลือกช่องทางชำระเงิน</h2></div>' +
         '<div class="payment-page-method-choices">' +
-        paymentPageMethodChoice('bank', 'โอนผ่านบัญชีธนาคาร', 'โอนเงินไปยังบัญชีรับชำระของ MEDTECH', cfg.accountNumber ? 'พร้อมแสดงชื่อบัญชีและเลขที่บัญชี' : 'ยังไม่ได้ตั้งค่าบัญชีรับเงิน', 'bank', false) +
-        paymentPageMethodChoice('qr', 'สแกน QR เพื่อชำระ', 'ชำระผ่านแอปธนาคารด้วย QR Code', qr.url ? 'แสดง QR ตามยอดที่ต้องชำระ' : 'ยังไม่มี QR สำหรับยอดนี้', 'qr', !qr.url) +
+        paymentPageMethodChoice('bank', 'โอนผ่านเลขบัญชีธนาคาร', '', '', 'bank', false) +
+        paymentPageMethodChoice('qr', 'สแกน QR Code', '', '', 'qr', !qr.url) +
         '</div></section></div></section>';
     }
 
     const methodPanel = paymentPageState.method === 'bank'
-      ? '<article class="payment-page-card payment-page-bank"><div class="payment-page-card-heading"><span class="payment-page-step">01</span><div><span>BANK TRANSFER</span><h2>รายละเอียดบัญชีรับเงิน</h2></div>' + paymentPageIcon('bank') + '</div>' +
+      ? '<article class="payment-page-card payment-page-bank"><div class="payment-page-card-heading"><div><h2>รายละเอียดบัญชีธนาคาร</h2></div>' + paymentPageIcon('bank') + '</div>' +
         '<div class="payment-page-bank-details">' +
         (cfg.accountNumber
-          ? '<div class="payment-page-bank-row"><span>ธนาคาร</span><strong>' + esc(cfg.bankName || '—') + '</strong></div><div class="payment-page-bank-row"><span>ชื่อบัญชี</span><strong>' + esc(cfg.accountName || '—') + '</strong></div><div class="payment-page-account-number"><span>เลขที่บัญชี</span><strong>' + esc(cfg.accountNumber) + '</strong></div>'
+          ? '<div class="payment-page-bank-row"><span>ธนาคาร</span><strong>' + esc(cfg.bankName || '—') + '</strong></div><div class="payment-page-bank-row"><span>ชื่อบัญชี</span><strong>' + esc(cfg.accountName || '—') + '</strong></div><div class="payment-page-account-number"><span>เลขที่บัญชี</span><div class="payment-page-account-copy"><strong>' + esc(cfg.accountNumber) + '</strong><button type="button" class="payment-page-copy-account" data-copy-account="' + esc(cfg.accountNumber) + '">คัดลอก</button></div></div>'
           : '<p class="payment-page-bank-unset">ยังไม่ได้ตั้งค่าบัญชีรับเงิน กรุณาติดต่อผู้ดูแลการเงินก่อนโอนเงิน</p>') +
         '</div></article>'
-      : '<article class="payment-page-card payment-page-qr"><div class="payment-page-card-heading"><span class="payment-page-step">01</span><div><span>SCAN TO PAY</span><h2>สแกน QR เพื่อชำระ</h2></div>' + paymentPageIcon('qr') + '</div>' +
+      : '<article class="payment-page-card payment-page-qr"><div class="payment-page-card-heading"><div><h2>สแกน QR Code</h2></div>' + paymentPageIcon('qr') + '</div>' +
         '<div class="payment-page-qr-stage"><div class="payment-page-qr-placeholder" aria-hidden="true"><span>QR</span><small>รหัสชำระเงิน</small></div><img id="payment-qr" class="payment-page-qr-image" alt="QR สำหรับชำระเงิน" hidden></div>' +
         '<p id="payment-qr-hint" class="payment-page-qr-hint" role="status"></p></article>';
 
     return contentStart +
-      paymentPageTopline('ชำระเงินและแนบสลิป', 'ทำรายการตามรายละเอียดด้านล่าง แล้วแนบหลักฐานเพื่อส่งตรวจสอบ') +
+      '<h1 class="payment-page-main-title">ชำระเงิน</h1>' +
       summary +
-      '<div class="payment-page-selected-method"><div><span>วิธีที่เลือก</span><strong>' + (paymentPageState.method === 'bank' ? paymentPageIcon('bank') + ' โอนผ่านบัญชีธนาคาร' : paymentPageIcon('qr') + ' สแกน QR เพื่อชำระ') + '</strong></div><button type="button" class="payment-page-change-method" data-payment-method-back>เปลี่ยนวิธีชำระ</button></div>' +
+      '<div class="payment-page-selected-method"><strong>' + (paymentPageState.method === 'bank' ? paymentPageIcon('bank') + ' โอนผ่านเลขบัญชีธนาคาร' : paymentPageIcon('qr') + ' สแกน QR Code') + '</strong></div>' +
       '<section class="payment-page-method-details">' + methodPanel + '</section>' +
       '<section class="payment-page-card payment-page-upload"><div class="payment-page-card-heading payment-page-upload-heading">' +
-      '<span class="payment-page-step">02</span><div><span>PAYMENT CONFIRMATION</span><h2>แนบหลักฐานการโอน</h2><p>เลือกรูปสลิปหลังจากชำระเงินแล้ว ระบบจะส่งให้ตรวจสอบอัตโนมัติ</p></div>' +
-      '<span class="payment-page-file-types">JPG · PNG · WEBP <i>ไม่เกิน 5 MB</i></span></div>' +
+      '<div><h2>แนบสลิป</h2></div></div>' +
       '<form id="pay-form" class="payment-page-form" data-id="' + esc(charge.id) + '">' +
       '<input id="pay-amount" name="amount" type="hidden" value="' + esc(amount) + '">' +
       '<div class="dropzone"><div class="payment-page-upload-mark">' + paymentPageIcon('upload') + '</div>' +
-      '<div class="payment-page-upload-copy"><strong>เลือกไฟล์สลิปจากอุปกรณ์</strong><span>แตะเพื่อเลือกรูปภาพ หรือวางไฟล์ลงในกรอบนี้</span></div>' +
+      '<div class="payment-page-upload-copy"><strong>เลือกรูปสลิป</strong></div>' +
       '<label for="slip-file">เลือกภาพสลิป</label><input id="slip-file" name="file" type="file" accept="image/jpeg,image/png,image/webp" required>' +
-      '<p class="help">รองรับ JPG, PNG หรือ WEBP · ขนาดไม่เกิน 5 MB</p><div id="file-preview"></div></div>' +
-      '<p class="help auto-slip-help">เมื่อเลือกรูปสลิป ระบบจะส่งให้อัตโนมัติ ไม่ต้องกดปุ่มยืนยันอีกครั้ง</p>' +
+      '<p class="help">ขนาดไฟล์ไม่เกิน 5 MB</p><div id="file-preview"></div></div>' +
+      '<p class="help auto-slip-help">ระบบจะส่งสลิปให้อัตโนมัติ</p>' +
       '<div class="actions"><button type="submit" data-slip-retry hidden>ลองส่งอีกครั้ง</button></div><div class="form-error" role="alert"></div></form></section>' +
-      '<p class="payment-page-footnote">' + paymentPageIcon('lock') + ' ข้อมูลการชำระจะถูกส่งเข้าสู่ระบบตรวจสอบโดยตรง กรุณาอย่าปิดหน้าระหว่างกำลังส่งสลิป</p>' +
+      '' +
       '</div></section>';
   }
 
@@ -122,6 +114,41 @@
     nav(returnView);
   }
 
+  window.paymentPageHasSelectedMethod = () => Boolean(paymentPageState?.method);
+
+  function scrollPaymentPageToTop() {
+    if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+    const app = document.getElementById('app');
+    if (app) app.scrollTop = 0;
+    const workspace = document.querySelector('.workspace');
+    if (workspace) workspace.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
+
+  async function copyPaymentAccount(accountNumber) {
+    const value = String(accountNumber || '').trim();
+    if (!value) return;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const field = document.createElement('textarea');
+        field.value = value;
+        field.setAttribute('readonly', '');
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.appendChild(field);
+        field.select();
+        const copied = document.execCommand && document.execCommand('copy');
+        field.remove();
+        if (!copied) throw new Error('clipboard unavailable');
+      }
+      toast('คัดลอกเลขบัญชีแล้ว');
+    } catch (_) {
+      toast('คัดลอกไม่สำเร็จ กรุณาคัดลอกเลขบัญชีด้วยตนเอง');
+    }
+  }
+
   window.finishPaymentPageSubmission = function () {
     if (view !== 'payment' || !paymentPageState) return false;
     const returnView = paymentPageState.returnView || 'bills';
@@ -137,11 +164,17 @@
     paymentPageState = {id: id, method: '', returnView: view};
     view = 'payment';
     render();
+    scrollPaymentPageToTop();
   };
 
   document.addEventListener('click', event => {
-    const button = event.target.closest('[data-payment-method],[data-payment-method-back],[data-payment-page-back]');
+    const button = event.target.closest('[data-payment-method],[data-payment-method-back],[data-payment-page-back],[data-copy-account]');
     if (!button) return;
+    if (button.hasAttribute('data-copy-account')) {
+      event.preventDefault();
+      copyPaymentAccount(button.dataset.copyAccount);
+      return;
+    }
     if (button.hasAttribute('data-payment-page-back')) {
       leavePaymentPage();
       return;
@@ -150,6 +183,7 @@
     if (button.hasAttribute('data-payment-method-back')) paymentPageState.method = '';
     else if (!button.disabled) paymentPageState.method = button.dataset.paymentMethod;
     render();
+    scrollPaymentPageToTop();
   });
 
   const baseRender = render;
@@ -166,7 +200,18 @@
   if (typeof window.clayNavigateBack === 'function') {
     const baseClayNavigateBack = window.clayNavigateBack;
     window.clayNavigateBack = function () {
-      if (view === 'payment') return leavePaymentPage();
+      if (view === 'payment') {
+        if (paymentPageState?.method) {
+          paymentPageState.method = '';
+          render();
+          scrollPaymentPageToTop();
+          return;
+        }
+        paymentPageState = null;
+        nav('dashboard');
+        scrollPaymentPageToTop();
+        return;
+      }
       return baseClayNavigateBack();
     };
   }

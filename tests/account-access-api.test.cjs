@@ -59,6 +59,9 @@ const request=data=>new Request('https://project.test/functions/v1/account-acces
  assert.equal(r.status,200);
  assert.match((await r.json()).message,/ส่งรหัส OTP/);
  assert.equal(linePushes.length,2,'resend action issues a replacement LINE OTP');
+ const resendPush=JSON.parse(linePushes[1].options.body);
+ assert.equal(resendPush.to,'LINE-USER');
+ assert.match(resendPush.messages[0].text,/123456/);
  assert.equal(requestArgs.p_student,'670111');
  
  recoveryResult=null;

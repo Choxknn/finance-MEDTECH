@@ -12,6 +12,22 @@ Deno.serve(async req=>{
   const raw=await req.text();if(raw.length>4096)return json({error:'คำขอใหญ่เกินไป'},413);const input=JSON.parse(raw),db=adminDb();
   if(input.action==='security-config')return json(captchaConfig());
   const securityContext=await protectAccountRequest(db,req,input);
+  if(input.action==='login'){
+   if(typeof input.student_id!=='string'||!/^[A-Za-z0-9_-]{3,20}$/.test(input.student_id)||typeof input.password!=='string'||!input.password||input.password.length>128)
+    return json({error:'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง'},400);
+   const domain=Deno.env.get('STUDENT_EMAIL_DOMAIN')||'students.finance-medtech.invalid';
+   const email=input.student_id.toLowerCase()+'@'+domain;
+   const signed=await db.auth.signInWithPassword({email,password:input.password});
+   if(signed.error||!signed.data?.session||!signed.data?.user){
+    let profileId=null;
+    try{const owner=await db.from('profiles').select('id').eq('student_id',input.student_id).maybeSingle();profileId=owner.data?.id||null}catch{}
+    await recordAccountSecurityEvent(db,securityContext,{type:'login_failed',profileId,severity:'warning',message:'เข้าสู่ระบบไม่สำเร็จด้วยรหัสนักศึกษาและรหัสผ่าน'});
+    return json({error:'รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง'},401);
+   }
+   await recordAccountSecurityEvent(db,securityContext,{type:'login_succeeded',profileId:signed.data.user.id,severity:'info',message:'เข้าสู่ระบบสำเร็จด้วยรหัสนักศึกษาและรหัสผ่าน'});
+   const session=signed.data.session;
+   return json({access_token:session.access_token,refresh_token:session.refresh_token,expires_at:session.expires_at,expires_in:session.expires_in,token_type:session.token_type});
+  }
   if(input.action==='forgot'||input.action==='resend-otp'){
    if(typeof input.student_id!=='string'||!/^\d{5,20}$/.test(input.student_id))return json({error:'กรุณาระบุรหัสนักศึกษาให้ถูกต้อง'},400);
    const ip=(req.headers.get('x-forwarded-for')||'unknown').split(',').at(-1)!.trim();

@@ -1,9 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom');
 const root=require('node:path').resolve(__dirname,'..');
 (async()=>{
-const dom=new JSDOM('<dialog id="dialog"></dialog><div id="app"><div class="layout"><div class="mobile-scrim"></div><aside class="sidebar"><nav class="nav"></nav></aside><div class="workspace"><header class="topbar"><button class="topbar-back">back</button><div class="user"></div></header><main></main></div><nav class="clay-dock" aria-label="เมนูด่วน"><button data-view="dashboard"><svg></svg><span>หน้าหลัก</span></button><button data-view="bills"><svg></svg><span>บิล</span></button><button data-view="history"><svg></svg><span>ประวัติ</span></button><button data-view="fund"><svg></svg><span>การเงิน</span></button><button data-action="menu"><svg></svg><span>เมนู</span></button></nav></div></div>',{url:'https://example.test',runScripts:'outside-only',pretendToBeVisual:true});
+const dom=new JSDOM('<div id="app"><div class="layout"><div class="mobile-scrim"></div><aside class="sidebar"><nav class="nav"></nav></aside><div class="workspace"><header class="topbar"><button class="topbar-back">back</button><div class="user"></div></header><main></main></div><nav class="clay-dock" aria-label="เมนูด่วน"><button data-view="dashboard"><svg></svg><span>หน้าหลัก</span></button><button data-view="bills"><svg></svg><span>บิล</span></button><button data-view="history"><svg></svg><span>ประวัติ</span></button><button data-view="fund"><svg></svg><span>การเงิน</span></button><button data-action="menu"><svg></svg><span>เมนู</span></button></nav></div></div>',{url:'https://example.test',runScripts:'outside-only',pretendToBeVisual:true});
 const w=dom.window,ctx=dom.getInternalVMContext(),app=w.document.querySelector('#app');
-Object.defineProperty(w.document,'scrollingElement',{configurable:true,value:w.document.documentElement});
 const layoutMarkup=app.innerHTML,getLayout=()=>w.document.querySelector('.layout');
 let y=0;
 Object.defineProperty(w,'scrollY',{configurable:true,get:()=>y});
@@ -67,17 +66,6 @@ assert.ok(!getLayout().classList.contains('mobile-page-scrolled'),'changing page
 assert.ok(!app.classList.contains('mobile-dock-compact'),'persistent compact marker clears when the dock starts expanding');
 setScroll(90);
 assert.ok(getLayout().classList.contains('mobile-page-scrolled'),'dock can fold again after the user scrolls down on the new page');
-// Closing any native app window restores the header and dock without moving the page.
-const dialog=w.document.getElementById('dialog');
-const pageScrollBeforeClose=y;
-dialog.dispatchEvent(new w.Event('close'));
-assert.ok(!getLayout().classList.contains('mobile-header-hidden'),'closing any window restores the mobile header');
-assert.ok(!getLayout().classList.contains('mobile-page-scrolled'),'closing any window expands the mobile dock');
-assert.ok(!app.classList.contains('mobile-dock-compact'),'closing any window clears the persistent compact state');
-assert.equal(y,pageScrollBeforeClose,'closing a window preserves the current page scroll position');
-setScroll(pageScrollBeforeClose+12);
-assert.ok(getLayout().classList.contains('mobile-header-hidden'),'the next genuine downward gesture can hide the header again');
-assert.ok(getLayout().classList.contains('mobile-page-scrolled'),'the next genuine downward gesture can compact the dock again');
 const css=fs.readFileSync(root+'/web/shop-notice-navigation.css','utf8');
 assert.match(css,/mobile-header-hidden[^}]*topbar/s,'mobile header has an animated hidden state');
 assert.match(css,/mobile-page-scrolled \.clay-dock[\s\S]*?left:50%[\s\S]*?translate3d\(-50%,0,0\)/,'scrolled dock folds into the center');

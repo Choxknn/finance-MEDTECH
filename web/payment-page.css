@@ -1,0 +1,162 @@
+/* Full-page bill payment experience */
+#dialog.payment-page-dialog[open]{
+  position:fixed!important;inset:0!important;margin:0!important;
+  box-sizing:border-box!important;width:100vw!important;max-width:none!important;
+  height:100vh!important;height:100dvh!important;max-height:none!important;
+  padding:0!important;border:0!important;border-radius:0!important;
+  overflow-x:hidden!important;overflow-y:auto!important;scrollbar-gutter:stable;
+  background:#f8f5f6!important;color:#352a31!important;
+  overscroll-behavior:contain;outline:none!important;
+  animation:payment-page-enter .48s cubic-bezier(.2,.78,.2,1) both!important;
+}
+#dialog.payment-page-dialog::backdrop{
+  background:rgba(32,20,27,.34);backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+}
+@keyframes payment-page-enter{
+  from{transform:translate3d(100%,0,0);opacity:.88}
+  to{transform:translate3d(0,0,0);opacity:1}
+}
+.payment-page{min-height:100%;background:#f8f5f6}
+.payment-page-header{
+  position:sticky;top:0;z-index:20;box-sizing:border-box;
+  display:grid!important;grid-template-columns:48px 1fr 100px;
+  align-items:center;gap:16px;height:76px;min-height:76px;
+  margin:0!important;padding:0 clamp(18px,4vw,52px)!important;
+  border-bottom:1px solid #eee4e8;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+.payment-page-back{
+  display:grid!important;place-items:center;box-sizing:border-box;
+  width:44px;height:44px;min-height:44px;padding:0!important;
+  border:1px solid #e9dfe3!important;border-radius:11px!important;
+  background:#fff!important;color:#682b41!important;box-shadow:none!important;
+}
+.payment-page-back svg{width:20px;height:20px;transform:rotate(0deg)}
+.payment-page-header-title{display:flex;flex-direction:column;gap:1px;line-height:1.3}
+.payment-page-header-title span{font-size:10px;font-weight:700;letter-spacing:.16em;color:#a17d8c}
+.payment-page-header-title strong{font-size:17px;font-weight:700;color:#3b2b33}
+.payment-page-secure{display:flex;justify-content:flex-end;align-items:center;gap:7px;color:#7d5364;font-size:10px;font-weight:700;letter-spacing:.1em}
+.payment-page-secure svg{width:16px;height:16px}
+.payment-page-content{width:min(1100px,100%);box-sizing:border-box;margin:0 auto;padding:38px 34px 56px}
+.payment-page-overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.72fr);align-items:stretch;gap:28px;margin-bottom:26px}
+.payment-page-heading{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0;padding:10px 0}
+.payment-page-eyebrow{margin-bottom:10px;color:#a12e4e;font-size:10px;font-weight:800;letter-spacing:.17em}
+.payment-page-bill-title{margin:0;color:#342831;font-size:clamp(24px,3vw,36px);font-weight:750;line-height:1.35;overflow-wrap:anywhere}
+.payment-page-description{max-width:620px;margin:9px 0 16px;color:#796b73;font-size:14px;line-height:1.8}
+.payment-page-due{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:#796b73;font-size:12px}
+.payment-page-due strong{color:#473641;font-weight:700}
+.payment-page-due-mark{width:7px;height:7px;border-radius:2px;background:#b32d4e}
+.payment-page-total{
+  box-sizing:border-box;min-width:0;padding:24px 26px 20px;
+  border-radius:22px 5px 22px 5px;
+  background:linear-gradient(135deg,#76233f 0%,#922b4c 62%,#a53757 100%);
+  color:#fff;box-shadow:0 14px 32px rgba(104,31,57,.14);
+}
+.payment-page-total-label{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#f4dfe6;font-size:12px}
+.payment-page-total-label span:last-child{font-size:9px;letter-spacing:.18em}
+.payment-page-total-value{display:block;margin:7px 0 17px;font-size:clamp(30px,4vw,42px);font-weight:750;line-height:1.2;letter-spacing:-.035em;overflow-wrap:anywhere}
+.payment-page-total-divider{height:1px;background:rgba(255,255,255,.22);margin-bottom:12px}
+.payment-page-total-line{display:flex;justify-content:space-between;gap:14px;margin-top:7px;color:#f1dce4;font-size:11px}
+.payment-page-total-line b{color:#fff;font-size:12px;font-weight:650}
+.payment-page-methods{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(270px,.88fr);gap:18px;margin-bottom:18px}
+.payment-page-card{box-sizing:border-box;min-width:0;padding:22px 24px;border:1px solid #e9dfe4;background:#fff;color:#3b3037;box-shadow:0 8px 24px rgba(58,34,45,.035)}
+.payment-page-bank{border-radius:5px 20px 5px 20px;border-left:3px solid #a72c4b}
+.payment-page-qr{border-radius:20px 5px 20px 5px;background:#fffafb}
+.payment-page-card-heading{display:flex;align-items:center;gap:13px;min-width:0;margin-bottom:20px}
+.payment-page-card-heading>div{min-width:0}
+.payment-page-step{display:grid;place-items:center;box-sizing:border-box;width:34px;height:34px;flex:0 0 34px;border-radius:9px 3px 9px 3px;background:#f7e9ee;color:#a12e4e;font-size:11px;font-weight:800}
+.payment-page-card-heading>div>span{display:block;margin-bottom:2px;color:#a38491;font-size:9px;font-weight:750;letter-spacing:.15em}
+.payment-page-card-heading h2{margin:0;color:#3a2c34;font-size:17px;font-weight:700;line-height:1.45}
+.payment-page-card-heading>svg{width:22px;height:22px;margin-left:auto;flex:0 0 22px;color:#a36a80}
+.payment-page-bank-details{display:grid;gap:0;margin-left:47px}
+.payment-page-bank-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid #f0e8eb;font-size:12px}
+.payment-page-bank-row span{color:#927f88}
+.payment-page-bank-row strong{color:#44333c;font-size:13px;font-weight:650;text-align:right;overflow-wrap:anywhere}
+.payment-page-account-number{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;padding:15px 0 2px}
+.payment-page-account-number span{color:#927f88;font-size:11px}
+.payment-page-account-number strong{color:#7e2542;font-size:clamp(20px,2.5vw,26px);font-weight:750;letter-spacing:.045em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.payment-page-bank-unset{margin:0;padding:14px 16px;border-left:2px solid #c04a65;background:#fcf3f6;color:#805365;font-size:13px;line-height:1.8}
+.payment-page-qr-stage{display:grid;place-items:center;position:relative;min-height:190px;padding:2px 0}
+.payment-page-qr-stage #payment-qr{display:block;box-sizing:border-box;width:min(100%,196px);height:auto;max-height:220px;margin:0;padding:10px;border:1px solid #eee4e8;border-radius:8px;background:#fff;object-fit:contain}
+.payment-page-qr-stage #payment-qr[hidden]{display:none!important}
+.payment-page-qr-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:160px;height:160px;border:1px dashed #e4cbd4;border-radius:6px;background:repeating-linear-gradient(135deg,#fff 0,#fff 9px,#fdf7f9 9px,#fdf7f9 18px);color:#a16e80}
+.payment-page-qr-placeholder[hidden]{display:none!important}
+.payment-page-qr-placeholder span{display:grid;place-items:center;width:54px;height:54px;border:1px solid #e7cbd4;border-radius:7px;color:#a12e4e;font-size:16px;font-weight:800;letter-spacing:.08em}
+.payment-page-qr-placeholder small{font-size:10px}
+.payment-page-qr #payment-qr-hint{margin:12px 0 0;padding:0!important;border:0!important;background:transparent!important;color:#947b86!important;text-align:center;font-size:11px}
+.payment-page-upload{border-radius:17px 5px 17px 5px;padding:23px 24px 24px}
+.payment-page-upload-heading{align-items:flex-start;margin-bottom:17px}
+.payment-page-upload-heading>div{flex:1}
+.payment-page-upload-heading h2{font-size:18px}
+.payment-page-upload-heading p{margin:5px 0 0;color:#8b7a82;font-size:12px;line-height:1.6}
+.payment-page-file-types{display:flex;flex-direction:column;align-items:flex-end;gap:3px;color:#8f7380;font-size:10px;font-weight:750;letter-spacing:.04em;white-space:nowrap}
+.payment-page-file-types i{font-size:10px;font-style:normal;font-weight:500;letter-spacing:0}
+.payment-page-upload-slot{margin-left:47px}
+.payment-page-form{margin:0}
+.payment-page-form .dropzone.slip-upload-target{
+  display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;
+  column-gap:15px;row-gap:6px;box-sizing:border-box;width:100%;
+  margin:0;padding:17px 18px!important;border:1.5px dashed #d5a6b5!important;
+  border-radius:10px 10px 3px 10px!important;background:#fff9fb!important;
+  text-align:left;box-shadow:none!important;
+}
+.payment-page-upload-mark{display:grid;place-items:center;grid-row:1 / span 3;width:48px;height:48px;border-radius:9px 3px 9px 3px;background:#f7e7ed;color:#a52c4c}
+.payment-page-upload-mark svg{width:23px;height:23px}
+.payment-page-upload-copy{display:flex;flex-direction:column;gap:3px}
+.payment-page-upload-copy strong{color:#523944;font-size:13px;font-weight:700}
+.payment-page-upload-copy span{color:#927f88;font-size:11px;line-height:1.6}
+.payment-page-form .dropzone label{display:inline-block;margin:7px 0 0;color:#a12e4e;font-size:12px;font-weight:700}
+.payment-page-form .dropzone input[type=file]{grid-column:2;display:block;max-width:100%;min-width:0;padding:0;border:0;border-radius:0;background:transparent;color:#785967;font-size:11px}
+.payment-page-form .dropzone input[type=file]::file-selector-button{margin:0 9px 0 0;padding:8px 12px;border:1px solid #e2c4ce;border-radius:6px;background:#fff;color:#8d2a48;font-size:11px;font-weight:700;cursor:pointer}
+.payment-page-form .dropzone .help{grid-column:2;margin:0;color:#a08d96;font-size:10px}
+.payment-page-form #file-preview{grid-column:1/-1;min-width:0}
+.payment-page-form #file-preview .preview-image{display:block;max-width:100%;max-height:260px;margin:12px auto 0;border:1px solid #eee2e7;border-radius:5px;object-fit:contain}
+.payment-page-form .auto-slip-help{margin:11px 0 0;color:#76636c;font-size:12px}
+.payment-page-form .actions{justify-content:flex-end;margin-top:12px}
+.payment-page-form .actions:has(button[hidden]){display:none}
+.payment-page-form .actions button{min-height:42px;border-radius:7px!important}
+.payment-page-form .form-error:not(:empty){margin-top:12px}
+.payment-page-footnote{display:flex;align-items:center;justify-content:center;gap:8px;margin:20px 0 0;color:#95838c;font-size:11px;text-align:center;line-height:1.7}
+.payment-page-footnote svg{width:14px;height:14px;flex:0 0 14px;color:#a16b80}
+.payment-page-header+#slip-scroll-cue{position:sticky;top:76px;width:min(1100px,calc(100% - 40px));margin:7px auto 0;border-radius:0 0 9px 9px;font-size:12px}
+@media(max-width:760px){
+  #dialog.payment-page-dialog[open]{scrollbar-gutter:auto}
+  .payment-page-header{grid-template-columns:44px 1fr 70px;height:64px;min-height:64px;padding:0 15px!important;gap:10px}
+  .payment-page-back{width:40px;height:40px;min-height:40px}
+  .payment-page-secure{font-size:9px;gap:5px}
+  .payment-page-content{padding:24px 16px 38px}
+  .payment-page-overview{grid-template-columns:1fr;gap:16px;margin-bottom:18px}
+  .payment-page-heading{padding:0}
+  .payment-page-bill-title{font-size:25px}
+  .payment-page-description{margin:7px 0 12px;font-size:13px}
+  .payment-page-total{padding:20px 21px 17px;border-radius:17px 4px 17px 4px}
+  .payment-page-total-value{font-size:34px;margin:5px 0 13px}
+  .payment-page-methods{grid-template-columns:1fr;gap:13px;margin-bottom:13px}
+  .payment-page-card{padding:19px 17px}
+  .payment-page-bank-details{margin-left:0}
+  .payment-page-account-number strong{font-size:22px}
+  .payment-page-qr-stage{min-height:170px}
+  .payment-page-upload{padding:19px 17px}
+  .payment-page-upload-heading{gap:10px}
+  .payment-page-upload-heading>div{flex:1 1 180px}
+  .payment-page-file-types{display:none}
+  .payment-page-upload-slot{margin-left:0}
+  .payment-page-form .dropzone.slip-upload-target{grid-template-columns:42px minmax(0,1fr);padding:14px 12px!important;column-gap:11px}
+  .payment-page-upload-mark{width:40px;height:40px}
+  .payment-page-form .dropzone input[type=file]{grid-column:1/-1;width:100%;margin-top:8px}
+  .payment-page-form .dropzone .help{grid-column:1/-1;margin-top:2px}
+  .payment-page-header+#slip-scroll-cue{top:64px;width:calc(100% - 24px)}
+  .payment-page-footnote{align-items:flex-start;text-align:left}
+}
+@media(max-width:380px){
+  .payment-page-header{grid-template-columns:42px 1fr 58px;padding:0 11px!important}
+  .payment-page-secure span{display:none}
+  .payment-page-content{padding-left:12px;padding-right:12px}
+  .payment-page-total-value{font-size:31px}
+  .payment-page-card{padding:17px 14px}
+}
+@media(prefers-reduced-motion:reduce){
+  #dialog.payment-page-dialog[open]{animation:none!important}
+  #dialog.payment-page-dialog .payment-page *{scroll-behavior:auto!important;transition:none!important}
+}

@@ -23,7 +23,7 @@ Deno.serve(async req=>{
      const sent=await fetch('https://api.line.me/v2/bot/message/push',{method:'POST',headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN'),'Content-Type':'application/json'},body:JSON.stringify({to:request.line_user_id,messages:[{type:'text',text:'รหัส OTP สำหรับตั้งรหัสผ่านใหม่ของ finance MEDTECH คือ '+code+'\nรหัสมีอายุ 5 นาทีและใช้ได้ครั้งเดียว หากไม่ได้เป็นผู้ขอ สามารถละเว้นข้อความนี้ได้'}]}),signal:AbortSignal.timeout(15000)});
      if(!sent.ok)throw Error('LINE HTTP '+sent.status);
     }catch(error){
-     await query(db.from('password_recovery_otps').update({consumed_at:new Date().toISOString()}).eq('id',request.id));
+     await query(db.from('password_recovery_otps').delete().eq('id',request.id));
      console.warn('Password recovery OTP delivery failed');
     }
    }

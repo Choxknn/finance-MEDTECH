@@ -15,7 +15,24 @@ const base64url=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replaceA
 async function signingKey(){return crypto.subtle.importKey('raw',new TextEncoder().encode(secret('LINE_LOGIN_CHANNEL_SECRET')),{name:'HMAC',hash:'SHA-256'},false,['sign','verify'])}
 async function signState(data:any){const bytes=new TextEncoder().encode(JSON.stringify(data));return hex(bytes)+hex(new Uint8Array(await crypto.subtle.sign('HMAC',await signingKey(),bytes)))}
 async function readState(value:any){if(typeof value!=='string'||value.length>3000||value.length<66||!/^[a-f0-9]+$/.test(value)||value.length%2)throw Error('ข้อมูลยืนยัน LINE ไม่ถูกต้อง');const bytes=unhex(value.slice(0,-64));if(!await crypto.subtle.verify('HMAC',await signingKey(),unhex(value.slice(-64)),bytes))throw Error('ข้อมูลยืนยัน LINE ไม่ถูกต้อง');const data=JSON.parse(new TextDecoder().decode(bytes));if(!Number.isFinite(data.exp)||data.exp<Date.now())throw Error('การเชื่อมต่อหมดอายุ กรุณาลองใหม่');return data}
-async function activeProfile(db:any,req:Request){const bearer=req.headers.get('authorization')?.replace(/^Bearer /,'');if(!bearer)throw Error('กรุณาเข้าสู่ระบบก่อนเชื่อม LINE');const auth=await db.auth.getUser(bearer);if(auth.error||!auth.data.user)throw Error('กรุณาเข้าสู่ระบบใหม่');return query(db.from('profiles').select('id,active,role').eq('id',auth.data.user.id).eq('active',true).is('deleted_at',null).single())}
+async function activeProfile(db:any,req:Request){
+ const bearer=req.headers.get('authorization')?.replace(/^Bearer /,'');
+ if(!bearer)throw Error('กรุณาเข้าสู่ระบบก่อนเชื่อม LINE');
+ const auth=await db.auth.getUser(bearer);
+ if(auth.error||!auth.data.user)throw Error('กรุณาเข้าสู่ระบบใหม่');
+ let claims:any;
+ try{
+  const encoded=bearer.split('.')[1];if(!encoded)throw Error('Missing JWT payload');
+  const normalized=encoded.replace(/-/g,'+').replace(/_/g,'/');
+  const binary=atob(normalized.padEnd(Math.ceil(normalized.length/4)*4,'='));
+  claims=JSON.parse(new TextDecoder().decode(Uint8Array.from(binary,c=>c.charCodeAt(0))));
+ }catch{throw Error('เซสชันไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่');}
+ const sessionId=String(claims?.session_id||'');
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId))throw Error('ไม่พบเซสชันการเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่');
+ const active=await query(db.rpc('is_auth_session_active',{p_user_id:auth.data.user.id,p_session_id:sessionId}));
+ if(active!==true)throw Error('เซสชันนี้ถูกยกเลิกแล้ว กรุณาเข้าสู่ระบบใหม่');
+ return query(db.from('profiles').select('id,active,role').eq('id',auth.data.user.id).eq('active',true).is('deleted_at',null).single());
+}
 async function linePost(path:string,body:Record<string,string>){const r=await fetch('https://api.line.me/'+path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(body),signal:AbortSignal.timeout(15000)});const j=await r.json();if(!r.ok)throw Error('ยืนยัน LINE ไม่สำเร็จ กรุณาเริ่มใหม่');return j}
 async function verifyOfficialAccountFriendship(lineUserId:string){
  const response=await fetch('https://api.line.me/v2/bot/profile/'+encodeURIComponent(lineUserId),{headers:{Authorization:'Bearer '+secret('LINE_CHANNEL_ACCESS_TOKEN')},signal:AbortSignal.timeout(12000)});

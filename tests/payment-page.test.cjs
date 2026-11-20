@@ -4,12 +4,18 @@ const root=path.resolve(__dirname,'..'),dom=new JSDOM('<div id="app"></div><dial
 w.FINANCE_CONFIG={mode:'demo',bankName:'ธนาคารตัวอย่าง',accountName:'บัญชี MEDTECH',accountNumber:'123-4-56789-0',paymentQrUrl:'https://example.test/main.png'};
 w.HTMLDialogElement.prototype.showModal=function(){this.open=true};
 w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
-w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.scrollCalls=0;w.lastScroll=null;Object.defineProperty(w,'scrollY',{value:240,writable:true,configurable:true});w.scrollTo=(x,y)=>{w.scrollCalls++;w.lastScroll=[x,y];w.scrollY=y};w.matchMedia=()=>({matches:false,addListener(){},removeListener(){}});w.document.execCommand=()=>true;Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async value=>{w.copiedAccount=value}},configurable:true});
+w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.scrollCalls=0;w.lastScroll=null;Object.defineProperty(w,'scrollY',{value:240,writable:true,configurable:true});w.scrollTo=(x,y)=>{w.scrollCalls++;w.lastScroll=[x,y];w.scrollY=y};w.matchMedia=query=>({matches:String(query).includes('max-width: 720px'),addListener(){},removeListener(){}});w.document.execCommand=()=>true;Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async value=>{w.copiedAccount=value}},configurable:true});
 for(const name of ['app.js','management.js','records.js','fund.js','payment-qrs.js','session-history.js','bills.js','experience.js','operations.js','layout-polish.js','fund-evidence.js','flex-templates.js','flex-preview.js','line-messages.js','communications.js','payment-status.js','mobile-refinement.js','detail-polish.js','individual-bills.js','record-modals.js','clay-theme.js','payment-page.js'])vm.runInContext(fs.readFileSync(root+'/web/'+name,'utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx);
 (async()=>{
 run("demoLogin('member');paymentWindowOpen=()=>true;nav('dashboard')");
 const app=w.document.getElementById('app'),dialog=w.document.getElementById('dialog');
+assert.equal(app.querySelector('.topbar').dataset.subpage,'false','mobile home views keep their topbar controls');
+run("nav('profile')");
+assert.equal(app.querySelector('.topbar').dataset.subpage,'true','mobile pages outside the bottom navigation are flagged as subpages');
+const mobileHeaderCss=fs.readFileSync(root+'/web/rounded-header.css','utf8');
+assert.match(mobileHeaderCss,/\[data-subpage="true"\] \.topbar-brand[\s\S]*?\.user \{[^}]*display: none/s,'mobile subpages hide the logo, notifications and profile group');
+run("nav('dashboard')");
 const originalHomeLayout=app.querySelector('.layout');
 const originalHomeMain=app.querySelector('.layout .workspace > main');
 run("payModal('c1')");

@@ -2,7 +2,7 @@
 let shopData={products:[],orders:[]},shopLoaded=false,shopLoading=false,shopOwner=null,shopLoadError='',shopTarget='',shopPendingScan='',shopSummary=null,shopPaidOnly=false,shopSearch='',shopStatusFilter='',shopSelected=new Set();
 const shopStatuses={pending:'รอยืนยันคำสั่งซื้อ',confirmed:'ยืนยันคำสั่งซื้อแล้ว',ready:'พร้อมรับสินค้า',completed:'รับสินค้าแล้ว',cancelled:'ยกเลิก'};
 const shopPayStatuses={unpaid:'รอชำระ',pending:'กำลังตรวจสลิป',review:'รอตรวจสอบสลิป',approved:'ชำระแล้ว',rejected:'ต้องแก้ไขสลิป'};
-const shopLink=id=>new URL('./',location.href).href+'#shop'+(id?'/'+id:'');
+const shopLink=id=>{const url=new URL('https://liff.line.me/'+cfg.financeFlexLiffId);url.searchParams.set('view','shop');if(id)url.searchParams.set('product',id);return url.href};
 const shopImage=path=>cfg.supabaseUrl+'/storage/v1/object/public/shop-products/'+path.split('/').map(encodeURIComponent).join('/');
 const shopRoute=hash=>/^#(shop|shop-order)(?:\/([0-9a-f-]{36}))?$/.exec(hash||'');
 if(shopRoute(location.hash))sessionStorage.setItem('finance-shop-destination',location.hash);

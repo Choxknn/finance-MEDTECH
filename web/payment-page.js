@@ -125,16 +125,48 @@
       '</div></section></div></section></div>';
   }
 
+  // Keep the live page DOM intact while payment is open. The sheet is mounted
+  // as a separate overlay, rather than rebuilding a duplicate page as its backdrop.
   content = function () {
     if (view === 'payment') {
       const activeView = view;
       view = paymentPageState?.returnView || 'bills';
       const background = baseContent();
       view = activeView;
-      return background + paymentPageMarkup();
+      return background;
     }
     return baseContent();
   };
+
+  function renderPaymentSheet() {
+    const app = document.getElementById('app');
+    if (!app) return null;
+
+    const holder = document.createElement('div');
+    holder.innerHTML = paymentPageMarkup().trim();
+    const incomingOverlay = holder.firstElementChild;
+    if (!incomingOverlay) return app.querySelector('[data-payment-sheet-overlay]');
+
+    const currentOverlay = app.querySelector('[data-payment-sheet-overlay]');
+    if (!currentOverlay) {
+      app.appendChild(incomingOverlay);
+      return incomingOverlay;
+    }
+
+    const currentSheet = currentOverlay.querySelector('[data-payment-sheet]');
+    const incomingSheet = incomingOverlay.querySelector('[data-payment-sheet]');
+    if (currentSheet && incomingSheet) {
+      const currentSize = currentSheet.dataset.sheetSize || incomingSheet.dataset.sheetSize || 'medium';
+      currentSheet.innerHTML = incomingSheet.innerHTML;
+      currentSheet.dataset.sheetSize = currentSize;
+      if (paymentSheetEntrancePending) currentOverlay.classList.remove('is-open', 'is-closing');
+      else if (!currentOverlay.classList.contains('is-closing')) currentOverlay.classList.add('is-open');
+      return currentOverlay;
+    }
+
+    currentOverlay.replaceWith(incomingOverlay);
+    return incomingOverlay;
+  }
 
   nav = function (nextView) {
     const leavingPayment = view === 'payment' && nextView !== 'payment';
@@ -337,23 +369,27 @@
 
   const baseRender = render;
   render = function () {
-    baseRender();
-    if (view === 'payment') lockPaymentBackgroundScroll(paymentPageState?.backgroundScrollY);
-    else unlockPaymentBackgroundScroll();
-    if (view === 'payment' && paymentSheetEntrancePending) {
-      const overlay = document.querySelector('[data-payment-sheet-overlay]');
-      if (overlay) {
+    if (view === 'payment' && paymentPageState) {
+      // Updating a payment step only touches the sheet; the original page,
+      // announcements, scroll position and all live DOM nodes remain in place.
+      const overlay = renderPaymentSheet();
+      lockPaymentBackgroundScroll(paymentPageState.backgroundScrollY);
+      if (overlay && paymentSheetEntrancePending) {
         void overlay.offsetHeight;
         overlay.classList.add('is-open');
         paymentSheetEntrancePending = false;
       }
+      if (typeof updatePaymentQr === 'function' && paymentPageState.method === 'qr') {
+        updatePaymentQr();
+        const qr = document.getElementById('payment-qr');
+        const placeholder = document.querySelector('.payment-page-qr-placeholder');
+        if (placeholder) placeholder.hidden = !!qr && !qr.hidden;
+      }
+      return;
     }
-    if (view === 'payment' && typeof updatePaymentQr === 'function' && paymentPageState?.method === 'qr') {
-      updatePaymentQr();
-      const qr = document.getElementById('payment-qr');
-      const placeholder = document.querySelector('.payment-page-qr-placeholder');
-      if (placeholder) placeholder.hidden = !!qr && !qr.hidden;
-    }
+
+    baseRender();
+    unlockPaymentBackgroundScroll();
   };
 
   window.paymentPageHandleTopbarBack = function () {

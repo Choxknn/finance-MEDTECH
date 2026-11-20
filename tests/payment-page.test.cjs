@@ -31,7 +31,7 @@ assert.equal(w.document.documentElement.style.overflow,'hidden','document scroll
 assert.ok(app.querySelector('[data-payment-sheet-back]'),'the sheet back button remains available for payment details');
 assert.equal(app.querySelector('[data-payment-sheet-back]').hidden,true,'the back button is hidden on the payment-method selection step');
 const paymentHeaderCss=fs.readFileSync(root+'/web/payment-page.css','utf8');
-assert.match(paymentHeaderCss,/\.payment-sheet-header-button\[hidden\]\s*\{[^}]*visibility:\s*hidden\s*!important/s,'the hidden back button is visually suppressed while retaining its grid slot');
+assert.match(paymentHeaderCss,/\.payment-sheet > \.payment-sheet-header > \.payment-sheet-back-button\[hidden\]\s*\{[^}]*display:\s*none\s*!important/s,'the selection step completely hides the back button without affecting the absolute title and close positions');
 assert.match(paymentHeaderCss,/\.payment-sheet > \.payment-sheet-header\s*\{[^}]*display:\s*block\s*!important[^}]*width:\s*100%\s*!important/s,'the payment header fills the sheet and does not rely on overridden grid tracks');
 assert.match(paymentHeaderCss,/\.payment-sheet > \.payment-sheet-header > strong\s*\{[^}]*left:\s*50%\s*!important[^}]*transform:\s*translate\(-50%, -50%\)\s*!important/s,'the payment title is anchored to the exact horizontal centre of the sheet');
 assert.match(paymentHeaderCss,/\.payment-sheet > \.payment-sheet-header > \.payment-sheet-close-button\s*\{[^}]*right:\s*clamp\(16px, 3vw, 28px\)\s*!important/s,'the close control is anchored to the right edge of the payment sheet');

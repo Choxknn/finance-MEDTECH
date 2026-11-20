@@ -533,8 +533,8 @@ html body.payment-sheet-open { overflow: hidden !important; }
   display: flex;
   flex-direction: column;
   width: min(920px, 100%);
-  height: min(82dvh, 820px);
-  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 8px);
+  height: min(90dvh, 900px);
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 24px);
   min-height: min(48dvh, 420px);
   margin: 0 auto;
   overflow: hidden;
@@ -555,9 +555,9 @@ html body.payment-sheet-open { overflow: hidden !important; }
   transform: translate3d(0,100%,0);
 }
 .payment-sheet[data-sheet-size="compact"] { height: 62dvh; }
-.payment-sheet[data-sheet-size="medium"] { height: min(82dvh,820px); }
+.payment-sheet[data-sheet-size="medium"] { height: min(90dvh,900px); }
 .payment-sheet[data-sheet-size="expanded"] {
-  height: calc(100dvh - env(safe-area-inset-top,0px) - 8px);
+  height: calc(100dvh - env(safe-area-inset-top,0px) - 24px);
 }
 .payment-sheet.is-dragging {
   transition: none !important;
@@ -614,15 +614,15 @@ html body.payment-sheet-open { overflow: hidden !important; }
 @media(max-width:720px) {
   .payment-sheet {
     width: 100%;
-    height: 84dvh;
-    max-height: calc(100dvh - env(safe-area-inset-top,0px) - 6px);
+    height: 90dvh;
+    max-height: calc(100dvh - env(safe-area-inset-top,0px) - 24px);
     min-height: 52dvh;
     border-radius: 23px 23px 0 0;
   }
   .payment-sheet[data-sheet-size="compact"] { height: 62dvh; }
-  .payment-sheet[data-sheet-size="medium"] { height: 84dvh; }
+  .payment-sheet[data-sheet-size="medium"] { height: 90dvh; }
   .payment-sheet[data-sheet-size="expanded"] {
-    height: calc(100dvh - env(safe-area-inset-top,0px) - 6px);
+    height: calc(100dvh - env(safe-area-inset-top,0px) - 24px);
   }
   .payment-sheet-grab-zone { flex-basis: 31px; min-height: 31px; }
   .payment-sheet-scroll .payment-page-content {
@@ -690,11 +690,13 @@ body.payment-sheet-open .workspace > .topbar {
   min-width: 42px;
   min-height: 42px;
   padding: 0 !important;
-  border: 1px solid rgba(224, 210, 218, .9) !important;
+  border: 1px solid rgba(255, 255, 255, .9) !important;
   border-radius: 50% !important;
-  background: rgba(255,255,255,.88) !important;
+  background: rgba(255,255,255,.64) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.55);
+  backdrop-filter: blur(18px) saturate(1.55);
   color: #765b68 !important;
-  box-shadow: 0 3px 12px rgba(75, 52, 73, .08), inset 0 1px 0 rgba(255,255,255,.92) !important;
+  box-shadow: 0 5px 17px rgba(63, 45, 62, .11), inset 0 1px 0 rgba(255,255,255,.82) !important;
   transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
 }
 .payment-sheet-header-button svg {

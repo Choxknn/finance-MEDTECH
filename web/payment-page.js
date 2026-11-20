@@ -138,6 +138,22 @@
     return baseContent();
   };
 
+  function syncPaymentTopbarBack() {
+    const button = document.querySelector('.layout .workspace > .topbar [data-topbar-back]');
+    if (!button || !paymentPageState) return;
+    if (paymentPageState.method) {
+      button.setAttribute('aria-label', 'กลับเลือกวิธีชำระ');
+      button.title = 'กลับเลือกวิธีชำระ';
+      return;
+    }
+    const label = paymentPageState.topbarBackLabel;
+    const title = paymentPageState.topbarBackTitle;
+    if (label == null) button.removeAttribute('aria-label');
+    else button.setAttribute('aria-label', label);
+    if (title == null) button.removeAttribute('title');
+    else button.title = title;
+  }
+
   function renderPaymentSheet() {
     const app = document.getElementById('app');
     if (!app) return null;
@@ -329,7 +345,15 @@
     if (!charge || charge.profile_id !== user?.id) return;
     if (paymentSheetCloseTimer) clearTimeout(paymentSheetCloseTimer);
     paymentSheetCloseTimer = null;
-    paymentPageState = {id: id, method: '', returnView: view, backgroundScrollY: window.scrollY || window.pageYOffset || 0};
+    const topbarBack = document.querySelector('.layout .workspace > .topbar [data-topbar-back]');
+    paymentPageState = {
+      id: id,
+      method: '',
+      returnView: view,
+      backgroundScrollY: window.scrollY || window.pageYOffset || 0,
+      topbarBackLabel: topbarBack?.getAttribute('aria-label') ?? null,
+      topbarBackTitle: topbarBack?.getAttribute('title') ?? null
+    };
     paymentSheetEntrancePending = true;
     view = 'payment';
     render();
@@ -373,6 +397,7 @@
       // Updating a payment step only touches the sheet; the original page,
       // announcements, scroll position and all live DOM nodes remain in place.
       const overlay = renderPaymentSheet();
+      syncPaymentTopbarBack();
       lockPaymentBackgroundScroll(paymentPageState.backgroundScrollY);
       if (overlay && paymentSheetEntrancePending) {
         void overlay.offsetHeight;

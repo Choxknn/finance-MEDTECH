@@ -104,6 +104,11 @@ function applyClayPresentation() {
       : [['dashboard','home','หน้าหลัก'],['bills','bill','รายการบิล'],['history','history','ประวัติ'],['fund','wallet','กองกลาง']];
     layout.insertAdjacentHTML('beforeend', `<nav class="clay-dock" aria-label="เมนูด่วน">${items.map(([v,i,label])=>`<button type="button" data-view="${v}" class="${view===v?'active':''}" ${view===v?'aria-current="page"':''}>${icon(i)}<span>${label}</span></button>`).join('')}<button type="button" data-action="menu" aria-label="เปิดเมนูทั้งหมด">${icon('menu')}<span>เมนู</span></button></nav>`);
   }
+  // On mobile, keep the top bar minimal on pages outside the bottom navigation.
+  // The home views keep their brand, notifications and profile group.
+  const isMobileViewport = window.matchMedia('(max-width: 720px)').matches;
+  topbar.dataset.subpage = String(isMobileViewport && !clayIsMainMenuView(layout));
+
   // Re-evaluate after the dock exists; this also runs on every later render.
   if (backButton) {
     const hideMobileAdminHomeAction = user.role === 'admin' && window.matchMedia('(max-width: 720px)').matches && view !== 'payment';

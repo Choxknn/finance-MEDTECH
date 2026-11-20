@@ -22,6 +22,8 @@ assert.ok(app.querySelector('.layout .workspace > .topbar [data-topbar-back]'),'
 assert.equal(app.querySelector('.layout .workspace > .topbar [data-topbar-back]').getAttribute('aria-label'),'กลับหน้าหลัก','the underlying top bar retains its normal state while hidden');
 assert.match(fs.readFileSync(root+'/web/payment-page.css','utf8'),/body\.payment-sheet-open \.workspace > \.topbar\s*\{[^}]*display:\s*none/s,'the shared top bar is hidden while payment is open');
 assert.match(fs.readFileSync(root+'/web/payment-page.css','utf8'),/\.payment-sheet-header-button\s*\{[^}]*border-radius:\s*50%/s,'the sheet back and close controls are circular like the site top bar');
+assert.match(fs.readFileSync(root+'/web/payment-page.css','utf8'),/\.payment-sheet\[data-sheet-size="expanded"\]\s*\{[^}]*100dvh[^}]*- 24px/s,'the expanded sheet leaves a visible gap at the top of the screen');
+assert.match(fs.readFileSync(root+'/web/payment-page.css','utf8'),/height:\s*90dvh/,'the initial payment sheet opens higher without filling the entire screen');
 assert.equal(app.querySelector('[data-payment-sheet-scroll]').scrollTop,0,'the payment sheet opens at the top of its own scroll area');
 assert.ok(app.querySelector('[data-payment-sheet-overlay]'),'payment opens in a floating sheet above the current page');
 assert.ok(app.querySelector('[data-payment-sheet][role="dialog"]'),'the sheet is announced as a dialog');

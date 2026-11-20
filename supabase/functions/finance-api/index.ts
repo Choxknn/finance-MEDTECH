@@ -170,7 +170,13 @@ Deno.serve(async req=>{
     const batches=await Promise.all(batchRows.map(async(row:any)=>({...row,url:row.token_ciphertext?financeLiffUrl(financeSite+'register.html#token='+await openRegistrationToken(row.token_ciphertext)):null,token_ciphertext:undefined})));
     return json({invites,batches});
    }
-   case 'revoke-member-invite':{requireAdmin();await query(db.rpc('revoke_member_invite',{p_id:input.id,p_actor:profile.id}));return json({ok:true});}
+   case 'revoke-member-invite':{requireAdmin();await query(db.rpc('revoke_member_invite',{p_id:text(input.id,36),p_actor:profile.id}));return json({ok:true});}
+   case 'revoke-registration-batch':{
+    requireAdmin();const id=text(input.id,36);
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw Error('รหัสลิงก์สมัครไม่ถูกต้อง');
+    const revoked=await query(db.rpc('revoke_registration_batch',{p_id:id,p_actor:profile.id}));
+    return json({ok:true,revoked});
+   }
    case 'cleanup-preview':case 'cleanup-history':{
     requireAdmin();const months=Number(input.months);if(!['notifications','audit'].includes(input.kind)||!Number.isInteger(months)||months<1||months>120)throw new Error('เลือกชนิดข้อมูลและจำนวนเดือน 1–120');
     const confirmed=input.action==='cleanup-history';if(confirmed&&(input.confirmation!=='ลบข้อมูล'||typeof input.anchor!=='string'||!Number.isFinite(Date.parse(input.anchor))))throw new Error('กรุณาตรวจสอบจำนวนรายการและยืนยันก่อนลบ');

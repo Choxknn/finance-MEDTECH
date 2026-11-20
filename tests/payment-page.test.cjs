@@ -8,8 +8,14 @@ w.URL.createObjectURL=()=> 'blob:test';w.URL.revokeObjectURL=()=>{};w.scrollCall
 for(const name of ['app.js','management.js','records.js','fund.js','payment-qrs.js','session-history.js','bills.js','experience.js','operations.js','layout-polish.js','fund-evidence.js','flex-templates.js','flex-preview.js','line-messages.js','communications.js','payment-status.js','mobile-refinement.js','detail-polish.js','individual-bills.js','record-modals.js','clay-theme.js','payment-page.js'])vm.runInContext(fs.readFileSync(root+'/web/'+name,'utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx);
 (async()=>{
-run("demoLogin('member');paymentWindowOpen=()=>true;nav('bills');payModal('c1')");
+run("demoLogin('member');paymentWindowOpen=()=>true;nav('dashboard')");
 const app=w.document.getElementById('app'),dialog=w.document.getElementById('dialog');
+const originalHomeLayout=app.querySelector('.layout');
+const originalHomeMain=app.querySelector('.layout .workspace > main');
+run("payModal('c1')");
+assert.ok(originalHomeLayout?.isConnected&&originalHomeMain?.isConnected,'payment is mounted over the existing live home page');
+assert.equal(app.querySelector('.layout'),originalHomeLayout,'opening payment does not recreate the page behind the sheet');
+assert.equal(app.querySelector('.layout .workspace > main'),originalHomeMain,'the original home content DOM remains unchanged behind payment');
 assert.equal(dialog.open,false,'the payment flow is no longer presented as a dialog');
 assert.ok(app.querySelector('.layout .workspace > .topbar'),'the regular site top bar remains available in the layout');
 assert.ok(w.document.body.classList.contains('payment-sheet-open'),'opening payment locks the background page');
@@ -30,7 +36,7 @@ assert.ok(app.querySelector('[data-payment-sheet][role="dialog"]'),'the sheet is
 assert.ok(app.querySelector('[data-payment-sheet][data-sheet-size="medium"]'),'the sheet opens at its medium height');
 assert.ok(app.querySelector('.payment-sheet-overlay.is-open'),'the sheet animates into view');
 assert.equal(app.querySelector('.payment-page-header'),null,'payment does not create a separate replacement top bar');
-assert.equal(run('view'),'payment','opening a bill navigates to the dedicated payment page');
+assert.equal(run('view'),'payment','opening a bill shows the payment sheet over the current page');
 assert.equal(app.querySelector('.payment-page-bill-title').textContent.trim(),'เงินกองกลางประจำเดือน');
 assert.equal(app.querySelector('.payment-page-total-value').textContent.trim(),'฿200.00');
 assert.ok(app.querySelector('[data-payment-method="bank"]'),'bank transfer is offered as a payment method');
@@ -43,6 +49,7 @@ assert.doesNotMatch(app.querySelector('.payment-page').textContent,/BILL PAYMENT
 assert.equal(app.querySelector('#pay-form'),null,'the slip form is shown only after a payment method is selected');
 app.querySelector('[data-payment-method="bank"]').click();
 assert.ok(app.querySelector('.payment-sheet-overlay.is-open'),'the payment sheet remains visible after selecting bank transfer');
+assert.equal(app.querySelector('.layout'),originalHomeLayout,'changing payment methods does not rebuild the live page behind the sheet');
 assert.equal(run('view'),'payment');
 assert.equal(app.querySelector('.layout .workspace > .topbar [data-topbar-back]').getAttribute('aria-label'),'กลับเลือกวิธีชำระ','the top bar back control returns to method selection from payment details');
 assert.ok(app.querySelector('.payment-page-bank-details').textContent.includes('123-4-56789-0'),'bank account details are shown for the selected bank method');
@@ -79,7 +86,7 @@ assert.ok(app.querySelector('[data-payment-method="bank"]'),'the method selector
 app.querySelector('[data-payment-sheet-close]').click();
 assert.ok(app.querySelector('[data-payment-sheet-overlay].is-closing'),'the sheet begins its closing animation');
 await new Promise(resolve=>setTimeout(resolve,420));
-assert.equal(run('view'),'bills','the X button closes payment and returns to the originating bills page');
+assert.equal(run('view'),'dashboard','the X button closes payment and returns to the originating home page');
 assert.equal(w.document.body.style.position,'','the underlying page body is no longer fixed after closing');
 assert.equal(w.document.documentElement.style.overflow,'','document scrolling is restored after closing');
 assert.deepEqual(w.lastScroll,[0,240],'the original page scroll position is restored after closing');

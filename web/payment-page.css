@@ -646,3 +646,78 @@ html body.payment-sheet-open { overflow: hidden !important; }
     transition: none !important;
   }
 }
+
+/* Keep the page behind the sheet stationary and use the sheet's own header. */
+html:has(body.payment-sheet-open) {
+  overflow: hidden !important;
+  scrollbar-gutter: stable;
+}
+body.payment-sheet-open {
+  overscroll-behavior: none !important;
+}
+body.payment-sheet-open .workspace > .topbar {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+.payment-sheet-header {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  min-height: 56px;
+  padding: 0 clamp(16px, 3vw, 28px) 12px;
+  background: #f8f5f6;
+  color: #463540;
+}
+.payment-sheet-header > strong {
+  overflow: hidden;
+  color: #493640;
+  font-size: 16px;
+  font-weight: 750;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.payment-sheet-header-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0 !important;
+  border: 1px solid rgba(224, 210, 218, .9) !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,.88) !important;
+  color: #765b68 !important;
+  box-shadow: 0 3px 12px rgba(75, 52, 73, .08), inset 0 1px 0 rgba(255,255,255,.92) !important;
+  transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.payment-sheet-header-button svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+.payment-sheet-header-button:active {
+  transform: scale(.93);
+  background: #f4e9ee !important;
+}
+.payment-sheet-close-button {
+  justify-self: end;
+  color: #8a5368 !important;
+}
+@media(max-width:720px) {
+  .payment-sheet-header {
+    min-height: 51px;
+    padding: 0 16px 10px;
+  }
+  .payment-sheet-header > strong { font-size: 15px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .payment-sheet-header-button { transition: none !important; }
+}
+

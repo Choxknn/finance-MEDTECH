@@ -30,6 +30,9 @@ assert.equal(w.document.body.style.top,'-240px','the background scroll position 
 assert.equal(w.document.documentElement.style.overflow,'hidden','document scrolling is disabled while payment is open');
 assert.ok(app.querySelector('[data-payment-sheet-back]'),'the sheet back button remains available for payment details');
 assert.equal(app.querySelector('[data-payment-sheet-back]').hidden,true,'the back button is hidden on the payment-method selection step');
+const paymentHeaderCss=fs.readFileSync(root+'/web/payment-page.css','utf8');
+assert.match(paymentHeaderCss,/\.payment-sheet-header-button\[hidden\]\s*\{[^}]*visibility:\s*hidden\s*!important/s,'the hidden back button is visually suppressed while retaining its grid slot');
+assert.match(paymentHeaderCss,/\.payment-sheet-header\s*\{[^}]*grid-template-columns:\s*42px minmax\(0, 1fr\) 42px/s,'the selection header preserves the same centered title and right-aligned close button as the payment step');
 assert.ok(app.querySelector('[data-payment-sheet-close]'),'the sheet has a close button on the right');
 assert.ok(app.querySelector('.layout .workspace > .topbar [data-topbar-back]'),'the existing top bar contains the payment back control');
 assert.equal(app.querySelector('.layout .workspace > .topbar [data-topbar-back]').getAttribute('aria-label'),'กลับหน้าหลัก','the underlying top bar retains its normal state while hidden');

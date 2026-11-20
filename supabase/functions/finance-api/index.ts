@@ -151,7 +151,7 @@ Deno.serve(async req=>{
    case 'create-member-invite':{
     requireAdmin();const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
     const id=await query(db.rpc('create_member_invite',{p_student:text(input.student_id,20),p_prefix:text(input.name_prefix,30),p_first:text(input.first_name,60),p_last:text(input.last_name,60),p_year:text(input.year,1),p_expires:input.expires_at,p_hash:await hash(token),p_actor:profile.id}));
-    return json({id,url:financeSite+'register.html#token='+token,expires_at:input.expires_at});
+    return json({id,url:financeLiffUrl(financeSite+'register.html#token='+token),expires_at:input.expires_at});
    }
    case 'list-member-invites':{requireAdmin();return json({invites:await query(db.from('member_invites').select('id,student_id,name_prefix,first_name,last_name,expires_at,status,created_at,batch_id,year').order('created_at',{ascending:false}).limit(1000))});}
    case 'revoke-member-invite':{requireAdmin();await query(db.rpc('revoke_member_invite',{p_id:input.id,p_actor:profile.id}));return json({ok:true});}

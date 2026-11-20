@@ -247,3 +247,113 @@ body .page-head button[data-action="new-expense"]:hover,body .page-head button[d
 .signup-review-details{display:grid;gap:8px;padding:18px;background:#faf4f7;border-radius:18px}.signup-review-details dt{font-size:12px;color:#846577}.signup-review-details dd{margin:0 0 12px;font-weight:600;overflow-wrap:anywhere}#registration-review>button{width:100%;margin-top:10px}.mp-fund-recent .mp-fund-list+.mp-fund-list{border-top:1px solid #eee4eb}
 
 .mp-fund-recent{margin-bottom:24px}.logout-confirm{text-align:center}.logout-confirm-icon{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 18px;border-radius:22px;background:#fcecf1;color:#b92348}.logout-confirm-icon svg{width:30px;height:30px}.logout-confirm p{margin-bottom:24px}.logout-confirm .dialog-actions{display:flex;gap:12px}
+
+/* Give each bill its own clear title, description and due-date hierarchy. */
+.material-shell .mp-bill .mp-bill-title {
+  display: flex;
+  flex: 1 1 160px;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 0;
+}
+.material-shell .mp-bill .mp-bill-title > h3 {
+  display: block;
+  width: 100%;
+  margin: 0 0 9px !important;
+  color: #292638 !important;
+  font-size: clamp(17px, 1.55vw, 21px) !important;
+  font-weight: 750 !important;
+  letter-spacing: -.28px;
+  line-height: 1.42 !important;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  text-wrap: pretty;
+}
+.material-shell .mp-bill .mp-bill-description {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 10px;
+  padding: 8px 11px;
+  border: 1px solid #f0e4e9;
+  border-left: 3px solid #d8a0b3;
+  border-radius: 7px 12px 12px 7px;
+  background: #fff8fa;
+}
+.material-shell .mp-bill .mp-bill-description-label {
+  padding-top: 1px;
+  color: #a96b82;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.material-shell .mp-bill .mp-bill-description > p {
+  display: block !important;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #716875 !important;
+  font-size: 12px !important;
+  font-weight: 400;
+  line-height: 1.65 !important;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: pre-wrap;
+}
+.material-shell .mp-bill .mp-bill-due {
+  display: inline-flex !important;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 !important;
+  padding: 5px 9px;
+  border: 1px solid #f0edf1;
+  border-radius: 999px;
+  background: #f8f6f8;
+  color: #827987 !important;
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+}
+.material-shell .mp-bill .mp-bill-due svg {
+  flex: 0 0 auto;
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 !important;
+  color: #a77a90;
+}
+.material-shell .mp-bill .mp-bill-due span {
+  white-space: nowrap;
+}
+.material-shell .mp-bill .mp-bill-due strong {
+  color: #625967;
+  font-size: 11px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+@media(max-width: 480px) {
+  .material-shell .mp-bill .mp-bill-title {
+    flex-basis: calc(100% - 52px);
+  }
+  .material-shell .mp-bill .mp-bill-title > h3 {
+    font-size: 17px !important;
+    margin-bottom: 8px !important;
+  }
+  .material-shell .mp-bill .mp-bill-description {
+    gap: 7px;
+    padding: 7px 9px;
+  }
+  .material-shell .mp-bill .mp-bill-description > p {
+    font-size: 11px !important;
+  }
+  .material-shell .mp-bill .mp-bill-due {
+    font-size: 10px !important;
+  }
+}
+

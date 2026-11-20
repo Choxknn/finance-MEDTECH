@@ -42,10 +42,11 @@
       '</aside></section>';
   }
 
-  function paymentPageMethodChoice(name, title, description, note, icon, disabled) {
+  function paymentPageMethodChoice(name, title, description, note, icon, disabled, popular) {
     return '<button type="button" class="payment-page-method-choice" data-payment-method="' + name + '"' +
       (disabled ? ' disabled aria-disabled="true"' : '') + '><span class="payment-page-method-symbol">' + paymentPageIcon(icon) + '</span>' +
-      '<span class="payment-page-method-copy"><strong>' + title + '</strong></span>' +
+      '<span class="payment-page-method-copy"><strong>' + title + '</strong>' +
+      (popular ? '<span class="payment-page-method-popular"><span aria-hidden="true">🔥</span> ยอดนิยม</span>' : '') + '</span>' +
       '<span class="payment-page-method-arrow">' + paymentPageIcon('arrow') + '</span></button>';
   }
 
@@ -89,8 +90,8 @@
         summary +
         '<section class="payment-page-method-section"><div class="payment-page-section-heading"><h2>เลือกช่องทางชำระเงิน</h2></div>' +
         '<div class="payment-page-method-choices">' +
+        paymentPageMethodChoice('qr', 'สแกน QR Code', '', '', 'qr', !qr.url, true) +
         paymentPageMethodChoice('bank', 'โอนผ่านเลขบัญชีธนาคาร', '', '', 'bank', false) +
-        paymentPageMethodChoice('qr', 'สแกน QR Code', '', '', 'qr', !qr.url) +
         '</div></section></div></section></div>';
     }
 

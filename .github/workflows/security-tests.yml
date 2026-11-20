@@ -23,6 +23,8 @@ jobs:
         run: npm run build:flex
       - name: Test reusable signup link history and cancellation
         run: node --check web/batch-registration.js && node tests/registration-links-ui.test.cjs
+      - name: Test admin search camera observer does not loop
+        run: node --check web/navigation-upgrade.js && node tests/navigation-upgrade.test.cjs
       - name: Test full-page bill payment experience
         run: node tests/payment-page.test.cjs && node --check web/payment-page.js && node --check web/payment-safety.js && node --check web/mobile-refinement.js
       - name: Test abnormal request detection and temporary blocking

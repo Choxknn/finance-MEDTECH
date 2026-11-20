@@ -20,6 +20,11 @@ const amount=(v:unknown)=>{const n=Number(v);if(!Number.isFinite(n)||n<=0||n>100
 const memberIds=(v:any)=>{if(!Array.isArray(v)||!v.length||v.length>500||v.some(x=>typeof x!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x)))throw new Error('เลือกสมาชิกที่ถูกต้อง 1–500 คน');return [...new Set(v)]};
 const clock=(v:unknown)=>{if(v==null||v==='')return null;const s=String(v);if(!/^([01]\d|2[0-3]):[0-5]\d(:00)?$/.test(s))throw Error('เวลาไม่ถูกต้อง');return s.slice(0,5)};
 const day=(v:unknown)=>{const s=text(v,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||new Date(s).toISOString().slice(0,10)!==s)throw new Error('วันที่ไม่ถูกต้อง');return s};
+const registrationBase64Url=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const registrationBase64Decode=(value:string)=>{const raw=atob(value.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(value.length/4)*4,'='));return Uint8Array.from(raw,c=>c.charCodeAt(0))};
+const registrationEncryptionKey=async()=>{const material=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(secret('SUPABASE_SERVICE_ROLE_KEY')+':finance-medtech:registration-link-encryption:v1'));return crypto.subtle.importKey('raw',material,{name:'AES-GCM'},false,['encrypt','decrypt'])};
+const sealRegistrationToken=async(token:string)=>{const iv=crypto.getRandomValues(new Uint8Array(12)),key=await registrationEncryptionKey(),cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(token)));return 'v1.'+registrationBase64Url(iv)+'.'+registrationBase64Url(cipher)};
+const openRegistrationToken=async(value:string|null|undefined)=>{if(!value)return null;const [version,iv,cipher]=value.split('.');if(version!=='v1'||!iv||!cipher)throw Error('รูปแบบลิงก์สมัครที่บันทึกไว้ไม่ถูกต้อง');const key=await registrationEncryptionKey(),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:registrationBase64Decode(iv)},key,registrationBase64Decode(cipher));return new TextDecoder().decode(plain)};
 // Auth deletion must never wait behind failed Drive jobs.
 async function cleanupAuthAccounts(db:any,limit=500){
  const jobs=await query(db.from('trash_cleanup_queue').select('id,target').eq('kind','auth').order('created_at').limit(limit));
@@ -137,6 +142,7 @@ Deno.serve(async req=>{
    case 'create-registration-batch':{
     requireAdmin();const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
     const id=await query(db.rpc('create_registration_batch',{p_ids:memberIds(input.ids),p_expires:input.expires_at,p_hash:await hash(token),p_actor:profile.id}));
+    await query(db.from('registration_batches').update({token_ciphertext:await sealRegistrationToken(token)}).eq('id',id));
     return json({id,url:financeLiffUrl(financeSite+'register.html#token='+token),expires_at:input.expires_at});
    }
    case 'delete-fund-category':{requireAdmin();await query(db.rpc('delete_fund_category',{p_name:text(input.name,100),p_actor:profile.id}));return json({ok:true});}
@@ -151,9 +157,19 @@ Deno.serve(async req=>{
    case 'create-member-invite':{
     requireAdmin();const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
     const id=await query(db.rpc('create_member_invite',{p_student:text(input.student_id,20),p_prefix:text(input.name_prefix,30),p_first:text(input.first_name,60),p_last:text(input.last_name,60),p_year:text(input.year,1),p_expires:input.expires_at,p_hash:await hash(token),p_actor:profile.id}));
+    await query(db.from('member_invites').update({token_ciphertext:await sealRegistrationToken(token)}).eq('id',id));
     return json({id,url:financeLiffUrl(financeSite+'register.html#token='+token),expires_at:input.expires_at});
    }
-   case 'list-member-invites':{requireAdmin();return json({invites:await query(db.from('member_invites').select('id,student_id,name_prefix,first_name,last_name,expires_at,status,created_at,batch_id,year').order('created_at',{ascending:false}).limit(1000))});}
+   case 'list-member-invites':{
+    requireAdmin();
+    const [rows,batchRows]=await Promise.all([
+     query(db.from('member_invites').select('id,student_id,name_prefix,first_name,last_name,expires_at,status,created_at,batch_id,year,token_ciphertext').order('created_at',{ascending:false}).limit(1000)),
+     query(db.from('registration_batches').select('id,expires_at,created_at,created_by,token_ciphertext').order('created_at',{ascending:false}).limit(1000))
+    ]);
+    const invites=await Promise.all(rows.map(async(row:any)=>({...row,url:!row.batch_id&&row.token_ciphertext?financeLiffUrl(financeSite+'register.html#token='+await openRegistrationToken(row.token_ciphertext)):null,token_ciphertext:undefined})));
+    const batches=await Promise.all(batchRows.map(async(row:any)=>({...row,url:row.token_ciphertext?financeLiffUrl(financeSite+'register.html#token='+await openRegistrationToken(row.token_ciphertext)):null,token_ciphertext:undefined})));
+    return json({invites,batches});
+   }
    case 'revoke-member-invite':{requireAdmin();await query(db.rpc('revoke_member_invite',{p_id:input.id,p_actor:profile.id}));return json({ok:true});}
    case 'cleanup-preview':case 'cleanup-history':{
     requireAdmin();const months=Number(input.months);if(!['notifications','audit'].includes(input.kind)||!Number.isInteger(months)||months<1||months>120)throw new Error('เลือกชนิดข้อมูลและจำนวนเดือน 1–120');

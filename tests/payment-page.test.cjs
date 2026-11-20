@@ -109,8 +109,17 @@ assert.match(safetyCss,/#slip-scroll-cue\.is-visible\s*\{[^}]*opacity:1/s,'the r
 assert.match(safetyJs,/reminderCue\.classList\.toggle\('is-visible',show\)/,'the reminder shows and hides without toggling display or document flow');
 assert.match(safetyJs,/observe\(app,\{childList:true,subtree:true\}\)/,'the slip reminder also works on the full-page app payment route');
 
-run("nav('bills');payModal('c1')");
+run("nav('bills')");
+const originalBillsLayout=app.querySelector('.layout');
+const originalBillsMain=app.querySelector('.layout .workspace > main');
+const originalBillsHeading=originalBillsMain?.querySelector('.page-head h1')?.textContent;
+run("payModal('c1')");
+assert.ok(originalBillsLayout?.isConnected&&originalBillsMain?.isConnected,'payment opened from the bill list preserves the live bills page');
+assert.equal(app.querySelector('.layout'),originalBillsLayout,'opening payment from the bill list does not recreate its layout');
+assert.equal(app.querySelector('.layout .workspace > main'),originalBillsMain,'the original bill-list main content remains behind the sheet');
+assert.equal(originalBillsMain.querySelector('.page-head h1')?.textContent,originalBillsHeading,'the bill-list page content remains the same behind the sheet');
 app.querySelector('[data-payment-method="bank"]').click();
+assert.equal(app.querySelector('.layout'),originalBillsLayout,'selecting a bank method does not recreate the bill-list page behind the sheet');
 const beforeUpload=run('db.payments.length'),upload=app.querySelector('#slip-file'),testFile=new w.File(['demo slip'],'slip.png',{type:'image/png'});
 Object.defineProperty(upload,'files',{value:[testFile],configurable:true});
 upload.dispatchEvent(new w.Event('change',{bubbles:true}));

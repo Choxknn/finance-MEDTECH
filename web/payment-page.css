@@ -1332,10 +1332,50 @@ body.payment-sheet-open .workspace > .topbar {
   }
 }
 
-/* Keep the back-button grid slot so the title and close control stay aligned,
-   while the selection step has no visible or interactive back button. */
-.payment-sheet-header-button[hidden] {
+/* Anchor the payment-sheet header controls directly to the full sheet width.
+   This avoids grid/flex overrides shifting the title or the close button. */
+.payment-sheet > .payment-sheet-header {
+  position: relative !important;
+  display: block !important;
+  align-self: stretch !important;
+  flex: 0 0 72px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 72px !important;
+  box-sizing: border-box !important;
+}
+.payment-sheet > .payment-sheet-header > strong {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  display: block !important;
+  width: max-content !important;
+  max-width: calc(100% - 144px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: translate(-50%, -50%) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+.payment-sheet > .payment-sheet-header > .payment-sheet-back-button:not([hidden]) {
+  position: absolute !important;
+  top: 50% !important;
+  left: clamp(16px, 3vw, 28px) !important;
   display: grid !important;
+  margin: 0 !important;
+  transform: translateY(-50%) !important;
+}
+.payment-sheet > .payment-sheet-header > .payment-sheet-back-button[hidden] {
+  display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
+}
+.payment-sheet > .payment-sheet-header > .payment-sheet-close-button {
+  position: absolute !important;
+  top: 50% !important;
+  right: clamp(16px, 3vw, 28px) !important;
+  display: grid !important;
+  margin: 0 !important;
+  transform: translateY(-50%) !important;
+  justify-self: auto !important;
 }

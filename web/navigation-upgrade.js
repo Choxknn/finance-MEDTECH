@@ -145,6 +145,7 @@ async function adminSearchStartCamera(){
  }
 }
 const ADMIN_SEARCH_CAMERA_BUTTON_HTML='<button id="admin-search-camera-trigger" type="button" class="admin-camera-button" aria-label="สแกน QR ด้วยกล้อง" title="สแกน QR ด้วยกล้อง"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h-4l-2 3H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2-3Z"/><circle cx="12" cy="13" r="3.5"/></svg></button>';
+const adminSearchCameraConfigured=new WeakSet();
 let adminSearchCameraObserver=null,adminSearchCameraObservedTop=null;
 function adminSearchKeepSingleCamera(top){
  if(!top?.isConnected)return;
@@ -172,8 +173,11 @@ function adminSearchKeepSingleCamera(top){
  trigger.className='admin-camera-button';
  trigger.setAttribute('aria-label','สแกน QR ด้วยกล้อง');
  trigger.title='สแกน QR ด้วยกล้อง';
- const cameraMarkup=ADMIN_SEARCH_CAMERA_BUTTON_HTML.slice(ADMIN_SEARCH_CAMERA_BUTTON_HTML.indexOf('>')+1,-('</button>'.length));
- if(trigger.innerHTML!==cameraMarkup)trigger.innerHTML=cameraMarkup;
+ if(!adminSearchCameraConfigured.has(trigger)){
+  const cameraMarkup=ADMIN_SEARCH_CAMERA_BUTTON_HTML.slice(ADMIN_SEARCH_CAMERA_BUTTON_HTML.indexOf('>')+1,-('</button>'.length));
+  if(trigger.innerHTML!==cameraMarkup)trigger.innerHTML=cameraMarkup;
+  adminSearchCameraConfigured.add(trigger);
+ }
  if(trigger.parentElement!==field)field.append(trigger);
 }
 function adminSearchWatchSingleCamera(top){

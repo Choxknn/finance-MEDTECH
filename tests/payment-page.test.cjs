@@ -37,6 +37,8 @@ assert.ok(app.querySelector('[data-payment-method="bank"]'),'bank transfer is of
 assert.equal(app.querySelector('[data-payment-method="bank"] strong').textContent,'โอนผ่านเลขบัญชีธนาคาร');
 assert.ok(app.querySelector('[data-payment-method="qr"]'),'QR payment is offered as a payment method');
 assert.equal(app.querySelector('[data-payment-method="qr"] strong').textContent,'สแกน QR Code');
+assert.equal(app.querySelectorAll('[data-payment-method]')[0].dataset.paymentMethod,'qr','QR Code is displayed as the first payment option');
+assert.equal(app.querySelector('[data-payment-method="qr"] .payment-page-method-popular').textContent.trim(),'🔥 ยอดนิยม','the QR payment option is marked as popular');
 assert.doesNotMatch(app.querySelector('.payment-page').textContent,/BILL PAYMENT|PAYMENT METHOD|BANK TRANSFER|SCAN TO PAY|PAYMENT CONFIRMATION|THB/,'unnecessary English labels are removed');
 assert.equal(app.querySelector('#pay-form'),null,'the slip form is shown only after a payment method is selected');
 app.querySelector('[data-payment-method="bank"]').click();
@@ -87,6 +89,9 @@ const paymentCss=fs.readFileSync(root+'/web/payment-page.css','utf8');
 assert.match(paymentCss,/\.payment-sheet-overlay\.is-open\s+\.payment-sheet\s*\{[^}]*translate3d\(0,0,0\)/s,'the payment sheet slides up from the bottom');
 assert.match(paymentCss,/data-sheet-size="compact"/,'the sheet supports a compact height');
 assert.match(paymentCss,/data-sheet-size="expanded"/,'the sheet supports an expanded height');
+assert.match(paymentCss,/\.payment-sheet\[data-sheet-size="medium"\] \{ height: min\(95dvh,950px\); \}/,'the payment sheet initially opens at about 95 percent screen height');
+assert.match(paymentCss,/transition: transform \.58s cubic-bezier\(\.16,1,\.3,1\)/,'the payment sheet uses a smooth eased slide-in');
+assert.match(paymentCss,/\.payment-sheet-scroll\s*\{[^}]*overflow-y:\s*auto/s,'content inside the taller payment sheet remains independently scrollable');
 assert.match(safetyCss,/#slip-scroll-cue\s*\{[^}]*position:fixed/s,'the slip reminder floats at the bottom without taking layout space');
 assert.match(safetyCss,/#slip-scroll-cue\.is-visible\s*\{[^}]*opacity:1/s,'the reminder has a separate visible animation state');
 assert.match(safetyJs,/reminderCue\.classList\.toggle\('is-visible',show\)/,'the reminder shows and hides without toggling display or document flow');

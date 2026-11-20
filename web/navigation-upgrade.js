@@ -172,7 +172,8 @@ function adminSearchKeepSingleCamera(top){
  trigger.className='admin-camera-button';
  trigger.setAttribute('aria-label','สแกน QR ด้วยกล้อง');
  trigger.title='สแกน QR ด้วยกล้อง';
- trigger.innerHTML=ADMIN_SEARCH_CAMERA_BUTTON_HTML.replace(/^<button[^>]*>/,'').replace(/<\/button>$/,'');
+ const cameraMarkup=ADMIN_SEARCH_CAMERA_BUTTON_HTML.replace(/^<button[^>]*>/,'').replace(/<\\/button>$/,'');
+ if(trigger.innerHTML!==cameraMarkup)trigger.innerHTML=cameraMarkup;
  if(trigger.parentElement!==field)field.append(trigger);
 }
 function adminSearchWatchSingleCamera(top){

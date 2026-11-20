@@ -1,10 +1,19 @@
 export const financeSite='https://choxknn.github.io/finance-MEDTECH/';
+export const financeLiffId='2011933909-n2La8PPV';
+export function financeLiffUrl(url:string){
+ try{
+  const target=new URL(url,financeSite),site=new URL(financeSite);
+  if(target.origin!==site.origin)return url;
+  const path=target.pathname.startsWith(site.pathname)?target.pathname.slice(site.pathname.length):target.pathname.replace(/^\\/+/, '');
+  return 'https://liff.line.me/'+financeLiffId+'/'+path+target.search+target.hash;
+ }catch{return url}
+}
 const txt=(text:string,size='sm',color='#334155',extra:any={})=>({type:'text',text:text||' ',size,color,wrap:true,...extra});
 const box=(contents:any[],extra:any={})=>({type:'box',layout:'vertical',contents,...extra});
 const picture=(kind:string,size='40px')=>({type:'image',url:financeSite+'assets/flex-'+kind+'.png'+(kind==='new_bill'?'?v=2026110603':''),size,aspectRatio:'1:1',aspectMode:'fit',flex:0});
 const iconTile=(kind:string,size='40px')=>box([picture(kind,size)],{backgroundColor:'#FFFFFF',paddingAll:'10px',cornerRadius:'16px',flex:0});
 const separator=(color='#E2E8F0')=>({type:'separator',color});
-const footer=(label:string,url:string,color:string,secondary=false)=>box([{type:'button',style:secondary?'secondary':'primary',color:secondary?'#EAF0F7':color,height:'sm',action:{type:'uri',label,uri:url}},txt('Finance · MEDTECH','xxs','#94A3B8',{align:'center'})],{paddingAll:'24px',paddingTop:'8px',spacing:'md'});
+const footer=(label:string,url:string,color:string,secondary=false)=>box([{type:'button',style:secondary?'secondary':'primary',color:secondary?'#EAF0F7':color,height:'sm',action:{type:'uri',label,uri:financeLiffUrl(url)}},txt('Finance · MEDTECH','xxs','#94A3B8',{align:'center'})],{paddingAll:'24px',paddingTop:'8px',spacing:'md'});
 function noticeFacts(body:string){
  const lines=body.split('\n');
  const amount=lines.findIndex(s=>/^(ยอดชำระ:|ยอดค้าง\s)/.test(s));

@@ -48,9 +48,10 @@
   }
 
   function paymentPageMarkup() {
+    const overlayClass = paymentSheetEntrancePending ? 'payment-sheet-overlay' : 'payment-sheet-overlay is-open';
     const charge = paymentPageCharge();
     if (!charge) {
-      return '<div class="payment-sheet-overlay" data-payment-sheet-overlay><div class="payment-sheet-backdrop" data-payment-sheet-dismiss></div>' +
+      return '<div class="' + overlayClass + '" data-payment-sheet-overlay><div class="payment-sheet-backdrop" data-payment-sheet-dismiss></div>' +
         '<section class="payment-sheet" data-payment-sheet data-sheet-size="medium" role="dialog" aria-modal="true" aria-label="ชำระบิล">' +
         '<div class="payment-sheet-grab-zone" data-payment-sheet-drag role="button" tabindex="0" aria-label="ลากเพื่อปรับขนาดหน้าต่าง"><span class="payment-sheet-grabber"></span></div>' +
         '<div class="payment-sheet-scroll" data-payment-sheet-scroll><section class="payment-page"><div class="payment-page-content">' +
@@ -61,7 +62,7 @@
     const bill = round(charge.round_id);
     const amount = balance(charge);
     const qr = typeof selectPaymentQr === 'function' ? selectPaymentQr(amount) : {url: ''};
-    const contentStart = '<div class="payment-sheet-overlay" data-payment-sheet-overlay>' +
+    const contentStart = '<div class="' + overlayClass + '" data-payment-sheet-overlay>' +
       '<div class="payment-sheet-backdrop" data-payment-sheet-dismiss></div>' +
       '<section class="payment-sheet" data-payment-sheet data-sheet-size="medium" role="dialog" aria-modal="true" aria-label="ชำระบิล">' +
       '<div class="payment-sheet-grab-zone" data-payment-sheet-drag role="button" tabindex="0" aria-label="ลากขึ้นเพื่อขยายหน้าต่าง หรือลงเพื่อย่อ">' +

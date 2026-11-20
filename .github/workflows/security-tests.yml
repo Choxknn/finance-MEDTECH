@@ -21,6 +21,8 @@ jobs:
         run: npm ci
       - name: Build LINE Flex preview from shared template
         run: npm run build:flex
+      - name: Test reusable signup link history and cancellation
+        run: node --check web/batch-registration.js && node tests/api.test.cjs && node tests/management.test.cjs
       - name: Test full-page bill payment experience
         run: node tests/payment-page.test.cjs && node --check web/payment-page.js && node --check web/payment-safety.js && node --check web/mobile-refinement.js
       - name: Test abnormal request detection and temporary blocking

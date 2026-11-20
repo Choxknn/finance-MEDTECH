@@ -3,7 +3,7 @@ import {attendanceAction} from '../_shared/attendance.ts';
 import {shopAction} from '../_shared/shop.ts';
 import {evidenceOverview,maintainEvidence,downloadEvidence,deleteEvidenceByAdmin} from '../_shared/evidence-storage.ts';
 import {driveHealth} from '../_shared/drive-health.ts';
-import {financeSite} from '../_shared/line-flex.ts';
+import {financeSite,financeLiffUrl} from '../_shared/line-flex.ts';
 import {changeStudentLogin} from '../_shared/student-login.ts';
 import {adminDb,query,secret,hash,uploadDrive,deleteDrive,readEvidence,checkSlip,isRecentSlip,slipRejectionReason,slipOverpaid,overpaidMessage,discardRejectedSlip,notify,paymentSuccess,deliverNotification,validateImage,validateReceipt} from '../_shared/services.ts';
 // Return only monthly totals; never expose another member's payment evidence.
@@ -137,7 +137,7 @@ Deno.serve(async req=>{
    case 'create-registration-batch':{
     requireAdmin();const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');
     const id=await query(db.rpc('create_registration_batch',{p_ids:memberIds(input.ids),p_expires:input.expires_at,p_hash:await hash(token),p_actor:profile.id}));
-    return json({id,url:financeSite+'register.html#token='+token,expires_at:input.expires_at});
+    return json({id,url:financeLiffUrl(financeSite+'register.html#token='+token),expires_at:input.expires_at});
    }
    case 'delete-fund-category':{requireAdmin();await query(db.rpc('delete_fund_category',{p_name:text(input.name,100),p_actor:profile.id}));return json({ok:true});}
    case 'create-password-link':{
@@ -146,7 +146,7 @@ Deno.serve(async req=>{
     const link=await db.auth.admin.generateLink({type:'recovery',email:account.data.user.email});
     if(link.error||!link.data.properties?.hashed_token)throw Error('สร้างลิงก์เปลี่ยนรหัสผ่านไม่สำเร็จ');
     await query(db.from('audit').insert({actor:profile.name,action:'สร้างลิงก์เปลี่ยนรหัสผ่าน: '+target.student_id}));
-    return json({url:financeSite+'reset-password.html#token_hash='+encodeURIComponent(link.data.properties.hashed_token),student_id:target.student_id,name:target.name});
+    return json({url:financeLiffUrl(financeSite+'reset-password.html#token_hash='+encodeURIComponent(link.data.properties.hashed_token)),student_id:target.student_id,name:target.name});
    }
    case 'create-member-invite':{
     requireAdmin();const token=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');

@@ -4,7 +4,7 @@ export function financeLiffUrl(url:string){
  try{
   const target=new URL(url,financeSite),site=new URL(financeSite);
   if(target.origin!==site.origin)return url;
-  const path=target.pathname.startsWith(site.pathname)?target.pathname.slice(site.pathname.length):target.pathname.replace(/^\\/+/, '');
+  const path=target.pathname.startsWith(site.pathname)?target.pathname.slice(site.pathname.length):target.pathname.split('/').filter(Boolean).join('/');
   return 'https://liff.line.me/'+financeLiffId+'/'+path+target.search+target.hash;
  }catch{return url}
 }

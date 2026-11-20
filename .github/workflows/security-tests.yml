@@ -25,6 +25,8 @@ jobs:
         run: node tests/bot-protection.test.cjs
       - name: Test OTP recovery and LINE Flex notification preview
         run: node tests/account-access-api.test.cjs
+      - name: Test LIFF Flex destinations and liff.state routing
+        run: node tests/flex-designs.test.cjs && node tests/line-messages.test.cjs
       - name: Test mobile navigation reset after closing any dialog
         run: node tests/window-close-navigation-reset.test.cjs && node --check web/shop-notice-navigation.js
       - name: Check member bill title hierarchy

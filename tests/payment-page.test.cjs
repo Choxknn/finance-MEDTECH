@@ -30,6 +30,7 @@ assert.equal(app.querySelector('[data-payment-method="qr"] strong').textContent,
 assert.doesNotMatch(app.querySelector('.payment-page').textContent,/BILL PAYMENT|PAYMENT METHOD|BANK TRANSFER|SCAN TO PAY|PAYMENT CONFIRMATION|THB/,'unnecessary English labels are removed');
 assert.equal(app.querySelector('#pay-form'),null,'the slip form is shown only after a payment method is selected');
 app.querySelector('[data-payment-method="bank"]').click();
+assert.ok(app.querySelector('.payment-sheet-overlay.is-open'),'the payment sheet remains visible after selecting bank transfer');
 assert.equal(run('view'),'payment');
 assert.equal(app.querySelector('.layout .workspace > .topbar [data-topbar-back]').getAttribute('aria-label'),'กลับเลือกวิธีชำระ','the top bar back control returns to method selection from payment details');
 assert.ok(app.querySelector('.payment-page-bank-details').textContent.includes('123-4-56789-0'),'bank account details are shown for the selected bank method');
@@ -45,6 +46,7 @@ app.querySelector('.layout .workspace > .topbar [data-topbar-back]').click();
 assert.ok(app.querySelector('[data-payment-method="qr"]'),'the top bar back control returns to the payment-method selector');
 assert.equal(run('view'),'payment');
 app.querySelector('[data-payment-method="qr"]').click();
+assert.ok(app.querySelector('.payment-sheet-overlay.is-open'),'the payment sheet remains visible after selecting QR payment');
 assert.ok(app.querySelector('#payment-qr'),'the existing dynamic QR image is reused');
 assert.equal(app.querySelector('#payment-qr').hidden,false,'the configured main QR is visible after selecting QR');
 assert.ok(app.querySelector('#payment-qr-hint'),'the QR hint remains available for exact-amount guidance');

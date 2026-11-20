@@ -1,7 +1,7 @@
 var FinanceFlex=(()=>{
 const financeSite='https://choxknn.github.io/finance-MEDTECH/';
 const financeLiffId='2011933909-n2La8PPV';
-function financeLiffUrl(url){try{const target=new URL(url,financeSite),site=new URL(financeSite);if(target.origin!==site.origin)return url;const path=target.pathname.startsWith(site.pathname)?target.pathname.slice(site.pathname.length):target.pathname.split('/').filter(Boolean).join('/');return 'https://liff.line.me/'+financeLiffId+'/'+path+target.search+target.hash}catch{return url}}
+function financeLiffUrl(url){try{const target=new URL(url,financeSite),site=new URL(financeSite);if(target.origin!==site.origin)return url;const path=target.pathname.startsWith(site.pathname)?target.pathname.slice(site.pathname.length):target.pathname.split('/').filter(Boolean).join('/');return 'https://liff.line.me/'+financeLiffId+(path?'/'+path:'')+target.search+target.hash}catch{return url}}
 const txt=(text,size='sm',color='#334155',extra={})=>({type:'text',text:text||' ',size,color,wrap:true,...extra});
 const box=(contents,extra={})=>({type:'box',layout:'vertical',contents,...extra});
 const picture=(kind,size='40px')=>({type:'image',url:financeSite+'assets/flex-'+kind+'.png'+(kind==='new_bill'?'?v=2026110603':''),size,aspectRatio:'1:1',aspectMode:'fit',flex:0});

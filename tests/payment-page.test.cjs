@@ -14,7 +14,7 @@ assert.equal(dialog.open,false,'the payment flow is no longer presented as a dia
 assert.ok(app.querySelector('.layout .workspace > .topbar'),'the regular site top bar remains in use');
 assert.ok(app.querySelector('.layout .workspace > .topbar [data-topbar-back]'),'the existing top bar contains the payment back control');
 assert.equal(app.querySelector('.layout .workspace > .topbar [data-topbar-back]').getAttribute('aria-label'),'กลับหน้าหลัก','the method selector back control is labelled as home');
-assert.ok(w.scrollCalls>0,'opening the payment route scrolls the page to the top');
+assert.equal(app.querySelector('[data-payment-sheet-scroll]').scrollTop,0,'the payment sheet opens at the top of its own scroll area');
 assert.ok(app.querySelector('[data-payment-sheet-overlay]'),'payment opens in a floating sheet above the current page');
 assert.ok(app.querySelector('[data-payment-sheet][role="dialog"]'),'the sheet is announced as a dialog');
 assert.ok(app.querySelector('[data-payment-sheet][data-sheet-size="medium"]'),'the sheet opens at its medium height');
@@ -88,5 +88,5 @@ assert.equal(app.querySelector('[data-payment-sheet-overlay]'),null,'successful 
 assert.ok(w.document.getElementById('payment-status-dialog')?.open,'the existing payment result notification is preserved');
 w.close();
 console.log('Adjustable iOS-style payment sheet, drag resizing, bank/QR selection, automatic slip submission, return navigation and floating reminder passed');
-})().catch(error=>{console.error(error);process.exitCode=1;});
+})().catch(error=>{console.error(error);w.close();process.exitCode=1;});
 

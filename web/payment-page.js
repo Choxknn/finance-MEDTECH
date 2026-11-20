@@ -52,7 +52,7 @@
 
   function paymentSheetHeader() {
     return '<header class="payment-sheet-header" aria-label="ควบคุมหน้าต่างชำระบิล">' +
-      '<button type="button" class="payment-sheet-header-button payment-sheet-back-button" data-payment-sheet-back aria-label="ย้อนกลับ" title="ย้อนกลับ">' + paymentPageIcon('arrow') + '</button>' +
+      '<button type="button" class="payment-sheet-header-button payment-sheet-back-button" data-payment-sheet-back aria-label="ย้อนกลับ" title="ย้อนกลับ"' + (paymentPageState?.method ? '' : ' hidden') + '>' + paymentPageIcon('arrow') + '</button>' +
       '<strong>ชำระบิล</strong>' +
       '<button type="button" class="payment-sheet-header-button payment-sheet-close-button" data-payment-sheet-close aria-label="ปิดหน้าชำระบิล" title="ปิด">' + paymentPageIcon('close') + '</button>' +
       '</header>';
@@ -211,9 +211,13 @@
       priority: body.style.getPropertyPriority(property)
     }]));
     const scrollTop = Number.isFinite(Number(scrollY)) ? Number(scrollY) : (window.scrollY || window.pageYOffset || 0);
+    const workspaceScrollTop = Number.isFinite(Number(paymentPageState?.backgroundWorkspaceScrollTop))
+      ? Number(paymentPageState.backgroundWorkspaceScrollTop)
+      : (document.querySelector('.layout .workspace')?.scrollTop || 0);
     const scrollbarGap = Math.max(0, window.innerWidth - root.clientWidth);
     paymentBackgroundLock = {
       scrollTop,
+      workspaceScrollTop,
       bodyStyles: savedBodyStyles,
       rootOverflow: root.style.getPropertyValue('overflow'),
       rootOverflowPriority: root.style.getPropertyPriority('overflow')
@@ -244,6 +248,8 @@
     else root.style.removeProperty('overflow');
     body.classList.remove('payment-sheet-open');
     window.scrollTo(0, lock.scrollTop);
+    const workspace = document.querySelector('.layout .workspace');
+    if (workspace) workspace.scrollTop = lock.workspaceScrollTop;
   }
 
   function scrollPaymentPageToTop() {
@@ -351,6 +357,7 @@
       method: '',
       returnView: view,
       backgroundScrollY: window.scrollY || window.pageYOffset || 0,
+      backgroundWorkspaceScrollTop: document.querySelector('.layout .workspace')?.scrollTop || 0,
       topbarBackLabel: topbarBack?.getAttribute('aria-label') ?? null,
       topbarBackTitle: topbarBack?.getAttribute('title') ?? null
     };

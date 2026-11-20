@@ -5,7 +5,7 @@ export function financeLiffUrl(url:string){
   const target=new URL(url,financeSite),site=new URL(financeSite);
   if(target.origin!==site.origin||target.pathname.endsWith('/reset-password.html'))return url;
   const path=target.pathname.startsWith(site.pathname)?target.pathname.slice(site.pathname.length):target.pathname.split('/').filter(Boolean).join('/');
-  return 'https://liff.line.me/'+financeLiffId+'/'+path+target.search+target.hash;
+  return 'https://liff.line.me/'+financeLiffId+(path?'/'+path:'')+target.search+target.hash;
  }catch{return url}
 }
 const txt=(text:string,size='sm',color='#334155',extra:any={})=>({type:'text',text:text||' ',size,color,wrap:true,...extra});

@@ -304,6 +304,17 @@ html body .topbar .mp-profile-text {
   display: none !important;
 }
 
+@media (max-width: 720px) {
+  html body .workspace > .topbar[data-subpage="true"] .topbar-brand,
+  html body .workspace > .topbar[data-subpage="true"] .mobile-brand,
+  html body .workspace > .topbar[data-subpage="true"] .clay-notifications,
+  html body .workspace > .topbar[data-subpage="true"] .user {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
+
 @media (max-width: 1100px) and (min-width: 721px) {
   html body .workspace > .topbar {
     left: 210px !important;

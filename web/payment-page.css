@@ -1332,3 +1332,10 @@ body.payment-sheet-open .workspace > .topbar {
   }
 }
 
+/* Keep the back-button grid slot so the title and close control stay aligned,
+   while the selection step has no visible or interactive back button. */
+.payment-sheet-header-button[hidden] {
+  display: grid !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

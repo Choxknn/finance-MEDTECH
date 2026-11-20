@@ -1338,10 +1338,14 @@ body.payment-sheet-open .workspace > .topbar {
   position: relative !important;
   display: block !important;
   align-self: stretch !important;
-  flex: 0 0 72px !important;
+  flex: 0 0 52px !important;
   width: 100% !important;
+  height: 52px !important;
   min-width: 0 !important;
-  min-height: 72px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  margin: 0 !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
 }
 .payment-sheet > .payment-sheet-header > strong {

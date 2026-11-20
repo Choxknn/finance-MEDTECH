@@ -5,6 +5,7 @@
   let paymentSheetEntrancePending = false;
   let paymentSheetCloseTimer = null;
   let paymentSheetDrag = null;
+  let paymentBackgroundLock = null;
   const baseContent = content;
   const baseNav = nav;
 
@@ -14,6 +15,7 @@
       bank: '<path d="M3 10h18M5 10v9m4-9v9m6-9v9m4-9v9M3 20h18M12 3 2 8v2h20V8z"/>',
       qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zm5 0h2v2h-2zm-5 5h2v2h-2zm5 0h2v2h-2z"/>',
       lock: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>',
+      close: '<path d="m18 6-12 12M6 6l12 12"/>',
       upload: '<path d="M12 16V4m-5 7 5-7 5 7"/><path d="M4 16v4h16v-4"/>'
     };
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.bank) + '</svg>';
@@ -47,6 +49,14 @@
       '<span class="payment-page-method-arrow">' + paymentPageIcon('arrow') + '</span></button>';
   }
 
+  function paymentSheetHeader() {
+    return '<header class="payment-sheet-header" aria-label="ควบคุมหน้าต่างชำระบิล">' +
+      '<button type="button" class="payment-sheet-header-button payment-sheet-back-button" data-payment-sheet-back aria-label="ย้อนกลับ" title="ย้อนกลับ">' + paymentPageIcon('arrow') + '</button>' +
+      '<strong>ชำระบิล</strong>' +
+      '<button type="button" class="payment-sheet-header-button payment-sheet-close-button" data-payment-sheet-close aria-label="ปิดหน้าชำระบิล" title="ปิด">' + paymentPageIcon('close') + '</button>' +
+      '</header>';
+  }
+
   function paymentPageMarkup() {
     const overlayClass = paymentSheetEntrancePending ? 'payment-sheet-overlay' : 'payment-sheet-overlay is-open';
     const charge = paymentPageCharge();
@@ -54,6 +64,7 @@
       return '<div class="' + overlayClass + '" data-payment-sheet-overlay><div class="payment-sheet-backdrop" data-payment-sheet-dismiss></div>' +
         '<section class="payment-sheet" data-payment-sheet data-sheet-size="medium" role="dialog" aria-modal="true" aria-label="ชำระบิล">' +
         '<div class="payment-sheet-grab-zone" data-payment-sheet-drag role="button" tabindex="0" aria-label="ลากเพื่อปรับขนาดหน้าต่าง"><span class="payment-sheet-grabber"></span></div>' +
+        paymentSheetHeader() +
         '<div class="payment-sheet-scroll" data-payment-sheet-scroll><section class="payment-page"><div class="payment-page-content">' +
         '<div class="payment-page-empty">ไม่พบรายการที่ต้องชำระ หรือรายการนี้ไม่สามารถชำระได้แล้ว<button type="button" data-payment-page-back>กลับหน้าหลัก</button></div>' +
         '</div></section></div></section></div>';
@@ -67,6 +78,7 @@
       '<section class="payment-sheet" data-payment-sheet data-sheet-size="medium" role="dialog" aria-modal="true" aria-label="ชำระบิล">' +
       '<div class="payment-sheet-grab-zone" data-payment-sheet-drag role="button" tabindex="0" aria-label="ลากขึ้นเพื่อขยายหน้าต่าง หรือลงเพื่อย่อ">' +
       '<span class="payment-sheet-grabber"></span></div>' +
+      paymentSheetHeader() +
       '<div class="payment-sheet-scroll" data-payment-sheet-scroll>' +
       '<section class="payment-page"><div class="payment-page-content">';
     const summary = paymentPageSummary(charge, bill, amount);
@@ -124,8 +136,11 @@
   };
 
   nav = function (nextView) {
-    if (view === 'payment' && nextView !== 'payment') paymentPageState = null;
-    return baseNav(nextView);
+    const leavingPayment = view === 'payment' && nextView !== 'payment';
+    if (leavingPayment) paymentPageState = null;
+    const result = baseNav(nextView);
+    if (leavingPayment) unlockPaymentBackgroundScroll();
+    return result;
   };
 
   function leavePaymentPage() {
@@ -136,6 +151,51 @@
   }
 
   window.paymentPageHasSelectedMethod = () => Boolean(paymentPageState?.method);
+
+  function lockPaymentBackgroundScroll(scrollY) {
+    if (paymentBackgroundLock || !document.body) return;
+    const body = document.body;
+    const root = document.documentElement;
+    const bodyProperties = ['position', 'top', 'left', 'right', 'width', 'overflow', 'padding-right'];
+    const savedBodyStyles = Object.fromEntries(bodyProperties.map(property => [property, {
+      value: body.style.getPropertyValue(property),
+      priority: body.style.getPropertyPriority(property)
+    }]));
+    const scrollTop = Number.isFinite(Number(scrollY)) ? Number(scrollY) : (window.scrollY || window.pageYOffset || 0);
+    const scrollbarGap = Math.max(0, window.innerWidth - root.clientWidth);
+    paymentBackgroundLock = {
+      scrollTop,
+      bodyStyles: savedBodyStyles,
+      rootOverflow: root.style.getPropertyValue('overflow'),
+      rootOverflowPriority: root.style.getPropertyPriority('overflow')
+    };
+    const computedPadding = Number.parseFloat(window.getComputedStyle(body).paddingRight) || 0;
+    body.style.setProperty('position', 'fixed', 'important');
+    body.style.setProperty('top', '-' + scrollTop + 'px', 'important');
+    body.style.setProperty('left', '0', 'important');
+    body.style.setProperty('right', '0', 'important');
+    body.style.setProperty('width', 'auto', 'important');
+    body.style.setProperty('overflow', 'hidden', 'important');
+    if (scrollbarGap) body.style.setProperty('padding-right', (computedPadding + scrollbarGap) + 'px', 'important');
+    root.style.setProperty('overflow', 'hidden', 'important');
+    body.classList.add('payment-sheet-open');
+  }
+
+  function unlockPaymentBackgroundScroll() {
+    if (!paymentBackgroundLock || !document.body) return;
+    const lock = paymentBackgroundLock;
+    paymentBackgroundLock = null;
+    const body = document.body;
+    const root = document.documentElement;
+    for (const [property, saved] of Object.entries(lock.bodyStyles)) {
+      if (saved.value) body.style.setProperty(property, saved.value, saved.priority);
+      else body.style.removeProperty(property);
+    }
+    if (lock.rootOverflow) root.style.setProperty('overflow', lock.rootOverflow, lock.rootOverflowPriority);
+    else root.style.removeProperty('overflow');
+    body.classList.remove('payment-sheet-open');
+    window.scrollTo(0, lock.scrollTop);
+  }
 
   function scrollPaymentPageToTop() {
     const scroller = document.querySelector('[data-payment-sheet-scroll]');
@@ -226,6 +286,7 @@
     const returnView = paymentPageState.returnView || 'bills';
     paymentPageState = null;
     view = returnView;
+    unlockPaymentBackgroundScroll();
     return true;
   };
 
@@ -235,7 +296,7 @@
     if (!charge || charge.profile_id !== user?.id) return;
     if (paymentSheetCloseTimer) clearTimeout(paymentSheetCloseTimer);
     paymentSheetCloseTimer = null;
-    paymentPageState = {id: id, method: '', returnView: view};
+    paymentPageState = {id: id, method: '', returnView: view, backgroundScrollY: window.scrollY || window.pageYOffset || 0};
     paymentSheetEntrancePending = true;
     view = 'payment';
     render();
@@ -247,7 +308,7 @@
       dismissPaymentSheet(paymentPageState?.returnView || 'bills');
       return;
     }
-    const button = event.target.closest('[data-payment-method],[data-payment-method-back],[data-payment-page-back],[data-copy-account]');
+    const button = event.target.closest('[data-payment-sheet-back],[data-payment-sheet-close],[data-payment-method],[data-payment-method-back],[data-payment-page-back],[data-copy-account]');
     if (!button) return;
     if (button.hasAttribute('data-copy-account')) {
       event.preventDefault();
@@ -256,6 +317,14 @@
     }
     if (button.hasAttribute('data-payment-page-back')) {
       leavePaymentPage();
+      return;
+    }
+    if (button.hasAttribute('data-payment-sheet-close')) {
+      dismissPaymentSheet(paymentPageState?.returnView || 'bills');
+      return;
+    }
+    if (button.hasAttribute('data-payment-sheet-back')) {
+      window.paymentPageHandleTopbarBack();
       return;
     }
     if (!paymentPageState) return;
@@ -268,7 +337,8 @@
   const baseRender = render;
   render = function () {
     baseRender();
-    if (document.body) document.body.classList.toggle('payment-sheet-open', view === 'payment');
+    if (view === 'payment') lockPaymentBackgroundScroll(paymentPageState?.backgroundScrollY);
+    else unlockPaymentBackgroundScroll();
     if (view === 'payment' && paymentSheetEntrancePending) {
       const overlay = document.querySelector('[data-payment-sheet-overlay]');
       if (overlay) {
@@ -293,7 +363,7 @@
       scrollPaymentPageToTop();
       return true;
     }
-    dismissPaymentSheet('dashboard');
+    dismissPaymentSheet(paymentPageState.returnView || 'bills');
     return true;
   };
 
@@ -318,6 +388,14 @@
 
   window.addEventListener('pointerup', finishPaymentSheetDrag);
   window.addEventListener('pointercancel', finishPaymentSheetDrag);
+
+  document.addEventListener('wheel', event => {
+    if (view === 'payment' && !event.target.closest?.('[data-payment-sheet-scroll]')) event.preventDefault();
+  }, {passive:false});
+
+  document.addEventListener('touchmove', event => {
+    if (view === 'payment' && !event.target.closest?.('[data-payment-sheet-scroll]')) event.preventDefault();
+  }, {passive:false});
 
   document.addEventListener('keydown', event => {
     const handle = event.target.closest?.('[data-payment-sheet-drag]');

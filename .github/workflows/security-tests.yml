@@ -27,5 +27,7 @@ jobs:
         run: node tests/account-access-api.test.cjs
       - name: Test mobile navigation reset after closing any dialog
         run: node tests/window-close-navigation-reset.test.cjs && node --check web/shop-notice-navigation.js
+      - name: Test member bill title hierarchy
+        run: node tests/material-expressive.test.cjs && node --check web/material-layout.js
       - name: Check updated login and profile scripts
         run: node --check web/app.js && node --check web/account-access.js

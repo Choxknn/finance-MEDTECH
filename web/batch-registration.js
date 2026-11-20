@@ -37,7 +37,7 @@ async function registrationList(){
    const data=await api('list-member-invites');preparedMembers=data.invites||[];registrationBatches=data.batches||[];
   }else{preparedMembers=demoInvites;registrationBatches=demoRegistrationBatches}
   const batchesById=new Map(registrationBatches.map(row=>[row.id,row]));
-  const available=preparedMembers.filter(row=>row.status==='draft'||(row.status==='pending'&&(!row.batch_id||!batchesById.get(row.batch_id)||!batchesById.get(row.batch_id).url||Date.parse(row.expires_at)<=Date.now())));
+  const available=preparedMembers.filter(row=>row.status==='draft'||(row.status==='pending'&&(row.batch_id?(!batchesById.get(row.batch_id)||!batchesById.get(row.batch_id).url||Date.parse(row.expires_at)<=Date.now()):(!row.url||Date.parse(row.expires_at)<=Date.now()))));
   const batchCards=registrationBatches.map(registrationBatchCard).join('');
   const individualCards=preparedMembers.filter(row=>!row.batch_id&&row.status!=='draft').map(registrationIndividualCard).join('');
   const history=batchCards||individualCards?'<section class="registration-link-history"><h3>ลิงก์ที่เคยสร้าง</h3>'+batchCards+individualCards+'</section>':'<p class="help">ยังไม่มีลิงก์ที่สร้างไว้</p>';

@@ -1,0 +1,53 @@
+/* iOS-inspired persistent success surface for bill payment confirmation. */
+#payment-status-dialog[data-state="success"][open]{
+ position:fixed!important;inset:0!important;margin:auto!important;
+ width:min(390px,calc(100vw - 32px))!important;max-width:calc(100vw - 32px)!important;
+ height:fit-content!important;max-height:calc(100dvh - 40px)!important;
+ box-sizing:border-box!important;overflow:auto!important;padding:0!important;
+ border:1px solid rgba(143,220,174,.92)!important;border-radius:30px!important;
+ background:linear-gradient(155deg,#e4f9eb 0%,#f5fff8 54%,#eaf8ef 100%)!important;
+ box-shadow:0 26px 82px rgba(12,91,52,.22),0 5px 20px rgba(12,91,52,.09)!important;
+ color:#17472f!important;outline:none!important;
+ animation:payment-success-ios-in .38s cubic-bezier(.18,.9,.25,1) both!important;
+}
+#payment-status-dialog[data-state="success"]::backdrop{
+ background:rgba(18,54,35,.3)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important;
+}
+#payment-status-dialog[data-state="success"] .payment-status-content.success{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:0;width:100%;box-sizing:border-box;padding:34px 26px 26px;text-align:center;
+}
+#payment-status-dialog[data-state="success"] .payment-status-symbol{
+ display:grid;place-items:center;width:88px;height:88px;flex:0 0 88px;
+ margin:0 auto 23px;border:1px solid rgba(255,255,255,.9);border-radius:50%;
+ background:linear-gradient(145deg,#26c879 0%,#0b9858 100%);color:#fff;
+ box-shadow:0 0 0 9px rgba(191,241,210,.72),0 12px 28px rgba(12,132,75,.22);
+}
+#payment-status-dialog[data-state="success"] .payment-status-symbol svg{display:block;width:43px;height:43px;stroke:currentColor;stroke-width:2.8}
+#payment-status-dialog[data-state="success"] h2{
+ margin:0 0 12px;color:#17633d;font-size:24px;line-height:1.35;font-weight:750;letter-spacing:-.45px;
+}
+#payment-status-dialog[data-state="success"] p{
+ width:100%;box-sizing:border-box;margin:0 0 24px;padding:15px 16px;
+ border:1px solid rgba(255,255,255,.86);border-radius:18px;
+ background:rgba(255,255,255,.64);color:#416b53;font-size:14px;line-height:1.8;
+ text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;
+}
+#payment-status-dialog[data-state="success"] [data-payment-status-close]{
+ display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;
+ margin:0;padding:12px 20px;border:1px solid #0d9c5a;border-radius:16px;
+ background:linear-gradient(180deg,#1dbb70,#0c9958);color:#fff;
+ box-shadow:0 7px 16px rgba(12,142,78,.2);font-size:15px;font-weight:700;
+}
+#payment-status-dialog[data-state="success"] [data-payment-status-close]:active{transform:scale(.98);background:#0b874e}
+@keyframes payment-success-ios-in{
+ from{opacity:0;transform:translateY(12px) scale(.97)}
+ to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(max-width:480px){
+ #payment-status-dialog[data-state="success"] .payment-status-content.success{padding:30px 22px 22px}
+ #payment-status-dialog[data-state="success"] h2{font-size:22px}
+}
+@media(prefers-reduced-motion:reduce){
+ #payment-status-dialog[data-state="success"][open]{animation:none!important}
+}

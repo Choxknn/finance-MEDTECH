@@ -2,7 +2,9 @@
 
 (() => {
   let paymentPageState = null;
-  let paymentPageEntrancePending = false;
+  let paymentSheetEntrancePending = false;
+  let paymentSheetCloseTimer = null;
+  let paymentSheetDrag = null;
   const baseContent = content;
   const baseNav = nav;
 
@@ -48,13 +50,24 @@
   function paymentPageMarkup() {
     const charge = paymentPageCharge();
     if (!charge) {
-      return '<section class="payment-page"><div class="payment-page-content"><div class="payment-page-empty">ไม่พบรายการที่ต้องชำระ หรือรายการนี้ไม่สามารถชำระได้แล้ว<button type="button" data-payment-page-back>กลับหน้าหลัก</button></div></div></section>';
+      return '<div class="payment-sheet-overlay" data-payment-sheet-overlay><div class="payment-sheet-backdrop" data-payment-sheet-dismiss></div>' +
+        '<section class="payment-sheet" data-payment-sheet data-sheet-size="medium" role="dialog" aria-modal="true" aria-label="ชำระบิล">' +
+        '<div class="payment-sheet-grab-zone" data-payment-sheet-drag role="button" tabindex="0" aria-label="ลากเพื่อปรับขนาดหน้าต่าง"><span class="payment-sheet-grabber"></span></div>' +
+        '<div class="payment-sheet-scroll" data-payment-sheet-scroll><section class="payment-page"><div class="payment-page-content">' +
+        '<div class="payment-page-empty">ไม่พบรายการที่ต้องชำระ หรือรายการนี้ไม่สามารถชำระได้แล้ว<button type="button" data-payment-page-back>กลับหน้าหลัก</button></div>' +
+        '</div></section></div></section></div>';
     }
 
     const bill = round(charge.round_id);
     const amount = balance(charge);
     const qr = typeof selectPaymentQr === 'function' ? selectPaymentQr(amount) : {url: ''};
-    const contentStart = '<section class="payment-page"><div class="payment-page-content">';
+    const contentStart = '<div class="payment-sheet-overlay" data-payment-sheet-overlay>' +
+      '<div class="payment-sheet-backdrop" data-payment-sheet-dismiss></div>' +
+      '<section class="payment-sheet" data-payment-sheet data-sheet-size="medium" role="dialog" aria-modal="true" aria-label="ชำระบิล">' +
+      '<div class="payment-sheet-grab-zone" data-payment-sheet-drag role="button" tabindex="0" aria-label="ลากขึ้นเพื่อขยายหน้าต่าง หรือลงเพื่อย่อ">' +
+      '<span class="payment-sheet-grabber"></span></div>' +
+      '<div class="payment-sheet-scroll" data-payment-sheet-scroll>' +
+      '<section class="payment-page"><div class="payment-page-content">';
     const summary = paymentPageSummary(charge, bill, amount);
 
     if (!paymentPageState.method) {
@@ -65,7 +78,7 @@
         '<div class="payment-page-method-choices">' +
         paymentPageMethodChoice('bank', 'โอนผ่านเลขบัญชีธนาคาร', '', '', 'bank', false) +
         paymentPageMethodChoice('qr', 'สแกน QR Code', '', '', 'qr', !qr.url) +
-        '</div></section></div></section>';
+        '</div></section></div></section></div>';
     }
 
     const methodPanel = paymentPageState.method === 'bank'
@@ -95,11 +108,17 @@
       '<p class="help auto-slip-help">ระบบจะส่งสลิปให้อัตโนมัติ</p>' +
       '<div class="actions"><button type="submit" data-slip-retry hidden>ลองส่งอีกครั้ง</button></div><div class="form-error" role="alert"></div></form></section>' +
       '' +
-      '</div></section>';
+      '</div></section></div></section></div>';
   }
 
   content = function () {
-    if (view === 'payment') return paymentPageMarkup();
+    if (view === 'payment') {
+      const activeView = view;
+      view = paymentPageState?.returnView || 'bills';
+      const background = baseContent();
+      view = activeView;
+      return background + paymentPageMarkup();
+    }
     return baseContent();
   };
 
@@ -118,12 +137,63 @@
   window.paymentPageHasSelectedMethod = () => Boolean(paymentPageState?.method);
 
   function scrollPaymentPageToTop() {
-    if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
-    const app = document.getElementById('app');
-    if (app) app.scrollTop = 0;
-    const workspace = document.querySelector('.workspace');
-    if (workspace) workspace.scrollTop = 0;
-    window.scrollTo(0, 0);
+    const scroller = document.querySelector('[data-payment-sheet-scroll]');
+    if (scroller) scroller.scrollTop = 0;
+  }
+
+  function setPaymentSheetSize(size) {
+    const sheet = document.querySelector('[data-payment-sheet]');
+    if (!sheet) return;
+    const allowed = ['compact', 'medium', 'expanded'];
+    sheet.dataset.sheetSize = allowed.includes(size) ? size : 'medium';
+  }
+
+  function dismissPaymentSheet(nextView) {
+    if (!paymentPageState) return;
+    const destination = nextView || paymentPageState.returnView || 'bills';
+    const overlay = document.querySelector('[data-payment-sheet-overlay]');
+    if (!overlay) {
+      paymentPageState = null;
+      nav(destination);
+      return;
+    }
+    if (paymentSheetCloseTimer) clearTimeout(paymentSheetCloseTimer);
+    overlay.classList.remove('is-open');
+    overlay.classList.add('is-closing');
+    paymentSheetCloseTimer = setTimeout(() => {
+      paymentSheetCloseTimer = null;
+      if (view !== 'payment' || !paymentPageState) return;
+      paymentPageState = null;
+      nav(destination);
+    }, 380);
+  }
+
+  function resizePaymentSheet(direction) {
+    const sheet = document.querySelector('[data-payment-sheet]');
+    if (!sheet) return;
+    const current = sheet.dataset.sheetSize || 'medium';
+    if (direction === 'up') {
+      setPaymentSheetSize(current === 'compact' ? 'medium' : 'expanded');
+      return;
+    }
+    if (current === 'expanded') setPaymentSheetSize('medium');
+    else if (current === 'medium') setPaymentSheetSize('compact');
+    else dismissPaymentSheet(paymentPageState?.returnView || 'bills');
+  }
+
+  function finishPaymentSheetDrag(event) {
+    if (!paymentSheetDrag) return;
+    const drag = paymentSheetDrag;
+    paymentSheetDrag = null;
+    const sheet = document.querySelector('[data-payment-sheet]');
+    if (sheet) {
+      sheet.classList.remove('is-dragging');
+      sheet.style.removeProperty('transform');
+    }
+    const delta = (event?.clientY ?? drag.lastY) - drag.startY;
+    if (delta < -55) resizePaymentSheet('up');
+    else if (delta > 170) dismissPaymentSheet(paymentPageState?.returnView || 'bills');
+    else if (delta > 55) resizePaymentSheet('down');
   }
 
   async function copyPaymentAccount(accountNumber) {
@@ -162,14 +232,20 @@
     if (typeof updateDisplayedFees === 'function') updateDisplayedFees();
     const charge = db?.charges?.find(item => item.id === id);
     if (!charge || charge.profile_id !== user?.id) return;
+    if (paymentSheetCloseTimer) clearTimeout(paymentSheetCloseTimer);
+    paymentSheetCloseTimer = null;
     paymentPageState = {id: id, method: '', returnView: view};
-    paymentPageEntrancePending = true;
+    paymentSheetEntrancePending = true;
     view = 'payment';
     render();
     scrollPaymentPageToTop();
   };
 
   document.addEventListener('click', event => {
+    if (event.target.closest('[data-payment-sheet-dismiss]')) {
+      dismissPaymentSheet(paymentPageState?.returnView || 'bills');
+      return;
+    }
     const button = event.target.closest('[data-payment-method],[data-payment-method-back],[data-payment-page-back],[data-copy-account]');
     if (!button) return;
     if (button.hasAttribute('data-copy-account')) {
@@ -191,14 +267,13 @@
   const baseRender = render;
   render = function () {
     baseRender();
-    if (view === 'payment' && paymentPageEntrancePending) {
-      const page = document.querySelector('.payment-page');
-      if (page) {
-        page.classList.add('payment-page-entering');
-        page.addEventListener('animationend', event => {
-          if (event.animationName === 'payment-page-slide-in') page.classList.remove('payment-page-entering');
-        }, {once:true});
-        paymentPageEntrancePending = false;
+    if (document.body) document.body.classList.toggle('payment-sheet-open', view === 'payment');
+    if (view === 'payment' && paymentSheetEntrancePending) {
+      const overlay = document.querySelector('[data-payment-sheet-overlay]');
+      if (overlay) {
+        void overlay.offsetHeight;
+        overlay.classList.add('is-open');
+        paymentSheetEntrancePending = false;
       }
     }
     if (view === 'payment' && typeof updatePaymentQr === 'function' && paymentPageState?.method === 'qr') {
@@ -217,11 +292,44 @@
       scrollPaymentPageToTop();
       return true;
     }
-    paymentPageState = null;
-    nav('dashboard');
-    scrollPaymentPageToTop();
+    dismissPaymentSheet('dashboard');
     return true;
   };
+
+  document.addEventListener('pointerdown', event => {
+    const handle = event.target.closest?.('[data-payment-sheet-drag]');
+    if (!handle || view !== 'payment' || event.button > 0) return;
+    const sheet = document.querySelector('[data-payment-sheet]');
+    if (!sheet) return;
+    paymentSheetDrag = {startY: event.clientY, lastY: event.clientY};
+    sheet.classList.add('is-dragging');
+    event.preventDefault();
+  }, {passive:false});
+
+  window.addEventListener('pointermove', event => {
+    if (!paymentSheetDrag) return;
+    paymentSheetDrag.lastY = event.clientY;
+    const sheet = document.querySelector('[data-payment-sheet]');
+    if (!sheet) return;
+    const delta = event.clientY - paymentSheetDrag.startY;
+    sheet.style.transform = 'translate3d(0,' + Math.max(-110, Math.min(260, delta)) + 'px,0)';
+  });
+
+  window.addEventListener('pointerup', finishPaymentSheetDrag);
+  window.addEventListener('pointercancel', finishPaymentSheetDrag);
+
+  document.addEventListener('keydown', event => {
+    const handle = event.target.closest?.('[data-payment-sheet-drag]');
+    if (view !== 'payment') return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      dismissPaymentSheet(paymentPageState?.returnView || 'bills');
+      return;
+    }
+    if (!handle) return;
+    if (event.key === 'ArrowUp') { event.preventDefault(); resizePaymentSheet('up'); }
+    if (event.key === 'ArrowDown') { event.preventDefault(); resizePaymentSheet('down'); }
+  });
 
   // Intercept the shared header before other delegated navigation handlers.
   window.addEventListener('click', event => {

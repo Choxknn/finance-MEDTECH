@@ -27,7 +27,19 @@ jobs:
         run: node tests/account-access-api.test.cjs
       - name: Test mobile navigation reset after closing any dialog
         run: node tests/window-close-navigation-reset.test.cjs && node --check web/shop-notice-navigation.js
-      - name: Test member bill title hierarchy
-        run: node tests/material-expressive.test.cjs && node --check web/material-layout.js
+      - name: Check member bill title hierarchy
+        run: |
+          node --check web/material-layout.js
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const markup = fs.readFileSync('web/material-layout.js', 'utf8');
+          const styles = fs.readFileSync('web/prototype-integration.css', 'utf8');
+          assert.ok(markup.includes('<div class="mp-bill-description"><span class="mp-bill-description-label">รายละเอียด</span>'));
+          assert.ok(markup.includes('<p class="mp-bill-due">'));
+          assert.ok(styles.includes('.material-shell .mp-bill .mp-bill-description'));
+          assert.ok(styles.includes('.material-shell .mp-bill .mp-bill-due'));
+          console.log('Member bill title, description and due date hierarchy passed');
+          NODE
       - name: Check updated login and profile scripts
         run: node --check web/app.js && node --check web/account-access.js

@@ -2,7 +2,7 @@ import {adminDb,query,secret,hash} from '../_shared/services.ts';
 import {financeSite} from '../_shared/line-flex.ts';
 import {protectAccountRequest,recordAccountSecurityEvent} from '../_shared/bot-protection.ts';
 const callback=financeSite+'line-callback.html';
-const LIFF_ID='2011933909-4qXo3pGn';
+const LIFF_ID='2011933909-n2La8PPV';
 async function registrationSessionHash(db:any,sessionValue:any){
  if(typeof sessionValue!=='string'||!/^[a-f0-9]{64}$/.test(sessionValue))throw Error('กรุณาเริ่มสมัครใหม่');
  const sessionHash=await hash(sessionValue);
@@ -110,7 +110,7 @@ Deno.serve(async req=>{
     }
    }
    const state=await signState({mode:'friend-gate',profile:profile.id,nonce:crypto.randomUUID(),exp:Date.now()+600000});
-   const url=new URL('https://liff.line.me/'+LIFF_ID);url.searchParams.set('friend_gate_state',state);
+   const url=new URL('https://liff.line.me/'+LIFF_ID+'/register.html');url.searchParams.set('friend_gate_state',state);
    return json({required:true,url:url.href,state});
   }
   if(input.action==='friend-gate-finish'){
@@ -137,7 +137,7 @@ Deno.serve(async req=>{
    if(clientId!==LIFF_ID.split('-')[0])throw Error('LIFF ID นี้ไม่ได้อยู่ใน LINE Login Channel เดียวกับระบบ กรุณาตรวจสอบ LIFF App');
    const sessionHash=await registrationSessionHash(db,input.session);
    const signed=await signState({mode:'signup',flow:'liff',sessionHash,exp:Date.now()+600000});
-   const url=new URL('https://liff.line.me/'+LIFF_ID);url.searchParams.set('signup_state',signed);
+   const url=new URL('https://liff.line.me/'+LIFF_ID+'/register.html');url.searchParams.set('signup_state',signed);
    return json({url:url.href,state:signed});
   }
   if(input.action==='liff-finish'){

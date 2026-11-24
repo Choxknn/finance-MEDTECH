@@ -49,5 +49,7 @@ jobs:
           assert.ok(styles.includes('.material-shell .mp-bill .mp-bill-due'));
           console.log('Member bill title, description and due date hierarchy passed');
           NODE
+      - name: Test LINE signup, LIFF return and friend-gate recovery
+        run: node tests/line-login-api.test.cjs && node tests/line-login-ui.test.cjs
       - name: Check updated login and profile scripts
         run: node --check web/app.js && node --check web/account-access.js

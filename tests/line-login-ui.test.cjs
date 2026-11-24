@@ -20,7 +20,7 @@ assert.doesNotMatch(fs.readFileSync('web/line-login.js','utf8'),/line-login-succ
 assert.match(fs.readFileSync('web/line-login.js','utf8'),/line-already-linked/);
 assert.match(fs.readFileSync('web/register-liff.js','utf8'),/line-already-registered/);assert.match(fs.readFileSync('web/register-liff.js','utf8'),/resume\.lineVerified=true/);assert.match(fs.readFileSync('web/register-liff.js','utf8'),/location\.replace\('\.\/register\.html#token='/);assert.doesNotMatch(fs.readFileSync('web/register-liff.js','utf8'),/liff\.closeWindow\(\)/,'signup and friend-gate flows return to the website instead of closing LIFF');
 assert.match(fs.readFileSync('web/management.js','utf8'),/data-action="manual-add-member"/);
-assert.ok(fs.readFileSync('web/management.js','utf8').includes("line_friend_added_at?'เพิ่มเพื่อนแล้ว'"),'member row shows the saved LINE OA friend status');
+assert.ok(fs.readFileSync('web/management.js','utf8').includes("p.line_friend_added_at||p.line_friend_check_status==='added'")&&fs.readFileSync('web/management.js','utf8').includes("label='เพิ่มเพื่อนแล้ว'"),'member row shows the saved LINE OA friend status');
 assert.ok(fs.readFileSync('supabase/functions/finance-api/index.ts','utf8').includes('oa_friend_added_at,oa_friend_checked_at'),'admin bootstrap provides LINE OA verification timestamps');
 assert.ok(fs.readFileSync('supabase/functions/line-login/index.ts','utf8').includes('oa_friend_added_at:checkedAt'),'friendship verification persists a verified timestamp');
 assert.match(fs.readFileSync('web/app.js','utf8'),/case'manual-add-member':newMember\(\)/);

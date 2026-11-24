@@ -54,16 +54,18 @@
     if(!result.ok||result.mode!=='friend-gate')throw new Error('ตรวจสอบการเพิ่มเพื่อนไม่สำเร็จ กรุณาลองอีกครั้ง');
     completed=true;sessionStorage.removeItem('finance-line-friend-gate-pending');
     say('เพิ่มเพื่อน LINE เรียบร้อยแล้ว กำลังกลับเข้าสู่เว็บไซต์…');
-    back.textContent='กลับเข้าเว็บไซต์';back.hidden=false;
-    if(liff.isInClient())setTimeout(()=>{try{liff.closeWindow()}catch{}},650);
-    else location.replace('./');
+    location.replace('./');
     return;
    }
    if(!result.ok||result.mode!=='signup')throw new Error('ยืนยัน LINE ไม่สำเร็จ กรุณาเริ่มใหม่จากหน้าสมัครสมาชิก');
    completed=true;sessionStorage.removeItem('finance-line-liff-signup-state');
-   say('ยืนยันการเพิ่มเพื่อนเรียบร้อยแล้ว กำลังกลับไปหน้าสมัครสมาชิก…');
-   back.hidden=false;
-   if(liff.isInClient())setTimeout(()=>{try{liff.closeWindow()}catch{}},650);
+   let resume=null;try{resume=JSON.parse(sessionStorage.getItem('finance-signup-resume')||localStorage.getItem('finance-signup-resume')||'null')}catch{}
+   if(resume&&/^[0-9a-f]{64}$/.test(resume.token||'')&&/^[0-9a-f]{64}$/.test(resume.session||'')){
+    resume.lineVerified=true;sessionStorage.setItem('finance-signup-resume',JSON.stringify(resume));localStorage.setItem('finance-signup-resume',JSON.stringify(resume));
+    say('เชื่อม LINE สำเร็จ กำลังกลับไปหน้าตั้งรหัสผ่าน…');location.replace('./register.html#token='+encodeURIComponent(resume.token));return;
+   }
+   say('เชื่อม LINE สำเร็จแล้ว กรุณากลับไปเปิดลิงก์สมัครเดิมเพื่อดำเนินการตั้งรหัสผ่าน');
+   back.textContent='กลับไปหน้าสมัครสมาชิก';back.hidden=false;
   }catch(error){
    const message=error.message||'ยืนยัน LINE ไม่สำเร็จ กรุณาลองอีกครั้ง';
    if(/LINE นี้มีบัญชีแล้ว|LINE นี้เชื่อมกับบัญชีอื่น/.test(message)){

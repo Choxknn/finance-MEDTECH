@@ -13,7 +13,7 @@ function activityValue(key,value){if(value==null||value==='')return 'ไม่�
 function activityPresentation(a){
  const d=a.details||{},after=typeof d.after==='object'&&d.after||{},before=typeof d.before==='object'&&d.before||{},uuid=/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ig;
  let title=String(a.action||'อัปเดตข้อมูล'),legacyPaymentDescription='';
- const legacyMatch=title.match(/^(approved|rejected):\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+ const legacyMatch=title.match(/^(approved|rejected):\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
  if(legacyMatch){
   const payment=(db.payments||[]).find(p=>p.id===legacyMatch[2]);
   const charge=payment&&(db.charges||[]).find(c=>c.id===payment.charge_id);
@@ -32,7 +32,7 @@ function activityPresentation(a){
  const id=title.match(uuid)?.[0];
  const record=[...(db.profiles||[]),...(db.rounds||[]),...(db.expenses||[]),...(db.incomes||[])].find(x=>x.id===id);
  const name=after.title||after.name||before.title||before.name||record?.title||record?.name;
- title=title.replace(uuid,'').replace(/\\b(round|member|expense|payment|charge|income)\\b/g,k=>({round:'บิล',member:'สมาชิก',expense:'รายจ่าย',payment:'การชำระเงิน',charge:'ยอดเรียกเก็บ',income:'รายรับ'}[k])).replace(/:\\s*$/,'').trim();
+ title=title.replace(uuid,'').replace(/\b(round|member|expense|payment|charge|income)\\b/g,k=>({round:'บิล',member:'สมาชิก',expense:'รายจ่าย',payment:'การชำระเงิน',charge:'ยอดเรียกเก็บ',income:'รายรับ'}[k])).replace(/:\s*$/,'').trim();
  const changes=Object.keys({...activityFields,price:'ราคาสินค้า',stock:'จำนวนคงเหลือ',active:'เปิดใช้งาน',checked:'เช็กชื่อ',show_on_entry:'แสดงตอนเข้าเว็บ'}).filter(k=>JSON.stringify(before[k])!==JSON.stringify(after[k])&&(k in before||k in after)).map(k=>({label:activityFields[k]||({price:'ราคาสินค้า',stock:'จำนวนคงเหลือ',active:'เปิดใช้งาน',checked:'เช็กชื่อ',show_on_entry:'แสดงตอนเข้าเว็บ'}[k])||k,before:activityValue(k,before[k]),after:activityValue(k,after[k])}));
  if(typeof d.before==='string'&&typeof d.after==='string')changes.push({label:'รหัสนักศึกษา',before:d.before,after:d.after});
  const description=legacyPaymentDescription||[name||d.target_title,d.target_student_id?'นักศึกษา '+d.target_student_id:null,d.amount!=null?'ยอดชำระ ฿'+money(d.amount):null,d.reason||d.note,d.months?'ข้อมูลเก่ากว่า '+d.months+' เดือน · ลบ '+(d.count??0)+' รายการ':null,Array.isArray(d.members)?'สมาชิก '+d.members.length+' คน':null].filter(Boolean).join(' · ');

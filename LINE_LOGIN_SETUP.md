@@ -1,9 +1,9 @@
 # LINE Login and LIFF setup
 
 1. LINE Login Channel and the Messaging API channel must be under the same Provider so LINE user IDs match.
-2. The LIFF app ID used for signup is `2011933909-4qXo3pGn`.
+2. The LIFF app ID used for signup and friend verification is `2011933909-n2La8PPV`.
 3. Set the LIFF app Endpoint URL to:
-   `https://choxknn.github.io/finance-MEDTECH/line-liff.html`
+   `https://choxknn.github.io/finance-MEDTECH/`
 4. In the LIFF app, enable both the `openid` and `profile` scopes and set Add friend option to `On (aggressive)`.
 5. Publish the LIFF app and LINE Login channel. A Developing channel only permits authorized testers.
 6. The matching LINE Login Channel ID must be `2011933909`; the server validates that the LIFF ID belongs to this channel. Supabase Edge Function secrets remain:

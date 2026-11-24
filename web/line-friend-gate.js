@@ -22,7 +22,7 @@
    if(result.required===false){sessionStorage.removeItem('finance-line-friend-gate-pending');return true}
    if(result.required!==true)throw Error('ไม่ได้รับผลตรวจสอบเพื่อน LINE ที่ถูกต้อง ระบบจึงยังไม่อนุญาตให้เข้าใช้งาน');
    const url=new URL(result.url);
-   if(url.origin!=='https://liff.line.me'||url.pathname!=='/'+cfg.lineLiffId+'/register.html'||!url.searchParams.has('friend_gate_state'))throw Error('ลิงก์ตรวจสอบ LINE ไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ');
+   if(url.origin!=='https://liff.line.me'||url.pathname!=='/'+cfg.lineLiffId||!url.searchParams.has('friend_gate_state'))throw Error('ลิงก์ตรวจสอบ LINE ไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบ');
    sessionStorage.setItem('finance-line-friend-gate-pending',JSON.stringify({profileId:user.id,createdAt:Date.now()}));
    const app=document.getElementById('app');
    if(app){

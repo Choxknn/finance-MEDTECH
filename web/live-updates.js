@@ -1,5 +1,5 @@
 'use strict';
-let financeLiveClient=null,financeLiveScope='',financeLiveToken='',financeLiveTimer=null,financeAnnouncementUrlTimer=null,financeLiveBusy=false,financeLivePending=false,financeAnnouncementPending=false,financeLiveShopPending=false,financeLiveShopChannel=null;
+let financeLiveClient=null,financeLiveScope='',financeLiveToken='',financeLiveTimer=null,financeAnnouncementUrlTimer=null,financeLiveBusy=false,financeLivePending=false,financeLiveDeferredApp=false,financeAnnouncementPending=false,financeLiveShopPending=false,financeLiveShopChannel=null;
 function financeLiveBlocked(){return document.hidden||document.querySelector('dialog[open],.finance-picker-popup')||busyJobs.size||document.activeElement?.matches('input,select,textarea,[contenteditable=true]')||document.querySelector('#material-profile-menu:not([hidden])')}
 function scheduleFinanceLiveFlush(){if(!financeLiveTimer)financeLiveTimer=setTimeout(flushFinanceLive,350)}
 function scheduleFinanceAnnouncementUrlRefresh(){
@@ -27,19 +27,19 @@ async function flushFinanceLive(){
  if(!user||cfg.mode!=='live'||document.hidden)return;
  if(financeLiveBusy||financeLiveBlocked())return;
  if(backgroundRefreshRunning){setTimeout(()=>{if(financeLivePending||financeAnnouncementPending||financeLiveShopPending)scheduleFinanceLiveFlush()},500);return}
- const owner=user.id,screen=view,doApp=financeLivePending,doAnnouncements=financeAnnouncementPending,doShop=financeLiveShopPending;
+ const owner=user.id,screen=view,deferApp=screen==='attendance'&&financeLivePending,doApp=financeLivePending&&!deferApp,doAnnouncements=financeAnnouncementPending,doShop=financeLiveShopPending;
  financeLiveShopPending=false;
+ if(deferApp)financeLiveDeferredApp=true;
  if(!doApp&&!doAnnouncements&&!doShop)return;
  financeLivePending=false;financeAnnouncementPending=false;financeLiveBusy=true;
  try{
-  let result=null,announcements=null,shop=null,summary=null,attendance=null;
+  let result=null,announcements=null,shop=null,summary=null;
   if(doApp)result=await api('bootstrap',{skip_announcements:true});
   if(doAnnouncements)announcements=await api('announcements-list');
   if(doShop){
    shop=await api('shop-list');
    if(screen==='shop-summary'&&user.role==='admin')summary=await api('shop-summary',{paid:shopPaidOnly});
   }
-  if(doApp&&screen==='attendance'&&user.role==='admin')attendance=await api('attendance-list',{session_id:attendanceSession||undefined});
   if(user?.id!==owner)return;
   if(financeLiveBlocked()){
    if(doApp)financeLivePending=true;
@@ -69,7 +69,6 @@ async function flushFinanceLive(){
    shopSelected=new Set([...shopSelected].filter(id=>(shop.orders||[]).some(o=>o.id===id)));
    if(summary){if(stable(shopSummary)!==stable(summary))changed=true;shopSummary=summary}
   }
-  if(attendance){if(stable(attendanceData)!==stable(attendance))changed=true;attendanceData=attendance;attendanceSession=attendance.selected||'';attendanceLoaded=true}
   if(changed)renderInBackground();
  }catch{
   if(doApp)financeLivePending=true;
@@ -84,7 +83,7 @@ function stopFinanceLive(){
  financeLiveClient=null;financeLiveScope='';financeLiveToken='';financeLiveShopChannel=null;
  window.financeShopRealtimeReady=false;
  clearTimeout(financeLiveTimer);financeLiveTimer=null;clearTimeout(financeAnnouncementUrlTimer);financeAnnouncementUrlTimer=null;
- financeLivePending=false;financeAnnouncementPending=false;financeLiveShopPending=false;
+ financeLivePending=false;financeLiveDeferredApp=false;financeAnnouncementPending=false;financeLiveShopPending=false;
 }
 function syncFinanceShopChannel(client){
  const should=!!user&&cfg.mode==='live'&&!document.hidden;
@@ -133,6 +132,7 @@ async function syncFinanceLive(){
  }catch{/* Reconnect on browser online/visibility changes; no periodic data polling. */}
 }
 const liveRender=render;render=function(){liveRender();queueMicrotask(syncFinanceLive)};
+const financeLiveBaseNav=nav;nav=function(next){const fromAttendance=view==='attendance',result=financeLiveBaseNav(next);if(fromAttendance&&view!=='attendance'&&financeLiveDeferredApp){financeLiveDeferredApp=false;financeLivePending=true;scheduleFinanceLiveFlush()}return result};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopFinanceLive();else syncFinanceLive()});
 window.addEventListener('online',()=>{syncFinanceLive();queueFinanceLive();queueFinanceShop()});
 window.addEventListener('pagehide',stopFinanceLive);

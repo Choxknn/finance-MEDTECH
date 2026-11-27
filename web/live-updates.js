@@ -30,8 +30,9 @@ async function flushFinanceLive(){
  const owner=user.id,screen=view,deferApp=screen==='attendance'&&financeLivePending,doApp=financeLivePending&&!deferApp,doAnnouncements=financeAnnouncementPending,doShop=financeLiveShopPending;
  financeLiveShopPending=false;
  if(deferApp)financeLiveDeferredApp=true;
+ financeLivePending=false;financeAnnouncementPending=false;
  if(!doApp&&!doAnnouncements&&!doShop)return;
- financeLivePending=false;financeAnnouncementPending=false;financeLiveBusy=true;
+ financeLiveBusy=true;
  try{
   let result=null,announcements=null,shop=null,summary=null;
   if(doApp)result=await api('bootstrap',{skip_announcements:true});

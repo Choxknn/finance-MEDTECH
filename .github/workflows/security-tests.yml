@@ -52,4 +52,4 @@ jobs:
       - name: Test LINE signup, LIFF return and friend-gate recovery
         run: node tests/line-login-api.test.cjs && node tests/line-login-ui.test.cjs
       - name: Check updated login and profile scripts
-        run: node --check web/app.js && node --check web/account-access.js
+        run: node --check web/app.js && node --check web/account-access.js && node --check web/attendance.js
